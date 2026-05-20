@@ -1,0 +1,48 @@
+﻿@page
+@model INFP_Proj.Pages.Admin.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Patients[0].Status)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Patients[0].Bracelet)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Patients[0].User)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Patients) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Bracelet.BraceletID)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.User.UserID)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.PatientID">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.PatientID">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.PatientID">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

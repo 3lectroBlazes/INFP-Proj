@@ -1,0 +1,207 @@
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace INFP_Proj.Data
+{
+    public class AppDbSeeder
+    {
+        public static void Seed(IServiceProvider serviceProvider)
+        {
+            using var context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
+
+            // If any users exist, already seeded
+            if (context.Users.Any()) return;
+
+            // Hospitals
+            var hospital = new Hospitals
+            {
+                HospitalID = 1,
+                HospitalName = "City General Hospital",
+                HospitalAddress = "123 Main Street"
+            };
+            context.Hospitals.Add(hospital);
+
+            // Wards
+            var ward = new Wards
+            {
+                WardID = 1,
+                WardName = "Ward A",
+                MaxCapacity = 20
+            };
+            context.Wards.Add(ward);
+
+            // Users
+            var user1 = new User
+            {
+                UserID = 1,
+                FirstName = "Kai",
+                MiddleName = null,
+                LastName = "Luo",
+                Email = "kai.luo@hospital.com",
+                Role = "Nurse",
+                PasswordHash = "hashed_password_here"
+            };
+            var user2 = new User
+            {
+                UserID = 2,
+                FirstName = "Xavier",
+                MiddleName = null,
+                LastName = "Wee",
+                Email = "xavier.wee@hospital.com",
+                Role = "Doctor",
+                PasswordHash = "hashed_password_here"
+            };
+            var user3 = new User
+            {
+                UserID = 3,
+                FirstName = "Evan",
+                MiddleName = null,
+                LastName = "IDK",
+                Email = "evan.idk@hospital.com",
+                Role = "Reception",
+                PasswordHash = "hashed_password_here"
+            };
+            var user4 = new User
+            {
+                UserID = 4,
+                FirstName = "Sadev",
+                MiddleName = null,
+                LastName = "IDK",
+                Email = "sadev.idk@hospital.com",
+                Role = "Patient",
+                PasswordHash = "hashed_password_here"
+            };
+            var user5 = new User
+            {
+                UserID = 5,
+                FirstName = "Skibidi",
+                MiddleName = null,
+                LastName = "Toilet",
+                Email = "skibidi.toilet@hospital.com",
+                Role = "Patient",
+                PasswordHash = "hashed_password_here"
+            };
+            context.Users.AddRange(user1, user2, user3, user4, user5);
+
+            // Allergies
+            var allergy1 = new Allergies { AllergyID = 1, Allergy = "Penicillin" };
+            var allergy2 = new Allergies { AllergyID = 2, Allergy = "Peanuts" };
+            context.Allergies.AddRange(allergy1, allergy2);
+
+            // Diagnoses
+            var diagnosis = new Diagnoses { DiagnosisID = 1, DiagnosisName = "Hypertension" };
+            context.Diagnoses.Add(diagnosis);
+
+            // Medications
+            var medication = new Medications
+            {
+                MedicationID = 1,
+                MedicationName = "Paracetamol",
+                ConsumptionTime = new TimeOnly(8, 0)
+            };
+            context.Medications.Add(medication);
+
+            // Bracelet
+            var bracelet = new Bracelet
+            {
+                BraceletID = 1,
+                PatientID = 1,
+                Battery = 85.5f,
+                Respiration = 18.0f,
+                Location = "Ward A",
+                Movement = 0.5f,
+                BloodPressure = 120.0f,
+                HeartRate = 72.0f
+            };
+            context.Bracelets.Add(bracelet);
+
+            // Patients
+            var patient = new Patients
+            {
+                PatientID = 1,
+                BraceletID = 1,
+                UserID = 4,
+                Status = "Admitted"
+            };
+            context.Patients.Add(patient);
+
+            // AllergyList
+            context.AllergyLists.AddRange(
+                new AllergyList { AllergyListID = 1, PatientID = 1, AllergyID = 1 },
+                new AllergyList { AllergyListID = 2, PatientID = 1, AllergyID = 2 }
+            );
+
+            // MedicationList
+            var medList = new MedicationList
+            {
+                MedicationListID = 1,
+                PatientID = 1,
+                MedicationID = 1,
+                Dosage = "500mg"
+            };
+            context.MedicationLists.Add(medList);
+
+            // Beds
+            var bed = new Beds
+            {
+                BedID = 1,
+                PatientID = 1,
+                WardID = 1,
+                Sector = "A",
+                Floor = "1",
+                Room = "101",
+                Temperature = 36.5f,
+                Weight = 70.0f,
+                Location = "Near Window"
+            };
+            context.Beds.Add(bed);
+
+            // Records
+            var record = new Records
+            {
+                RecordID = 1,
+                PatientID = 1,
+                BedID = 1,
+                WardID = 1,
+                HospitalID = 1,
+                DiagnosisID = 1,
+                MedicationListID = 1,
+                Description = "Patient admitted for monitoring",
+                AdmissionDateTime = DateTime.UtcNow,
+                DischargeDateTime = null
+            };
+            context.Records.Add(record);
+
+            // Vitals
+            var vitals = new Vitals
+            {
+                VitalsID = 1,
+                PatientID = 1,
+                BloodPressure = 120.0f,
+                HeartRate = 72.0f,
+                RespiratoryRate = 18.0f,
+                Temperature = 36.5f,
+                RecordedAt = DateTime.UtcNow
+            };
+            context.Vitals.Add(vitals);
+
+            // Relationships
+            context.Relationships.AddRange(
+                new Relationships { PatientID = 1, UserID = 1 },
+                new Relationships { PatientID = 1, UserID = 2 }
+            );
+
+            // Log
+            var log = new Log
+            {
+                LogID = 1,
+                UserID = 1,
+                Event = "Patient admitted",
+                Emergency = false,
+                Timestamp = DateTime.UtcNow
+            };
+            context.Logs.Add(log);
+
+            context.SaveChanges();
+        }
+    }
+}
