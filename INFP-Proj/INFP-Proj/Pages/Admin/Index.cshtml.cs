@@ -1,30 +1,64 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using INFP_Proj.Data;
+using INFP_Proj.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using INFP_Proj.Data;
 
 namespace INFP_Proj.Pages.Admin
 {
     public class IndexModel : PageModel
     {
-        private readonly INFP_Proj.Data.AppDbContext _context;
+        private readonly AppDbContext _context;
 
-        public IndexModel(INFP_Proj.Data.AppDbContext context)
+        public IndexModel(AppDbContext context)
         {
             _context = context;
         }
 
-        public IList<Patients> Patients { get;set; } = default!;
+        public IList<PatientListItem> Patients { get; set; } = new List<PatientListItem>();
 
         public async Task OnGetAsync()
         {
-            Patients = await _context.Patients
-                .Include(p => p.Bracelet)
-                .Include(p => p.User).ToListAsync();
+            var patients = await _context.Patients
+                .Include(p => p.User)
+                .OrderBy(p => p.PatientID)
+                .ToListAsync();
+
+            var patientIds = patients.Select(p => p.PatientID).ToList();
+
+            var medicationLists = await _context.MedicationLists
+                .Include(m => m.Medications)
+                .Where(m => patientIds.Contains(m.PatientID))
+                .ToListAsync();
+
+            var records = await _context.Records
+                .Where(r => patientIds.Contains(r.PatientID))
+                .ToListAsync();
+
+            Patients = patients.Select(p =>
+            {
+                var patientMeds = medicationLists.Where(m => m.PatientID == p.PatientID).ToList();
+                var latestRecord = records
+                    .Where(r => r.PatientID == p.PatientID)
+                    .OrderByDescending(r => r.AdmissionDateTime)
+                    .FirstOrDefault();
+
+                var medSummary = patientMeds.Count == 0
+                    ? "None"
+                    : string.Join(", ", patientMeds.Select(m =>
+                        $"{m.Medications?.MedicationName ?? "Unknown"} ({m.Dosage})"));
+
+                return new PatientListItem
+                {
+                    PatientId = p.PatientID,
+                    PatientName = p.User != null
+                        ? $"{p.User.FirstName} {p.User.LastName}"
+                        : $"Patient #{p.PatientID}",
+                    Status = p.Status,
+                    MedicationsSummary = medSummary,
+                    AdmissionDateTime = latestRecord?.AdmissionDateTime,
+                    DischargeDateTime = latestRecord?.DischargeDateTime
+                };
+            }).ToList();
         }
     }
 }

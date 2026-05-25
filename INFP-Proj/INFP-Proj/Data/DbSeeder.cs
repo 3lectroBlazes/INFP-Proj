@@ -171,18 +171,40 @@ namespace INFP_Proj.Data
             };
             context.Records.Add(record);
 
-            // Vitals
-            var vitals = new Vitals
+            // Vitals (time series for tracker charts)
+            var vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
+            var vitalsReadings = new (float bp, float hr, float rr, float temp)[]
             {
-                VitalsID = 1,
-                PatientID = 1,
-                BloodPressure = 120.0f,
-                HeartRate = 72.0f,
-                RespiratoryRate = 18.0f,
-                Temperature = 36.5f,
-                RecordedAt = DateTime.UtcNow
+                (118, 68, 16, 36.4f),
+                (120, 70, 17, 36.5f),
+                (122, 72, 18, 36.5f),
+                (119, 74, 17, 36.6f),
+                (121, 71, 18, 36.4f),
+                (123, 75, 19, 36.7f),
+                (120, 73, 18, 36.5f),
+                (118, 69, 16, 36.3f),
+                (122, 76, 19, 36.6f),
+                (121, 72, 18, 36.5f),
+                (119, 70, 17, 36.4f),
+                (124, 77, 20, 36.8f),
+                (120, 71, 18, 36.5f),
+                (118, 68, 16, 36.4f)
             };
-            context.Vitals.Add(vitals);
+
+            for (var i = 0; i < vitalsReadings.Length; i++)
+            {
+                var reading = vitalsReadings[i];
+                context.Vitals.Add(new Vitals
+                {
+                    VitalsID = i + 1,
+                    PatientID = 1,
+                    BloodPressure = reading.bp,
+                    HeartRate = reading.hr,
+                    RespiratoryRate = reading.rr,
+                    Temperature = reading.temp,
+                    RecordedAt = vitalsBaseTime.AddHours(i * 12)
+                });
+            }
 
             // Relationships
             context.Relationships.AddRange(

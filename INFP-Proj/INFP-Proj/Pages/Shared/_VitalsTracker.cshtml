@@ -1,0 +1,82 @@
+@model INFP_Proj.Models.VitalsChartViewModel
+
+@if (Model.ShowPatientSelector && Model.Patients.Count > 0)
+{
+    <form method="get" class="row g-3 align-items-end mb-4">
+        <div class="col-auto">
+            <label for="patientId" class="form-label">Patient</label>
+            <select id="patientId" name="patientId" class="form-select" onchange="this.form.submit()">
+                @foreach (var patient in Model.Patients)
+                {
+                    if (patient.PatientId == Model.PatientId)
+                    {
+                        <option value="@patient.PatientId" selected="selected">@patient.DisplayName</option>
+                    }
+                    else
+                    {
+                        <option value="@patient.PatientId">@patient.DisplayName</option>
+                    }
+                }
+            </select>
+        </div>
+    </form>
+}
+
+<p class="text-muted mb-4">Vitals for <strong>@Model.PatientName</strong></p>
+
+@if (Model.Labels.Count == 0)
+{
+    <div class="alert alert-info">No vitals recorded for this patient yet.</div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 card-title">Heart Rate (bpm)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="heartRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 card-title">Breathing Rate (breaths/min)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="breathingRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 card-title">Blood Pressure (mmHg)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="bloodPressureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 card-title">Temperature (°C)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="application/json" id="vitals-chart-data">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+        }))
+    </script>
+}

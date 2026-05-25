@@ -1,0 +1,133 @@
+@page "{id:int}"
+@model INFP_Proj.Pages.Admin.EditModel
+@{
+    ViewData["Title"] = "Edit Patient";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-6 mb-0">@Model.Patient.PatientName</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Back to patient list</a>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="alert alert-success">@message</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5">Patient details</h2>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                <span class="badge @(Model.Patient.IsDischarged ? "bg-secondary" : "bg-success")">
+                    @Model.Patient.Status
+                </span>
+            </dd>
+            <dt class="col-sm-3">Admitted</dt>
+            <dd class="col-sm-9">@(Model.Patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</dd>
+            <dt class="col-sm-3">Discharged</dt>
+            <dd class="col-sm-9">@(Model.Patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Medications</h2>
+
+        @if (Model.Patient.MedicationLists.Count == 0)
+        {
+            <p class="text-muted">No medications assigned yet.</p>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="UpdateMedications" asp-route-id="@Model.Patient.PatientId">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Medication</th>
+                                <th>Dosage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Patient.MedicationLists.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        <input type="hidden" asp-for="Patient.MedicationLists[i].MedicationListID" />
+                                        <select asp-for="Patient.MedicationLists[i].MedicationID"
+                                                asp-items="Model.MedicationOptions"
+                                                class="form-select"
+                                                disabled="@Model.Patient.IsDischarged"></select>
+                                        <span asp-validation-for="Patient.MedicationLists[i].MedicationID" class="text-danger"></span>
+                                    </td>
+                                    <td>
+                                        <input asp-for="Patient.MedicationLists[i].Dosage"
+                                               class="form-control"
+                                               disabled="@Model.Patient.IsDischarged" />
+                                        <span asp-validation-for="Patient.MedicationLists[i].Dosage" class="text-danger"></span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (!Model.Patient.IsDischarged)
+                {
+                    <button type="submit" class="btn btn-primary">Save medications</button>
+                }
+            </form>
+        }
+
+        @if (!Model.Patient.IsDischarged)
+        {
+            <hr />
+            <h3 class="h6">Add medication</h3>
+            <form method="post" asp-page-handler="AddMedication" asp-route-id="@Model.Patient.PatientId" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label asp-for="Patient.NewMedicationID" class="form-label"></label>
+                    <select asp-for="Patient.NewMedicationID" asp-items="Model.MedicationOptions" class="form-select">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Patient.NewDosage" class="form-label"></label>
+                    <input asp-for="Patient.NewDosage" class="form-control" placeholder="e.g. 500mg" />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-outline-primary w-100">Add</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="card shadow-sm border-danger">
+    <div class="card-body">
+        <h2 class="h5 text-danger">Discharge</h2>
+        @if (Model.Patient.IsDischarged)
+        {
+            <p class="text-muted mb-0">This patient has already been discharged.</p>
+        }
+        else
+        {
+            <p class="text-muted">Set discharge date to now and update patient status.</p>
+            <form method="post"
+                  asp-page-handler="Discharge"
+                  asp-route-id="@Model.Patient.PatientId"
+                  onsubmit="return confirm('Discharge this patient?');">
+                <button type="submit" class="btn btn-danger">Discharge patient</button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

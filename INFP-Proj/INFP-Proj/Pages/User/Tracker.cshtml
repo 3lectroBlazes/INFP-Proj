@@ -1,0 +1,17 @@
+@page
+@model INFP_Proj.Pages.User.TrackerModel
+@{
+    ViewData["Title"] = "Vitals Tracker";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-6 mb-0">Vitals Tracker</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/User/Dashboard">Back to dashboard</a>
+</div>
+
+<partial name="_VitalsTracker" model="Model.ChartData" />
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="~/js/vitals-tracker.js" asp-append-version="true"></script>
+}

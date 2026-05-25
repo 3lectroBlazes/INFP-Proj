@@ -1,4 +1,5 @@
 using INFP_Proj.Data;
+using INFP_Proj.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseInMemoryDatabase("INFP_Proj"));
 
+builder.Services.AddScoped<VitalsChartService>();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
