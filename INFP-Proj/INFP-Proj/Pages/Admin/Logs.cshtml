@@ -1,0 +1,56 @@
+@page
+@model INFP_Proj.Pages.Admin.LogsModel
+@{
+    ViewData["Title"] = "Activity Log";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-6 mb-0">Activity Log</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Dashboard">Back to dashboard</a>
+</div>
+
+<p class="text-muted mb-4">System events recorded with timestamps (newest first).</p>
+
+@if (Model.Logs.Count == 0)
+{
+    <div class="alert alert-info">No log entries yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Event</th>
+                    <th>Emergency</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in Model.Logs)
+                {
+                    <tr class="@(entry.Emergency ? "table-danger" : "")">
+                        <td class="text-nowrap">
+                            <time datetime="@entry.Timestamp.ToString("o")">
+                                @entry.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                            </time>
+                        </td>
+                        <td>@entry.UserName</td>
+                        <td>@entry.Event</td>
+                        <td>
+                            @if (entry.Emergency)
+                            {
+                                <span class="badge bg-danger">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

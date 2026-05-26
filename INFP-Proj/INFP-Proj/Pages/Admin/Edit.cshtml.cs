@@ -1,5 +1,6 @@
 using INFP_Proj.Data;
 using INFP_Proj.Models;
+using INFP_Proj.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,10 +11,12 @@ namespace INFP_Proj.Pages.Admin
     public class EditModel : PageModel
     {
         private readonly AppDbContext _context;
+        private readonly AdminLogService _adminLogService;
 
-        public EditModel(AppDbContext context)
+        public EditModel(AppDbContext context, AdminLogService adminLogService)
         {
             _context = context;
+            _adminLogService = adminLogService;
         }
 
         [BindProperty]
@@ -70,6 +73,8 @@ namespace INFP_Proj.Pages.Admin
             }
 
             await _context.SaveChangesAsync();
+            await _adminLogService.AddLogAsync($"Medications updated for patient #{id}");
+            await AddPatientLogIfLinkedAsync(id, "Your medication schedule was updated");
             TempData["Message"] = "Medications updated successfully.";
             return RedirectToPage(new { id });
         }
@@ -101,13 +106,17 @@ namespace INFP_Proj.Pages.Admin
             });
 
             await _context.SaveChangesAsync();
+            await _adminLogService.AddLogAsync($"Medication added for patient #{id}");
+            await AddPatientLogIfLinkedAsync(id, "A new medication was added to your schedule");
             TempData["Message"] = "Medication added.";
             return RedirectToPage(new { id });
         }
 
         public async Task<IActionResult> OnPostDischargeAsync(int id)
         {
-            var patient = await _context.Patients.FindAsync(id);
+            var patient = await _context.Patients
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.PatientID == id);
             if (patient == null)
             {
                 return NotFound();
@@ -128,6 +137,18 @@ namespace INFP_Proj.Pages.Admin
             patient.Status = "Discharged";
 
             await _context.SaveChangesAsync();
+
+            var patientName = patient.User != null
+                ? $"{patient.User.FirstName} {patient.User.LastName}"
+                : $"patient #{id}";
+            await _adminLogService.AddLogAsync($"{patientName} discharged");
+            if (patient.UserID > 0)
+            {
+                await _adminLogService.AddLogAsync(
+                    "You have been discharged from the hospital",
+                    userId: patient.UserID);
+            }
+
             TempData["Message"] = "Patient discharged successfully.";
             return RedirectToPage(new { id });
         }
@@ -178,6 +199,19 @@ namespace INFP_Proj.Pages.Admin
                 .ToListAsync();
 
             MedicationOptions = new SelectList(medications, "MedicationID", "MedicationName");
+        }
+
+        private async Task AddPatientLogIfLinkedAsync(int patientId, string message)
+        {
+            var userId = await _context.Patients
+                .Where(p => p.PatientID == patientId)
+                .Select(p => p.UserID)
+                .FirstOrDefaultAsync();
+
+            if (userId > 0)
+            {
+                await _adminLogService.AddLogAsync(message, userId: userId);
+            }
         }
     }
 }

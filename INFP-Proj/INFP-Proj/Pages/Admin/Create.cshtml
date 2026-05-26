@@ -1,42 +1,47 @@
 ﻿@page
 @model INFP_Proj.Pages.Admin.CreateModel
-
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Add New Patient";
 }
 
-<h1>Create</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-6 mb-0">Add New Patient</h1>
+    <a class="btn btn-outline-secondary btn-sm" asp-page="Index">Back to patient list</a>
+</div>
 
-<h4>Patients</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
+<div class="card shadow-sm">
+    <div class="card-body">
         <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Patients.BraceletID" class="control-label"></label>
-                <select asp-for="Patients.BraceletID" class ="form-control" asp-items="ViewBag.BraceletID" ></select>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Patients.UserID" class="form-label">Patient user account</label>
+                <select asp-for="Patients.UserID" class="form-select" asp-items="Model.UserOptions">
+                    <option value="">— Select user —</option>
+                </select>
+                <span asp-validation-for="Patients.UserID" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Patients.UserID" class="control-label"></label>
-                <select asp-for="Patients.UserID" class ="form-control" asp-items="ViewBag.UserID" ></select>
+
+            <div class="mb-3">
+                <label asp-for="Patients.BraceletID" class="form-label">Bracelet</label>
+                <select asp-for="Patients.BraceletID" class="form-select" asp-items="Model.BraceletOptions">
+                    <option value="">— Select bracelet —</option>
+                </select>
+                <span asp-validation-for="Patients.BraceletID" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Patients.Status" class="control-label"></label>
-                <input asp-for="Patients.Status" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="Patients.Status" class="form-label">Status</label>
+                <input asp-for="Patients.Status" class="form-control" placeholder="Admitted" />
                 <span asp-validation-for="Patients.Status" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
+
+            <button type="submit" class="btn btn-primary">Create patient</button>
+            <a class="btn btn-outline-secondary ms-2" asp-page="Index">Cancel</a>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-page="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

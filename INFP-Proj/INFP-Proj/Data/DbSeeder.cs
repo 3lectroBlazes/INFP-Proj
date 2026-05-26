@@ -212,16 +212,82 @@ namespace INFP_Proj.Data
                 new Relationships { PatientID = 1, UserID = 2 }
             );
 
-            // Log
-            var log = new Log
-            {
-                LogID = 1,
-                UserID = 1,
-                Event = "Patient admitted",
-                Emergency = false,
-                Timestamp = DateTime.UtcNow
-            };
-            context.Logs.Add(log);
+            // Logs
+            var logBaseTime = DateTime.UtcNow.AddDays(-3);
+            context.Logs.AddRange(
+                new Log
+                {
+                    LogID = 1,
+                    UserID = 1,
+                    Event = "log test 1",
+                    Emergency = false,
+                    Timestamp = logBaseTime
+                },
+                new Log
+                {
+                    LogID = 2,
+                    UserID = 2,
+                    Event = "log test 2",
+                    Emergency = false,
+                    Timestamp = logBaseTime.AddHours(4)
+                },
+                new Log
+                {
+                    LogID = 3,
+                    UserID = 1,
+                    Event = "log test 3",
+                    Emergency = false,
+                    Timestamp = logBaseTime.AddDays(1)
+                },
+                new Log
+                {
+                    LogID = 4,
+                    UserID = 2,
+                    Event = "log test 4",
+                    Emergency = true,
+                    Timestamp = logBaseTime.AddDays(1).AddHours(6)
+                },
+                new Log
+                {
+                    LogID = 5,
+                    UserID = 1,
+                    Event = "log test 5",
+                    Emergency = false,
+                    Timestamp = DateTime.UtcNow
+                },
+                new Log
+                {
+                    LogID = 6,
+                    UserID = 4,
+                    Event = "log test 6",
+                    Emergency = false,
+                    Timestamp = logBaseTime.AddMinutes(30)
+                },
+                new Log
+                {
+                    LogID = 7,
+                    UserID = 4,
+                    Event = "log test 7",
+                    Emergency = false,
+                    Timestamp = logBaseTime.AddHours(5)
+                },
+                new Log
+                {
+                    LogID = 8,
+                    UserID = 4,
+                    Event = "log test 8",
+                    Emergency = false,
+                    Timestamp = logBaseTime.AddDays(1).AddHours(2)
+                },
+                new Log
+                {
+                    LogID = 9,
+                    UserID = 4,
+                    Event = "log test 9",
+                    Emergency = true,
+                    Timestamp = logBaseTime.AddDays(1).AddHours(7)
+                }
+            );
 
             context.SaveChanges();
         }

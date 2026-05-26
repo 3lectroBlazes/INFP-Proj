@@ -9,6 +9,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseInMemoryDatabase("INFP_Proj"));
 
 builder.Services.AddScoped<VitalsChartService>();
+builder.Services.AddScoped<AdminLogService>();
+builder.Services.AddScoped<UserContextService>();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
