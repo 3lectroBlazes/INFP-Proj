@@ -1,5 +1,7 @@
 using INFP_Proj.Data;
+using INFP_Proj.Model;
 using INFP_Proj.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +13,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<VitalsChartService>();
 builder.Services.AddScoped<AdminLogService>();
 builder.Services.AddScoped<UserContextService>();
+builder.Services.AddDbContext<AuthLogin>();
+builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AuthLogin>();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -26,6 +30,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+app.UseAuthentication();
 app.MapRazorPages();
 
 // Seed the database
