@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace INFP_Proj.Migrations.AppDb
+namespace INFP_Proj.Migrations
 {
     /// <inheritdoc />
-    public partial class AppMigration : Migration
+    public partial class InitialApp : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,6 +22,34 @@ namespace INFP_Proj.Migrations.AppDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Allergies", x => x.AllergyID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AppUser",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MiddleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppUser", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -85,24 +113,6 @@ namespace INFP_Proj.Migrations.AppDb
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
-                columns: table => new
-                {
-                    UserID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MiddleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Users", x => x.UserID);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Wards",
                 columns: table => new
                 {
@@ -122,7 +132,7 @@ namespace INFP_Proj.Migrations.AppDb
                 {
                     LogID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserID = table.Column<int>(type: "int", nullable: false),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Event = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Emergency = table.Column<bool>(type: "bit", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -131,10 +141,10 @@ namespace INFP_Proj.Migrations.AppDb
                 {
                     table.PrimaryKey("PK_Logs", x => x.LogID);
                     table.ForeignKey(
-                        name: "FK_Logs_Users_UserID",
+                        name: "FK_Logs_AppUser_UserID",
                         column: x => x.UserID,
-                        principalTable: "Users",
-                        principalColumn: "UserID",
+                        principalTable: "AppUser",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -145,23 +155,23 @@ namespace INFP_Proj.Migrations.AppDb
                     PatientID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BraceletID = table.Column<int>(type: "int", nullable: false),
-                    UserID = table.Column<int>(type: "int", nullable: false),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Patients", x => x.PatientID);
                     table.ForeignKey(
+                        name: "FK_Patients_AppUser_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AppUser",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_Patients_Bracelets_BraceletID",
                         column: x => x.BraceletID,
                         principalTable: "Bracelets",
                         principalColumn: "BraceletID",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Patients_Users_UserID",
-                        column: x => x.UserID,
-                        principalTable: "Users",
-                        principalColumn: "UserID",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -255,33 +265,21 @@ namespace INFP_Proj.Migrations.AppDb
                 columns: table => new
                 {
                     PatientID = table.Column<int>(type: "int", nullable: false),
-                    UserID = table.Column<int>(type: "int", nullable: false),
-                    PatientID1 = table.Column<int>(type: "int", nullable: true),
-                    UserID1 = table.Column<int>(type: "int", nullable: true)
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Relationships", x => new { x.PatientID, x.UserID });
                     table.ForeignKey(
+                        name: "FK_Relationships_AppUser_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AppUser",
+                        principalColumn: "Id");
+                    table.ForeignKey(
                         name: "FK_Relationships_Patients_PatientID",
                         column: x => x.PatientID,
                         principalTable: "Patients",
                         principalColumn: "PatientID");
-                    table.ForeignKey(
-                        name: "FK_Relationships_Patients_PatientID1",
-                        column: x => x.PatientID1,
-                        principalTable: "Patients",
-                        principalColumn: "PatientID");
-                    table.ForeignKey(
-                        name: "FK_Relationships_Users_UserID",
-                        column: x => x.UserID,
-                        principalTable: "Users",
-                        principalColumn: "UserID");
-                    table.ForeignKey(
-                        name: "FK_Relationships_Users_UserID1",
-                        column: x => x.UserID1,
-                        principalTable: "Users",
-                        principalColumn: "UserID");
                 });
 
             migrationBuilder.CreateTable(
@@ -442,19 +440,9 @@ namespace INFP_Proj.Migrations.AppDb
                 column: "WardsWardID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Relationships_PatientID1",
-                table: "Relationships",
-                column: "PatientID1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Relationships_UserID",
                 table: "Relationships",
                 column: "UserID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Relationships_UserID1",
-                table: "Relationships",
-                column: "UserID1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Vitals_PatientsPatientID",
@@ -505,10 +493,10 @@ namespace INFP_Proj.Migrations.AppDb
                 name: "Patients");
 
             migrationBuilder.DropTable(
-                name: "Bracelets");
+                name: "AppUser");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Bracelets");
         }
     }
 }

@@ -1,4 +1,5 @@
 using INFP_Proj.Data;
+using INFP_Proj.Model;
 using INFP_Proj.Models;
 using INFP_Proj.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -142,7 +143,9 @@ namespace INFP_Proj.Pages.Admin
                 ? $"{patient.User.FirstName} {patient.User.LastName}"
                 : $"patient #{id}";
             await _adminLogService.AddLogAsync($"{patientName} discharged");
-            if (patient.UserID > 0)
+
+            // Changed from > 0 to !string.IsNullOrEmpty
+            if (!string.IsNullOrEmpty(patient.UserID))
             {
                 await _adminLogService.AddLogAsync(
                     "You have been discharged from the hospital",
@@ -208,7 +211,8 @@ namespace INFP_Proj.Pages.Admin
                 .Select(p => p.UserID)
                 .FirstOrDefaultAsync();
 
-            if (userId > 0)
+            // Changed from > 0 to !string.IsNullOrEmpty
+            if (!string.IsNullOrEmpty(userId))
             {
                 await _adminLogService.AddLogAsync(message, userId: userId);
             }

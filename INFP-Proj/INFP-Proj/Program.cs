@@ -44,7 +44,7 @@ app.MapRazorPages();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    AppDbSeeder.Seed(services);
+    await AppDbSeeder.SeedAsync(services);
 }
 
 app.Run();

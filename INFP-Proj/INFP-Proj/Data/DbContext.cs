@@ -24,19 +24,17 @@ namespace INFP_Proj.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Composite PK for Relationships junction table
             modelBuilder.Entity<Relationships>()
                 .HasKey(r => new { r.PatientID, r.UserID });
 
-            // Fix cascade cycle - set to NoAction
             modelBuilder.Entity<Relationships>()
-                .HasOne<Patients>()
-                .WithMany()
+                .HasOne(r => r.Patient)
+                .WithMany(p => p.Relationships)
                 .HasForeignKey(r => r.PatientID)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Relationships>()
-                .HasOne<AppUser>()  // Changed from User to AppUser
+                .HasOne<AppUser>()
                 .WithMany()
                 .HasForeignKey(r => r.UserID)
                 .OnDelete(DeleteBehavior.NoAction);

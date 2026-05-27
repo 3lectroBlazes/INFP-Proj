@@ -1,53 +1,50 @@
+using INFP_Proj.Model;
+using INFP_Proj.Models;
+using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using INFP_Proj.ViewModel;
 
 namespace INFP_Proj.Pages
 {
     public class RegisterModel : PageModel
     {
-        private UserManager<IdentityUser> userManager { get; }
-        private SignInManager<IdentityUser> signInManager { get; }
+        private UserManager<AppUser> userManager { get; }
+        private SignInManager<AppUser> signInManager { get; }
 
         [BindProperty]
         public Register RModel { get; set; }
 
-        public RegisterModel(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public RegisterModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
         }
 
-        public void OnGet()
-        {
-        }
+        public void OnGet() { }
 
-        // Save data into the database
         public async Task<IActionResult> OnPostAsync()
         {
             if (ModelState.IsValid)
             {
-                var user = new IdentityUser()
+                var user = new AppUser()
                 {
                     UserName = RModel.Email,
-                    Email = RModel.Email
+                    Email = RModel.Email,
+                    FirstName = string.Empty,
+                    LastName = string.Empty
                 };
-
                 var result = await userManager.CreateAsync(user, RModel.Password);
-
                 if (result.Succeeded)
                 {
                     await signInManager.SignInAsync(user, false);
                     return RedirectToPage("Index");
                 }
-
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError("", error.Description);
                 }
             }
-
             return Page();
         }
     }

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace INFP_Proj.Migrations.AppDb
+namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
@@ -208,8 +208,9 @@ namespace INFP_Proj.Migrations.AppDb
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("LogID");
 
@@ -286,8 +287,9 @@ namespace INFP_Proj.Migrations.AppDb
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("PatientID");
 
@@ -372,60 +374,14 @@ namespace INFP_Proj.Migrations.AppDb
                     b.Property<int>("PatientID")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PatientID1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserID1")
-                        .HasColumnType("int");
+                    b.Property<string>("UserID")
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("PatientID", "UserID");
 
-                    b.HasIndex("PatientID1");
-
                     b.HasIndex("UserID");
 
-                    b.HasIndex("UserID1");
-
                     b.ToTable("Relationships");
-                });
-
-            modelBuilder.Entity("INFP_Proj.Data.User", b =>
-                {
-                    b.Property<int>("UserID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserID"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("MiddleName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserID");
-
-                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Vitals", b =>
@@ -484,6 +440,69 @@ namespace INFP_Proj.Migrations.AppDb
                     b.ToTable("Wards");
                 });
 
+            modelBuilder.Entity("INFP_Proj.Models.AppUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("MiddleName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppUser");
+                });
+
             modelBuilder.Entity("INFP_Proj.Data.AllergyList", b =>
                 {
                     b.HasOne("INFP_Proj.Data.Allergies", "Allergies")
@@ -516,7 +535,7 @@ namespace INFP_Proj.Migrations.AppDb
 
             modelBuilder.Entity("INFP_Proj.Data.Log", b =>
                 {
-                    b.HasOne("INFP_Proj.Data.User", "User")
+                    b.HasOne("INFP_Proj.Models.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -548,7 +567,7 @@ namespace INFP_Proj.Migrations.AppDb
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("INFP_Proj.Data.User", "User")
+                    b.HasOne("INFP_Proj.Models.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -602,29 +621,19 @@ namespace INFP_Proj.Migrations.AppDb
 
             modelBuilder.Entity("INFP_Proj.Data.Relationships", b =>
                 {
-                    b.HasOne("INFP_Proj.Data.Patients", null)
-                        .WithMany()
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany("Relationships")
                         .HasForeignKey("PatientID")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
-                        .WithMany("Relationships")
-                        .HasForeignKey("PatientID1");
-
-                    b.HasOne("INFP_Proj.Data.User", null)
+                    b.HasOne("INFP_Proj.Models.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("INFP_Proj.Data.User", "User")
-                        .WithMany("Relationships")
-                        .HasForeignKey("UserID1");
-
                     b.Navigation("Patient");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Vitals", b =>
@@ -645,11 +654,6 @@ namespace INFP_Proj.Migrations.AppDb
                 {
                     b.Navigation("AllergyLists");
 
-                    b.Navigation("Relationships");
-                });
-
-            modelBuilder.Entity("INFP_Proj.Data.User", b =>
-                {
                     b.Navigation("Relationships");
                 });
 #pragma warning restore 612, 618

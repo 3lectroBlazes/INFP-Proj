@@ -1,3 +1,5 @@
+using INFP_Proj.Model;
+using INFP_Proj.Models;
 using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,15 +11,16 @@ namespace INFP_Proj.Pages
     {
         [BindProperty]
         public Login LModel { get; set; }
-        public void OnGet()
-        {
-        }
-        private readonly SignInManager<IdentityUser> signInManager;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager)
+        private readonly SignInManager<AppUser> signInManager;
+
+        public LoginModel(SignInManager<AppUser> signInManager)
         {
             this.signInManager = signInManager;
         }
+
+        public void OnGet() { }
+
         public async Task<IActionResult> OnPostAsync()
         {
             if (ModelState.IsValid)
@@ -27,15 +30,12 @@ namespace INFP_Proj.Pages
                     LModel.Password,
                     LModel.RememberMe,
                     false);
-
                 if (identityResult.Succeeded)
                 {
                     return RedirectToPage("Index");
                 }
-
                 ModelState.AddModelError("", "Username or Password incorrect");
             }
-
             return Page();
         }
     }
