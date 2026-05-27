@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations;
+using INFP_Proj.ViewModel;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -7,34 +8,35 @@ namespace INFP_Proj.Pages
     public class LoginModel : PageModel
     {
         [BindProperty]
-        public LoginInput Input { get; set; } = new();
-
+        public Login LModel { get; set; }
         public void OnGet()
         {
         }
+        private readonly SignInManager<IdentityUser> signInManager;
 
-        public IActionResult OnPost()
+        public LoginModel(SignInManager<IdentityUser> signInManager)
         {
-            if (!ModelState.IsValid)
+            this.signInManager = signInManager;
+        }
+        public async Task<IActionResult> OnPostAsync()
+        {
+            if (ModelState.IsValid)
             {
-                return Page();
+                var identityResult = await signInManager.PasswordSignInAsync(
+                    LModel.Email,
+                    LModel.Password,
+                    LModel.RememberMe,
+                    false);
+
+                if (identityResult.Succeeded)
+                {
+                    return RedirectToPage("Index");
+                }
+
+                ModelState.AddModelError("", "Username or Password incorrect");
             }
 
-            // Authentication will be implemented later.
             return Page();
         }
-    }
-
-    public class LoginInput
-    {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; } = string.Empty;
-
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Password")]
-        public string Password { get; set; } = string.Empty;
     }
 }

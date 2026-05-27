@@ -17,6 +17,13 @@ builder.Services.AddDbContext<AuthLogin>();
 builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AuthLogin>();
 builder.Services.AddRazorPages();
 
+
+builder.Services.ConfigureApplicationCookie(Config =>
+{
+    Config.LoginPath = "/Login";
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -29,8 +36,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 app.MapRazorPages();
 
 // Seed the database

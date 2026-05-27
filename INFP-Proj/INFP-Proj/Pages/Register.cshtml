@@ -1,0 +1,40 @@
+﻿@page
+@model INFP_Proj.Pages.RegisterModel
+@{
+}
+
+<div class="container mt-5">
+
+	<div class="row justify-content-center align-items-center">
+
+		<div class="col-sm-12 col-md-12 col-lg-4">
+			<h1 class="mb-3">Register </h1>
+
+			<form method="post">
+				<div asp-validation-summary="All" class="text-danger"></div>
+
+				<div class="mb-3">
+					<label class="form-label" asp-for="RModel.Email">Email Address</label>
+					<input type="Text" asp-for="RModel.Email" class="form-control" />
+					<span asp-validaton-for="RModel.Email" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label" asp-for="RModel.Password">Password</label>
+					<input type="Text" asp-for="RModel.Password" class="form-control" />
+					<span asp-validaton-for="RModel.Password" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label" asp-for="RModel.ConfirmPassword">Confirm Password</label>
+					<input type="Text" asp-for="RModel.ConfirmPassword" class="form-control" />
+					<span asp-validaton-for="RModel.ConfirmPassword" class="text-danger"></span>
+				</div>
+
+				<div class="mb-3">
+					<button type="submit" class="btn btn-primary">Register</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
