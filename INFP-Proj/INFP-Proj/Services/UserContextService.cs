@@ -9,7 +9,7 @@ namespace INFP_Proj.Services
     public class UserContextService
     {
         // Demo patient user "Sadev IDK" linked to PatientID 1.
-        public const int DemoUserId = 4;
+        public const string DemoUserId = "your-appuser-id-here"; // changed to string
         public const int DemoPatientId = 1;
 
         private readonly AppDbContext _context;
@@ -19,14 +19,14 @@ namespace INFP_Proj.Services
             _context = context;
         }
 
-        public async Task<int> GetCurrentUserIdAsync()
+        public async Task<string> GetCurrentUserIdAsync() // changed return type to string
         {
             var userId = await _context.Patients
                 .Where(p => p.PatientID == DemoPatientId)
                 .Select(p => p.UserID)
                 .FirstOrDefaultAsync();
 
-            return userId > 0 ? userId : DemoUserId;
+            return !string.IsNullOrEmpty(userId) ? userId : DemoUserId; // changed check
         }
     }
 }

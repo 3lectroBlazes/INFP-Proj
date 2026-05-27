@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using INFP_Proj.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace INFP_Proj.Model
 {
-    public class AuthLogin : IdentityDbContext
+    public class AuthLogin : IdentityDbContext<AppUser>
     {
         private readonly IConfiguration _configuration;
 

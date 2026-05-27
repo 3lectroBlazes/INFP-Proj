@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using INFP_Proj.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace INFP_Proj.Data
 {
@@ -6,8 +7,6 @@ namespace INFP_Proj.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
-
-        public DbSet<User> Users { get; set; }
         public DbSet<Patients> Patients { get; set; }
         public DbSet<Bracelet> Bracelets { get; set; }
         public DbSet<Vitals> Vitals { get; set; }
@@ -28,6 +27,19 @@ namespace INFP_Proj.Data
             // Composite PK for Relationships junction table
             modelBuilder.Entity<Relationships>()
                 .HasKey(r => new { r.PatientID, r.UserID });
+
+            // Fix cascade cycle - set to NoAction
+            modelBuilder.Entity<Relationships>()
+                .HasOne<Patients>()
+                .WithMany()
+                .HasForeignKey(r => r.PatientID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Relationships>()
+                .HasOne<AppUser>()  // Changed from User to AppUser
+                .WithMany()
+                .HasForeignKey(r => r.UserID)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

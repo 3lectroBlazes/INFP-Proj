@@ -1,5 +1,8 @@
 ﻿using INFP_Proj.Data;
+using INFP_Proj.Model;
+using INFP_Proj.Models;
 using INFP_Proj.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -11,11 +14,13 @@ namespace INFP_Proj.Pages.Admin
     {
         private readonly AppDbContext _context;
         private readonly AdminLogService _adminLogService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public CreateModel(AppDbContext context, AdminLogService adminLogService)
+        public CreateModel(AppDbContext context, AdminLogService adminLogService, UserManager<AppUser> userManager)
         {
             _context = context;
             _adminLogService = adminLogService;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -32,7 +37,7 @@ namespace INFP_Proj.Pages.Admin
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (Patients.UserID <= 0)
+            if (string.IsNullOrWhiteSpace(Patients.UserID))  
             {
                 ModelState.AddModelError("Patients.UserID", "Please select a user.");
             }
@@ -78,14 +83,12 @@ namespace INFP_Proj.Pages.Admin
             _context.Patients.Add(Patients);
             await _context.SaveChangesAsync();
 
-            var user = await _context.Users.FindAsync(Patients.UserID);
+            var user = await _userManager.FindByIdAsync(Patients.UserID);
             var patientName = user != null
                 ? $"{user.FirstName} {user.LastName}"
                 : $"patient #{Patients.PatientID}";
             await _adminLogService.AddLogAsync($"New patient registered: {patientName}");
-            await _adminLogService.AddLogAsync(
-                "Your patient account was created",
-                userId: Patients.UserID);
+            await _adminLogService.AddLogAsync("Your patient account was created",userId: Patients.UserID);
 
             TempData["Message"] = "Patient created successfully.";
             return RedirectToPage("./Index");
@@ -96,11 +99,12 @@ namespace INFP_Proj.Pages.Admin
             var assignedUserIds = await _context.Patients.Select(p => p.UserID).ToListAsync();
             var assignedBraceletIds = await _context.Patients.Select(p => p.BraceletID).ToListAsync();
 
-            var availableUsers = await _context.Users
-                .Where(u => u.Role == "Patient" && !assignedUserIds.Contains(u.UserID))
+            var patientRoleUsers = await _userManager.GetUsersInRoleAsync("Patient");
+            var availableUsers = patientRoleUsers
+                .Where(u => !assignedUserIds.Contains(u.Id))
                 .OrderBy(u => u.LastName)
-                .Select(u => new { u.UserID, Name = $"{u.FirstName} {u.LastName}" })
-                .ToListAsync();
+                .Select(u => new { UserID = u.Id, Name = $"{u.FirstName} {u.LastName}" })
+                .ToList();
 
             var availableBracelets = await _context.Bracelets
                 .Where(b => !assignedBraceletIds.Contains(b.BraceletID))
