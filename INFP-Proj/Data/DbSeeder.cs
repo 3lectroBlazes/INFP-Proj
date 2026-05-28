@@ -28,11 +28,11 @@ namespace INFP_Proj.Data
             {
                 var user = new AppUser
                 {
-                    UserName = email,
-                    Email = email,
                     FirstName = firstName,
                     MiddleName = middleName,
                     LastName = lastName,
+                    UserName = email,
+                    Email = email,
                     EmailConfirmed = true
                 };
                 await userManager.CreateAsync(user, "Password@123");
