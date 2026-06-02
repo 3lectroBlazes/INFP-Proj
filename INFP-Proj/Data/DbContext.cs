@@ -1,9 +1,10 @@
 ﻿using INFP_Proj.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace INFP_Proj.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<AppUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -24,6 +25,8 @@ namespace INFP_Proj.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Relationships>()
                 .HasKey(r => new { r.PatientID, r.UserID });
 
