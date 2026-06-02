@@ -14,6 +14,7 @@ namespace INFP_Proj.Pages
 
         private readonly SignInManager<AppUser> signInManager;
 
+
         public LoginModel(SignInManager<AppUser> signInManager)
         {
             this.signInManager = signInManager;
@@ -32,6 +33,7 @@ namespace INFP_Proj.Pages
                     false);
                 if (identityResult.Succeeded)
                 {
+
                     return RedirectToPage("Index");
                 }
                 ModelState.AddModelError("", "Username or Password incorrect");
