@@ -8,13 +8,12 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnectionString")));
 builder.Services.AddScoped<VitalsChartService>();
 builder.Services.AddScoped<AdminLogService>();
 builder.Services.AddScoped<UserContextService>();
-builder.Services.AddDbContext<AuthLogin>();
-builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AuthLogin>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnectionString")));
+builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
 builder.Services.AddRazorPages();
 
 
