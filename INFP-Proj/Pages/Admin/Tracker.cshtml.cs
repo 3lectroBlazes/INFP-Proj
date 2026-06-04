@@ -1,3 +1,4 @@
+using INFP_Proj.Models;
 using INFP_Proj.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -13,14 +14,11 @@ namespace INFP_Proj.Pages.Admin
             _vitalsChartService = vitalsChartService;
         }
 
-        public INFP_Proj.Models.VitalsChartViewModel ChartData { get; set; } = new();
+        public AdminVitalsChartViewModel ChartData { get; set; } = new();
 
-        public async Task OnGetAsync(int? patientId)
+        public async Task OnGetAsync([FromQuery] List<int> patientIds)
         {
-            var selectedPatientId = patientId ?? 1;
-            ChartData = await _vitalsChartService.BuildChartModelAsync(
-                selectedPatientId,
-                showPatientSelector: true);
+            ChartData = await _vitalsChartService.BuildAdminMultiPatientChartAsync(patientIds);
         }
     }
 }

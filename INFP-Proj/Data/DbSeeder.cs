@@ -1,4 +1,4 @@
-﻿using INFP_Proj.Model;
+using INFP_Proj.Model;
 using INFP_Proj.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -162,30 +162,9 @@ namespace INFP_Proj.Data
                 DischargeDateTime = null
             });
 
-            // Vitals
-            DateTime vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
-            var vitalsReadings = new (float bp, float hr, float rr, float temp)[]
-            {
-                (118, 68, 16, 36.4f), (120, 70, 17, 36.5f), (122, 72, 18, 36.5f),
-                (119, 74, 17, 36.6f), (121, 71, 18, 36.4f), (123, 75, 19, 36.7f),
-                (120, 73, 18, 36.5f), (118, 69, 16, 36.3f), (122, 76, 19, 36.6f),
-                (121, 72, 18, 36.5f), (119, 70, 17, 36.4f), (124, 77, 20, 36.8f),
-                (120, 71, 18, 36.5f), (118, 68, 16, 36.4f)
-            };
-
-            for (int i = 0; i < vitalsReadings.Length; i++)
-            {
-                var reading = vitalsReadings[i];
-                context.Vitals.Add(new Vitals
-                {
-                    PatientID = patient.PatientID,
-                    BloodPressure = reading.bp,
-                    HeartRate = reading.hr,
-                    RespiratoryRate = reading.rr,
-                    Temperature = reading.temp,
-                    RecordedAt = vitalsBaseTime.AddHours(i * 12)
-                });
-            }
+            // Vitals — matches Vitals table: PatientID (FK), nullable real metrics, RecordedAt (datetime2 UTC)
+            // VitalsID is database-generated (identity); do not set it in seed data.
+            SeedVitalsForPatient(context, patient, DateTime.UtcNow.AddDays(-6));
 
             // Relationships
             context.Relationships.AddRange(
@@ -207,6 +186,70 @@ namespace INFP_Proj.Data
                 new Log { UserID = user4.Id, Event = "log test 9", Emergency = true, Timestamp = logBaseTime.AddDays(1).AddHours(7) }
             );
 
+            await context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Seeds Vitals rows for a patient per schema: PatientID FK, optional floats, RecordedAt.
+        /// </summary>
+        private static void SeedVitalsForPatient(AppDbContext context, Patients patient, DateTime baseRecordedAtUtc)
+        {
+            (float? bloodPressure, float? heartRate, float? respiratoryRate, float? temperature)[] readings =
+            {
+                (118f, 68f, 16f, 36.4f),
+                (120f, 70f, 17f, 36.5f),
+                (122f, 72f, 18f, 36.5f),
+                (119f, 74f, 17f, 36.6f),
+                (121f, 71f, 18f, 36.4f),
+                (123f, 75f, 19f, 36.7f),
+                (120f, 73f, 18f, 36.5f),
+                (118f, 69f, 16f, 36.3f),
+                (122f, 76f, 19f, 36.6f),
+                (121f, 72f, 18f, 36.5f),
+                (119f, 70f, 17f, 36.4f),
+                (124f, 77f, 20f, 36.8f),
+                (120f, 71f, 18f, 36.5f),
+                (118f, 68f, 16f, 36.4f)
+            };
+
+            List<Vitals> vitals = new List<Vitals>();
+            for (int i = 0; i < readings.Length; i++)
+            {
+                (float? bloodPressure, float? heartRate, float? respiratoryRate, float? temperature) reading = readings[i];
+                vitals.Add(new Vitals
+                {
+                    PatientID = patient.PatientID,
+                    Patients = patient,
+                    BloodPressure = reading.bloodPressure,
+                    HeartRate = reading.heartRate,
+                    RespiratoryRate = reading.respiratoryRate,
+                    Temperature = reading.temperature,
+                    RecordedAt = DateTime.SpecifyKind(baseRecordedAtUtc.AddHours(i * 12), DateTimeKind.Utc)
+                });
+            }
+
+            context.Vitals.AddRange(vitals);
+        }
+
+        /// <summary>
+        /// When users were seeded earlier but vitals are missing, backfill vitals for the first patient.
+        /// </summary>
+        public static async Task SeedVitalsIfMissingAsync(IServiceProvider serviceProvider)
+        {
+            using AppDbContext context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
+
+            if (await context.Vitals.AnyAsync())
+            {
+                return;
+            }
+
+            Patients? patient = await context.Patients.OrderBy(p => p.PatientID).FirstOrDefaultAsync();
+            if (patient == null)
+            {
+                return;
+            }
+
+            SeedVitalsForPatient(context, patient, DateTime.UtcNow.AddDays(-6));
             await context.SaveChangesAsync();
         }
     }

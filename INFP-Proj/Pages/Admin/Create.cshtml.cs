@@ -1,5 +1,4 @@
-﻿using INFP_Proj.Data;
-using INFP_Proj.Model;
+using INFP_Proj.Data;
 using INFP_Proj.Models;
 using INFP_Proj.Services;
 using Microsoft.AspNetCore.Identity;
@@ -24,7 +23,7 @@ namespace INFP_Proj.Pages.Admin
         }
 
         [BindProperty]
-        public Patients Patients { get; set; } = new() { Status = "Admitted" };
+        public RegisterPatientInput Input { get; set; } = new();
 
         public SelectList UserOptions { get; set; } = default!;
         public SelectList BraceletOptions { get; set; } = default!;
@@ -37,61 +36,144 @@ namespace INFP_Proj.Pages.Admin
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (string.IsNullOrWhiteSpace(Patients.UserID))  
+            if (string.IsNullOrWhiteSpace(Input.Status))
             {
-                ModelState.AddModelError("Patients.UserID", "Please select a user.");
+                Input.Status = "Admitted";
             }
 
-            if (Patients.BraceletID <= 0)
+            if (Input.BraceletID <= 0)
             {
-                ModelState.AddModelError("Patients.BraceletID", "Please select a bracelet.");
+                ModelState.AddModelError(nameof(Input.BraceletID), "Please select a bracelet.");
             }
 
-            if (string.IsNullOrWhiteSpace(Patients.Status))
+            var isNewUser = string.Equals(Input.AccountMode, "new", StringComparison.OrdinalIgnoreCase);
+            string? userId = null;
+
+            if (isNewUser)
             {
-                Patients.Status = "Admitted";
+                ValidateNewUserFields();
+                if (ModelState.IsValid)
+                {
+                    userId = await CreatePatientUserAsync();
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(Input.ExistingUserId))
+                {
+                    ModelState.AddModelError(nameof(Input.ExistingUserId), "Please select an existing patient account.");
+                }
+                else
+                {
+                    userId = Input.ExistingUserId;
+                }
             }
 
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid || string.IsNullOrEmpty(userId))
             {
                 await PopulateSelectListsAsync();
                 return Page();
             }
 
-            var userAlreadyPatient = await _context.Patients
-                .AnyAsync(p => p.UserID == Patients.UserID);
+            var userAlreadyPatient = await _context.Patients.AnyAsync(p => p.UserID == userId);
             if (userAlreadyPatient)
             {
-                ModelState.AddModelError("Patients.UserID", "This user is already linked to a patient.");
+                ModelState.AddModelError(
+                    isNewUser ? nameof(Input.NewEmail) : nameof(Input.ExistingUserId),
+                    "This user is already registered as a patient.");
                 await PopulateSelectListsAsync();
                 return Page();
             }
 
-            var braceletInUse = await _context.Patients
-                .AnyAsync(p => p.BraceletID == Patients.BraceletID);
+            var braceletInUse = await _context.Patients.AnyAsync(p => p.BraceletID == Input.BraceletID);
             if (braceletInUse)
             {
-                ModelState.AddModelError("Patients.BraceletID", "This bracelet is already assigned.");
+                ModelState.AddModelError(nameof(Input.BraceletID), "This bracelet is already assigned.");
                 await PopulateSelectListsAsync();
                 return Page();
             }
 
-            Patients.PatientID = await _context.Patients.AnyAsync()
-                ? await _context.Patients.MaxAsync(p => p.PatientID) + 1
-                : 1;
+            var bracelet = await _context.Bracelets.FindAsync(Input.BraceletID);
+            if (bracelet == null)
+            {
+                ModelState.AddModelError(nameof(Input.BraceletID), "Selected bracelet was not found.");
+                await PopulateSelectListsAsync();
+                return Page();
+            }
 
-            _context.Patients.Add(Patients);
+            var patient = new Patients
+            {
+                UserID = userId!,
+                BraceletID = Input.BraceletID,
+                Status = Input.Status
+            };
+
+            _context.Patients.Add(patient);
             await _context.SaveChangesAsync();
 
-            var user = await _userManager.FindByIdAsync(Patients.UserID);
+            bracelet.PatientID = patient.PatientID;
+            await _context.SaveChangesAsync();
+
+            var user = await _userManager.FindByIdAsync(userId!);
             var patientName = user != null
                 ? $"{user.FirstName} {user.LastName}"
-                : $"patient #{Patients.PatientID}";
-            await _adminLogService.AddLogAsync($"New patient registered: {patientName}");
-            await _adminLogService.AddLogAsync("Your patient account was created",userId: Patients.UserID);
+                : $"Patient #{patient.PatientID}";
 
-            TempData["Message"] = "Patient created successfully.";
+            await _adminLogService.AddLogAsync($"New patient registered: {patientName} (ID {patient.PatientID})");
+            await _adminLogService.AddLogAsync("Your patient account was created", userId: userId);
+
+            TempData["Message"] = $"Patient #{patient.PatientID} created successfully.";
             return RedirectToPage("./Index");
+        }
+
+        private void ValidateNewUserFields()
+        {
+            if (string.IsNullOrWhiteSpace(Input.NewFirstName))
+            {
+                ModelState.AddModelError(nameof(Input.NewFirstName), "First name is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(Input.NewLastName))
+            {
+                ModelState.AddModelError(nameof(Input.NewLastName), "Last name is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(Input.NewEmail))
+            {
+                ModelState.AddModelError(nameof(Input.NewEmail), "Email is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(Input.NewPassword))
+            {
+                ModelState.AddModelError(nameof(Input.NewPassword), "Password is required.");
+            }
+        }
+
+        private async Task<string?> CreatePatientUserAsync()
+        {
+            var user = new AppUser
+            {
+                FirstName = Input.NewFirstName!.Trim(),
+                MiddleName = string.IsNullOrWhiteSpace(Input.NewMiddleName) ? null : Input.NewMiddleName.Trim(),
+                LastName = Input.NewLastName!.Trim(),
+                UserName = Input.NewEmail!.Trim(),
+                Email = Input.NewEmail.Trim(),
+                EmailConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(user, Input.NewPassword!);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(nameof(Input.NewEmail), error.Description);
+                }
+
+                return null;
+            }
+
+            await _userManager.AddToRoleAsync(user, "Patient");
+            return user.Id;
         }
 
         private async Task PopulateSelectListsAsync()
@@ -103,7 +185,7 @@ namespace INFP_Proj.Pages.Admin
             var availableUsers = patientRoleUsers
                 .Where(u => !assignedUserIds.Contains(u.Id))
                 .OrderBy(u => u.LastName)
-                .Select(u => new { UserID = u.Id, Name = $"{u.FirstName} {u.LastName}" })
+                .Select(u => new { UserID = u.Id, Name = $"{u.FirstName} {u.LastName} ({u.Email})" })
                 .ToList();
 
             var availableBracelets = await _context.Bracelets
@@ -116,8 +198,8 @@ namespace INFP_Proj.Pages.Admin
                 })
                 .ToListAsync();
 
-            UserOptions = new SelectList(availableUsers, "UserID", "Name");
-            BraceletOptions = new SelectList(availableBracelets, "BraceletID", "Label");
+            UserOptions = new SelectList(availableUsers, "UserID", "Name", Input.ExistingUserId);
+            BraceletOptions = new SelectList(availableBracelets, "BraceletID", "Label", Input.BraceletID);
         }
     }
 }

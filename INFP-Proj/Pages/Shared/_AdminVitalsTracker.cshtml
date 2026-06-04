@@ -1,0 +1,104 @@
+@model INFP_Proj.Models.AdminVitalsChartViewModel
+
+<div class="app-card card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-12">
+                <label for="patientIds" class="form-label fw-semibold">Select patients</label>
+                <p class="text-muted small mb-2">Hold Ctrl (Windows) or Cmd (Mac) to select multiple patients. Compare vitals on the charts below.</p>
+                @if (Model.Patients.Count == 0)
+                {
+                    <p class="text-muted mb-0">No patients available. Add patients from the patient list first.</p>
+                }
+                else
+                {
+                    <select id="patientIds" name="patientIds" class="form-select" multiple size="@Math.Min(8, Math.Max(4, Model.Patients.Count))">
+                        @foreach (var patient in Model.Patients)
+                        {
+                            if (Model.SelectedPatientIds.Contains(patient.PatientId))
+                            {
+                                <option value="@patient.PatientId" selected="selected">@patient.DisplayName</option>
+                            }
+                            else
+                            {
+                                <option value="@patient.PatientId">@patient.DisplayName</option>
+                            }
+                        }
+                    </select>
+                }
+            </div>
+            @if (Model.Patients.Count > 0)
+            {
+                <div class="col-12 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">Apply selection</button>
+                    <a class="btn btn-outline-secondary" asp-page="/Admin/Tracker">Clear selection</a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+@if (Model.SelectedPatientIds.Count > 0)
+{
+    <p class="text-muted mb-4">
+        Showing vitals for:
+        <strong class="text-dark">@string.Join(", ", Model.Series.Select(s => s.PatientName))</strong>
+    </p>
+}
+
+@if (Model.Series.Count == 0 || Model.Labels.Count == 0)
+{
+    <div class="alert alert-info">No vitals recorded for the selected patient(s) yet.</div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Heart rate (bpm)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="heartRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Breathing rate (breaths/min)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="breathingRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Blood pressure (mmHg)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="bloodPressureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Temperature (°C)</h2>
+                    <div class="vitals-chart-container">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="application/json" id="admin-vitals-chart-data">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+        }))
+    </script>
+}

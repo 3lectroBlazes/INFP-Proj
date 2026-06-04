@@ -1,4 +1,4 @@
-﻿using INFP_Proj.Models;
+using INFP_Proj.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,6 +41,17 @@ namespace INFP_Proj.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserID)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Vitals>()
+                .HasOne(v => v.Patients)
+                .WithMany()
+                .HasForeignKey(v => v.PatientID)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            modelBuilder.Entity<Patients>()
+                .Property(p => p.PatientID)
+                .ValueGeneratedOnAdd();
         }
     }
 }

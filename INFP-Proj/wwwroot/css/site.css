@@ -359,6 +359,15 @@ body {
   width: 100%;
 }
 
+select#patientIds[multiple].form-select {
+  min-height: 8rem;
+}
+
+select#patientIds[multiple].form-select option:checked {
+  background: linear-gradient(0deg, var(--app-primary-light) 0%, var(--app-primary-light) 100%);
+  color: var(--app-primary-dark);
+}
+
 /* Discharge section */
 .section-danger {
   border-color: #fecaca !important;

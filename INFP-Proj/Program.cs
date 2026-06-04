@@ -44,6 +44,7 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     IServiceProvider services = scope.ServiceProvider;
     await AppDbSeeder.SeedAsync(services);
+    await AppDbSeeder.SeedVitalsIfMissingAsync(services);
 }
 
 app.Run();

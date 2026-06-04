@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model INFP_Proj.Pages.Admin.CreateModel
 @{
     ViewData["Title"] = "Add Patient";
@@ -7,7 +7,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Add new patient</h1>
-        <p class="page-subtitle text-muted">Link a patient account to a bracelet.</p>
+        <p class="page-subtitle text-muted">Create a portal account and assign a bracelet. Patient ID is generated automatically.</p>
     </div>
     <div class="page-actions">
         <a class="btn btn-outline-secondary btn-sm" asp-page="Index">Patient list</a>
@@ -16,32 +16,80 @@
 
 <div class="app-card card">
     <div class="card-body">
-        <form method="post">
+        <form method="post" id="registerPatientForm">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
 
-            <div class="mb-3">
-                <label asp-for="Patients.UserID" class="form-label">Patient user account</label>
-                <select asp-for="Patients.UserID" class="form-select" asp-items="Model.UserOptions">
-                    <option value="">— Select user —</option>
-                </select>
-                <span asp-validation-for="Patients.UserID" class="text-danger small"></span>
-            </div>
+            <fieldset class="mb-4">
+                <legend class="h6 text-primary mb-3">Patient account</legend>
+                <div class="btn-group mb-3" role="group" aria-label="Account type">
+                    <input type="radio" class="btn-check" name="Input.AccountMode" id="modeExisting" value="existing"
+                           @(Model.Input.AccountMode != "new" ? "checked" : null) autocomplete="off" />
+                    <label class="btn btn-outline-primary" for="modeExisting">Link existing user</label>
 
-            <div class="mb-3">
-                <label asp-for="Patients.BraceletID" class="form-label">Bracelet</label>
-                <select asp-for="Patients.BraceletID" class="form-select" asp-items="Model.BraceletOptions">
-                    <option value="">— Select bracelet —</option>
-                </select>
-                <span asp-validation-for="Patients.BraceletID" class="text-danger small"></span>
-            </div>
+                    <input type="radio" class="btn-check" name="Input.AccountMode" id="modeNew" value="new"
+                           @(Model.Input.AccountMode == "new" ? "checked" : null) autocomplete="off" />
+                    <label class="btn btn-outline-primary" for="modeNew">Create new user</label>
+                </div>
 
-            <div class="mb-4">
-                <label asp-for="Patients.Status" class="form-label">Status</label>
-                <input asp-for="Patients.Status" class="form-control" placeholder="Admitted" />
-                <span asp-validation-for="Patients.Status" class="text-danger small"></span>
-            </div>
+                <div id="existingUserSection" class="@(Model.Input.AccountMode == "new" ? "d-none" : "")">
+                    <label asp-for="Input.ExistingUserId" class="form-label"></label>
+                    <select asp-for="Input.ExistingUserId" class="form-select" asp-items="Model.UserOptions">
+                        <option value="">— Select patient account —</option>
+                    </select>
+                    <span asp-validation-for="Input.ExistingUserId" class="text-danger small"></span>
+                    <p class="form-text text-muted">Only users with the Patient role who are not already registered.</p>
+                </div>
 
-            <button type="submit" class="btn btn-primary">Create patient</button>
+                <div id="newUserSection" class="@(Model.Input.AccountMode == "new" ? "" : "d-none")">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="Input.NewFirstName" class="form-label"></label>
+                            <input asp-for="Input.NewFirstName" class="form-control" />
+                            <span asp-validation-for="Input.NewFirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.NewMiddleName" class="form-label"></label>
+                            <input asp-for="Input.NewMiddleName" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.NewLastName" class="form-label"></label>
+                            <input asp-for="Input.NewLastName" class="form-control" />
+                            <span asp-validation-for="Input.NewLastName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.NewEmail" class="form-label"></label>
+                            <input asp-for="Input.NewEmail" class="form-control" type="email" autocomplete="username" />
+                            <span asp-validation-for="Input.NewEmail" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.NewPassword" class="form-label"></label>
+                            <input asp-for="Input.NewPassword" class="form-control" type="password" autocomplete="new-password" />
+                            <span asp-validation-for="Input.NewPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <p class="form-text text-muted mb-0">A new AspNetUsers account with the Patient role will be created.</p>
+                </div>
+            </fieldset>
+
+            <fieldset class="mb-4">
+                <legend class="h6 text-primary mb-3">Admission details</legend>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.BraceletID" class="form-label"></label>
+                        <select asp-for="Input.BraceletID" class="form-select" asp-items="Model.BraceletOptions">
+                            <option value="">— Select bracelet —</option>
+                        </select>
+                        <span asp-validation-for="Input.BraceletID" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Status" class="form-label"></label>
+                        <input asp-for="Input.Status" class="form-control" placeholder="Admitted" />
+                        <span asp-validation-for="Input.Status" class="text-danger small"></span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <button type="submit" class="btn btn-primary">Register patient</button>
             <a class="btn btn-outline-secondary ms-2" asp-page="Index">Cancel</a>
         </form>
     </div>
@@ -49,4 +97,20 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        (function () {
+            const existingSection = document.getElementById('existingUserSection');
+            const newSection = document.getElementById('newUserSection');
+            const modeRadios = document.querySelectorAll('input[name="Input.AccountMode"]');
+
+            function updateSections() {
+                const isNew = document.getElementById('modeNew')?.checked;
+                existingSection?.classList.toggle('d-none', isNew);
+                newSection?.classList.toggle('d-none', !isNew);
+            }
+
+            modeRadios.forEach(r => r.addEventListener('change', updateSections));
+            updateSections();
+        })();
+    </script>
 }

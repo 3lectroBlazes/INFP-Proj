@@ -1,10 +1,13 @@
-﻿using INFP_Proj.Models;
+using INFP_Proj.Models;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace INFP_Proj.Data
 {
     public class Patients
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PatientID { get; set; }
         public int BraceletID { get; set; }
         public string UserID { get; set; } 

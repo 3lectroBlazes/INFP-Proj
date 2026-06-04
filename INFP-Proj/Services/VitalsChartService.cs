@@ -57,5 +57,77 @@ namespace INFP_Proj.Services
 
             return model;
         }
+
+        public async Task<AdminVitalsChartViewModel> BuildAdminMultiPatientChartAsync(IList<int> selectedPatientIds)
+        {
+            var allPatients = await _context.Patients
+                .Include(p => p.User)
+                .OrderBy(p => p.PatientID)
+                .Select(p => new PatientSelectItem
+                {
+                    PatientId = p.PatientID,
+                    DisplayName = p.User != null
+                        ? $"{p.User.FirstName} {p.User.LastName}"
+                        : $"Patient #{p.PatientID}"
+                })
+                .ToListAsync();
+
+            var ids = selectedPatientIds
+                .Where(id => allPatients.Any(p => p.PatientId == id))
+                .Distinct()
+                .ToList();
+
+            if (ids.Count == 0 && allPatients.Count > 0)
+            {
+                ids.Add(allPatients[0].PatientId);
+            }
+
+            var model = new AdminVitalsChartViewModel
+            {
+                Patients = allPatients,
+                SelectedPatientIds = ids
+            };
+
+            if (ids.Count == 0)
+            {
+                return model;
+            }
+
+            var vitals = await _context.Vitals
+                .Where(v => ids.Contains(v.PatientID))
+                .OrderBy(v => v.RecordedAt)
+                .ToListAsync();
+
+            var timeline = vitals
+                .Select(v => v.RecordedAt)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+
+            model.Labels = timeline
+                .Select(t => t.ToLocalTime().ToString("MMM d, HH:mm"))
+                .ToList();
+
+            foreach (var patientId in ids)
+            {
+                var patientInfo = allPatients.First(p => p.PatientId == patientId);
+                var byTime = vitals
+                    .Where(v => v.PatientID == patientId)
+                    .GroupBy(v => v.RecordedAt)
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                model.Series.Add(new PatientVitalsSeries
+                {
+                    PatientId = patientId,
+                    PatientName = patientInfo.DisplayName,
+                    HeartRate = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.HeartRate : null).ToList(),
+                    RespiratoryRate = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.RespiratoryRate : null).ToList(),
+                    BloodPressure = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.BloodPressure : null).ToList(),
+                    Temperature = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.Temperature : null).ToList()
+                });
+            }
+
+            return model;
+        }
     }
 }
