@@ -1,4 +1,3 @@
-using INFP_Proj.Model;
 using INFP_Proj.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,24 +8,37 @@ namespace INFP_Proj.Data
     {
         public static async Task SeedAsync(IServiceProvider serviceProvider)
         {
-            using var context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
-            var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            using AppDbContext context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
+            UserManager<AppUser> userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
+            RoleManager<AppRole> roleManager = serviceProvider.GetRequiredService<RoleManager<AppRole>>();
 
             if (userManager.Users.Any()) return;
 
             // Seed Roles
-            string[] roles = { "Admin", "Nurse", "Doctor", "Reception", "Patient" };
-            foreach (var role in roles)
+            string[] roles = {"Nurse", "Doctor", "Reception", "User"};
+
+            async Task<AppRole> CreateRole(string role)
             {
-                if (!await roleManager.RoleExistsAsync(role))
-                    await roleManager.CreateAsync(new IdentityRole(role));
+                AppRole roles = new AppRole
+                {
+                    Name = role,
+                    IsAdmin = true ? role != "User" : false
+
+                };
+                await roleManager.CreateAsync(roles);
+                return roles;
+            }
+
+            foreach (string role in roles)
+            {
+                await CreateRole(role);
+
             }
 
             // Seed Users
             async Task<AppUser> CreateUser(string firstName, string? middleName, string lastName, string email, string role)
             {
-                var user = new AppUser
+                AppUser user = new AppUser
                 {
                     FirstName = firstName,
                     MiddleName = middleName,
@@ -40,14 +52,16 @@ namespace INFP_Proj.Data
                 return user;
             }
 
-            var user1 = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "Nurse");
-            var user2 = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
-            var user3 = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
-            var user4 = await CreateUser("Sadev", null, "IDK", "sadev.idk@hospital.com", "Patient");
-            var user5 = await CreateUser("Skibidi", null, "Toilet", "skibidi.toilet@hospital.com", "Patient");
+            AppUser kailuo = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "Nurse");
+            AppUser xavier = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
+            AppUser evan = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
+            AppUser sadev = await CreateUser("Sadev", null, "Mawadavilage", "sadev.mawadavilage@hospital.com", "User");
+            AppUser miku = await CreateUser("Hatsune", null, "Miku", "hastune.miku@hospital.com", "User");
+            AppUser sasha = await CreateUser("Sasha", null, "Sasthi", "sasha.sasthi@hospital.com", "User");
+            AppUser teto = await CreateUser("Kasane", null, "Teto", "hastune.miku@hospital.com", "User");
 
             // Hospitals
-            var hospital = new Hospitals
+            Hospitals hospital = new Hospitals
             {
                 HospitalName = "City General Hospital",
                 HospitalAddress = "123 Main Street"
@@ -55,7 +69,7 @@ namespace INFP_Proj.Data
             context.Hospitals.Add(hospital);
 
             // Wards
-            var ward = new Wards
+            Wards ward = new Wards
             {
                 WardName = "Ward A",
                 MaxCapacity = 20
@@ -63,27 +77,34 @@ namespace INFP_Proj.Data
             context.Wards.Add(ward);
 
             // Allergies
-            var allergy1 = new Allergies { Allergy = "Penicillin" };
-            var allergy2 = new Allergies { Allergy = "Peanuts" };
-            context.Allergies.AddRange(allergy1, allergy2);
+            Allergies Penicillin = new Allergies { Allergy = "Penicillin" };
+            Allergies Peanuts = new Allergies { Allergy = "Peanuts" };
+            Allergies Grass = new Allergies { Allergy = "Grass" };
+            context.Allergies.AddRange(Penicillin, Peanuts, Grass);
 
             // Diagnoses
-            var diagnosis = new Diagnoses { DiagnosisName = "Hypertension" };
-            context.Diagnoses.Add(diagnosis);
+            Diagnoses diagnosis = new Diagnoses { DiagnosisName = "Hypertension" };
+            Diagnoses autism = new Diagnoses { DiagnosisName = "Autism" };
+            context.Diagnoses.AddRange(diagnosis, autism);
 
             // Medications
-            var medication = new Medications
+            Medications paracetamol = new Medications
             {
                 MedicationName = "Paracetamol",
                 ConsumptionTime = new TimeOnly(8, 0)
             };
-            context.Medications.Add(medication);
+            Medications brainrot = new Medications
+            {
+                MedicationName = "Brainrot",
+                ConsumptionTime = new TimeOnly(20, 0)
+            };
+            context.Medications.AddRange(paracetamol, brainrot);
 
             // Save so IDs are generated before we reference them
             await context.SaveChangesAsync();
 
             // Bracelet
-            var bracelet = new Bracelet
+            Bracelet sadevBracelet = new Bracelet
             {
                 PatientID = 0,
                 Battery = 85.5f,
@@ -93,43 +114,67 @@ namespace INFP_Proj.Data
                 BloodPressure = 120.0f,
                 HeartRate = 72.0f
             };
-            context.Bracelets.Add(bracelet);
+            Bracelet mikuBracelet = new Bracelet
+            {
+                PatientID = 0,
+                Battery = 90.0f,
+                Respiration = 16.0f,
+                Location = "Ward A",
+                Movement = 0.3f,
+                BloodPressure = 110.0f,
+                HeartRate = 68.0f
+            };
+            context.Bracelets.AddRange(sadevBracelet, mikuBracelet);
             await context.SaveChangesAsync();
 
             // Patients
-            var patient = new Patients
+            Patients sadevPatient = new Patients
             {
-                BraceletID = bracelet.BraceletID,
-                UserID = user4.Id,
+                BraceletID = sadevBracelet.BraceletID,
+                UserID = sadev.Id,
                 Status = "Admitted"
             };
-            context.Patients.Add(patient);
+            Patients mikuPatient = new Patients
+            {
+                BraceletID = mikuBracelet.BraceletID,
+                UserID = miku.Id,
+                Status = "Admitted"
+            };
+            context.Patients.AddRange(sadevPatient, mikuPatient);
             await context.SaveChangesAsync();
 
             // Update bracelet to point to patient
-            bracelet.PatientID = patient.PatientID;
+            sadevBracelet.PatientID = sadevPatient.PatientID;
+            mikuBracelet.PatientID = mikuPatient.PatientID;
             await context.SaveChangesAsync();
 
             // AllergyList
             context.AllergyLists.AddRange(
-                new AllergyList { PatientID = patient.PatientID, AllergyID = allergy1.AllergyID },
-                new AllergyList { PatientID = patient.PatientID, AllergyID = allergy2.AllergyID }
+                new AllergyList { PatientID = sadevPatient.PatientID, AllergyID = Penicillin.AllergyID },
+                new AllergyList { PatientID = sadevPatient.PatientID, AllergyID = Peanuts.AllergyID },
+                new AllergyList { PatientID = mikuPatient.PatientID, AllergyID = Grass.AllergyID }
             );
 
             // MedicationList
-            var medList = new MedicationList
+            MedicationList sadevList = new MedicationList
             {
-                PatientID = patient.PatientID,
-                MedicationID = medication.MedicationID,
+                PatientID = sadevPatient.PatientID,
+                MedicationID = paracetamol.MedicationID,
                 Dosage = "500mg"
             };
-            context.MedicationLists.Add(medList);
+            MedicationList mikuList = new MedicationList
+            {
+                PatientID = mikuPatient.PatientID,
+                MedicationID = brainrot.MedicationID,
+                Dosage = "250mg"
+            };
+            context.MedicationLists.AddRange(sadevList, mikuList);
             await context.SaveChangesAsync();
 
             // Beds
-            var bed = new Beds
+            Beds sadevBed = new Beds
             {
-                PatientID = patient.PatientID,
+                PatientID = sadevPatient.PatientID,
                 WardID = ward.WardID,
                 Sector = "A",
                 Floor = "1",
@@ -138,25 +183,48 @@ namespace INFP_Proj.Data
                 Weight = 70.0f,
                 Location = "Near Window"
             };
-            context.Beds.Add(bed);
+            Beds mikuBed = new Beds
+            {
+                PatientID = mikuPatient.PatientID,
+                WardID = ward.WardID,
+                Sector = "A",
+                Floor = "1",
+                Room = "102",
+                Temperature = 36.6f,
+                Weight = 60.0f,
+                Location = "Near Door"
+            };
+            context.Beds.AddRange(sadevBed, mikuBed);
             await context.SaveChangesAsync();
 
             // Records
             context.Records.Add(new Records
             {
-                PatientID = patient.PatientID,
-                BedID = bed.BedID,
+                PatientID = sadevPatient.PatientID,
+                BedID = sadevBed.BedID,
                 WardID = ward.WardID,
                 HospitalID = hospital.HospitalID,
                 DiagnosisID = diagnosis.DiagnosisID,
-                MedicationListID = medList.MedicationListID,
+                MedicationListID = sadevList.MedicationListID,
+                Description = "Patient admitted for monitoring",
+                AdmissionDateTime = DateTime.UtcNow,
+                DischargeDateTime = null
+            });
+            context.Records.Add(new Records
+            {
+                PatientID = mikuPatient.PatientID,
+                BedID = mikuBed.BedID,
+                WardID = ward.WardID,
+                HospitalID = hospital.HospitalID,
+                DiagnosisID = autism.DiagnosisID,
+                MedicationListID = mikuList.MedicationListID,
                 Description = "Patient admitted for monitoring",
                 AdmissionDateTime = DateTime.UtcNow,
                 DischargeDateTime = null
             });
 
             // Vitals
-            var vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
+            DateTime vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
             var vitalsReadings = new (float bp, float hr, float rr, float temp)[]
             {
                 (118, 68, 16, 36.4f), (120, 70, 17, 36.5f), (122, 72, 18, 36.5f),
@@ -169,35 +237,39 @@ namespace INFP_Proj.Data
             for (var i = 0; i < vitalsReadings.Length; i++)
             {
                 var reading = vitalsReadings[i];
-                context.Vitals.Add(new Vitals
-                {
-                    PatientID = patient.PatientID,
-                    BloodPressure = reading.bp,
-                    HeartRate = reading.hr,
-                    RespiratoryRate = reading.rr,
-                    Temperature = reading.temp,
-                    RecordedAt = vitalsBaseTime.AddHours(i * 12)
-                });
+                foreach (var patient in new[] { sadevPatient, mikuPatient })
+                    {
+                        context.Vitals.Add(new Vitals
+                        {
+                            PatientID = patient.PatientID,
+                            BloodPressure = reading.bp,
+                            HeartRate = reading.hr,
+                            RespiratoryRate = reading.rr,
+                            Temperature = reading.temp,
+                            RecordedAt = vitalsBaseTime.AddHours(i * 12)
+                        });
+                    }
+                
             }
 
             // Relationships
             context.Relationships.AddRange(
-                new Relationships { PatientID = patient.PatientID, UserID = user1.Id },
-                new Relationships { PatientID = patient.PatientID, UserID = user2.Id }
+                new Relationships { PatientID = sadevPatient.PatientID, UserID = sasha.Id },
+                new Relationships { PatientID = mikuPatient.PatientID, UserID = teto.Id }
             );
 
             // Logs
-            var logBaseTime = DateTime.UtcNow.AddDays(-3);
+            DateTime logBaseTime = DateTime.UtcNow.AddDays(-3);
             context.Logs.AddRange(
-                new Log { UserID = user1.Id, Event = "log test 1", Emergency = false, Timestamp = logBaseTime },
-                new Log { UserID = user2.Id, Event = "log test 2", Emergency = false, Timestamp = logBaseTime.AddHours(4) },
-                new Log { UserID = user1.Id, Event = "log test 3", Emergency = false, Timestamp = logBaseTime.AddDays(1) },
-                new Log { UserID = user2.Id, Event = "log test 4", Emergency = true, Timestamp = logBaseTime.AddDays(1).AddHours(6) },
-                new Log { UserID = user1.Id, Event = "log test 5", Emergency = false, Timestamp = DateTime.UtcNow },
-                new Log { UserID = user4.Id, Event = "log test 6", Emergency = false, Timestamp = logBaseTime.AddMinutes(30) },
-                new Log { UserID = user4.Id, Event = "log test 7", Emergency = false, Timestamp = logBaseTime.AddHours(5) },
-                new Log { UserID = user4.Id, Event = "log test 8", Emergency = false, Timestamp = logBaseTime.AddDays(1).AddHours(2) },
-                new Log { UserID = user4.Id, Event = "log test 9", Emergency = true, Timestamp = logBaseTime.AddDays(1).AddHours(7) }
+                new Log { UserID = xavier.Id, Event = "log test 1", Emergency = false, Timestamp = logBaseTime },
+                new Log { UserID = kailuo.Id, Event = "log test 2", Emergency = false, Timestamp = logBaseTime.AddHours(4) },
+                new Log { UserID = xavier.Id, Event = "log test 3", Emergency = false, Timestamp = logBaseTime.AddDays(1) },
+                new Log { UserID = kailuo.Id, Event = "log test 4", Emergency = true, Timestamp = logBaseTime.AddDays(1).AddHours(6) },
+                new Log { UserID = evan.Id, Event = "log test 5", Emergency = false, Timestamp = DateTime.UtcNow },
+                new Log { UserID = sadev.Id, Event = "log test 6", Emergency = false, Timestamp = logBaseTime.AddMinutes(30) },
+                new Log { UserID = evan.Id, Event = "log test 7", Emergency = false, Timestamp = logBaseTime.AddHours(5) },
+                new Log { UserID = sadev.Id, Event = "log test 8", Emergency = false, Timestamp = logBaseTime.AddDays(1).AddHours(2) },
+                new Log { UserID = miku.Id, Event = "log test 9", Emergency = true, Timestamp = logBaseTime.AddDays(1).AddHours(7) }
             );
 
             await context.SaveChangesAsync();

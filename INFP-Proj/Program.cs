@@ -1,5 +1,4 @@
 using INFP_Proj.Data;
-using INFP_Proj.Model;
 using INFP_Proj.Models;
 using INFP_Proj.Services;
 using Microsoft.AspNetCore.Identity;
@@ -13,7 +12,7 @@ builder.Services.AddScoped<AdminLogService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnectionString")));
-builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbContext>();
 builder.Services.AddRazorPages();
 
 

@@ -1,5 +1,4 @@
 using INFP_Proj.Data;
-using INFP_Proj.Model;
 using INFP_Proj.Models;
 using INFP_Proj.Services;
 using Microsoft.AspNetCore.Identity;

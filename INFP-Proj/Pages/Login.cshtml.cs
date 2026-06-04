@@ -1,4 +1,3 @@
-using INFP_Proj.Model;
 using INFP_Proj.Models;
 using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Identity;
