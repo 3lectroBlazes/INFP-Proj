@@ -1,39 +1,56 @@
 ﻿@page
 @model INFP_Proj.Pages.LoginModel
 @{
+    ViewData["Title"] = "Sign in";
+    Layout = null;
 }
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Hospital Portal</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h1>Sign in</h1>
+            <p class="auth-lead">Access your hospital portal account.</p>
 
-<div class="container mt-5">
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
 
-	<div class="row justify-content-center align-items-center">
+                <div class="mb-3">
+                    <label class="form-label" asp-for="LModel.Email">Email address</label>
+                    <input type="email" asp-for="LModel.Email" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="LModel.Email" class="text-danger small"></span>
+                </div>
 
-		<div class="col-sm-12 col-md-12 col-lg-4">
-			<h1 class="mb-3">Login </h1>
+                <div class="mb-3">
+                    <label class="form-label" asp-for="LModel.Password">Password</label>
+                    <input type="password" asp-for="LModel.Password" class="form-control" autocomplete="current-password" />
+                    <span asp-validation-for="LModel.Password" class="text-danger small"></span>
+                </div>
 
-			<form method="post">
-				
-				<div class="mb-3">
-					<label class="form-label" asp-for="LModel.Email">Email Address</label>
-					<input type="Text" asp-for="LModel.Email" class="form-control" />
-					<span asp-validaton-for="LModel.Email" class="text-danger"></span>
-				</div>
+                <div class="mb-4 form-check">
+                    <input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
+                    <label class="form-check-label" asp-for="LModel.RememberMe">Remember me</label>
+                </div>
 
-				<div class="mb-3">
-					<label class="form-label" asp-for="LModel.Password">Password</label>
-					<input type="Text" asp-for="LModel.Password" class="form-control" />
-					<span asp-validaton-for="LModel.Password" class="text-danger"></span>
-				</div>
+                <button type="submit" class="btn btn-primary w-100">Sign in</button>
+            </form>
 
-				<div class="mb-3 form-check">
-					<input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
-					<label class="form-check-label" asp-for="LModel.RememberMe">Remember Me?</label>
-				</div>
+            <p class="text-center text-muted small mt-4 mb-0">
+                No account? <a asp-page="/Register" class="text-primary">Register</a>
+            </p>
+        </div>
+    </div>
 
-				<div class="mb-3">
-					<button type="submit" class="btn btn-primary">Login</button>
-				</div>
-			</form>
-		</div>
-	</div>
-</div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+</body>
+</html>

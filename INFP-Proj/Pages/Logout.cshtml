@@ -1,19 +1,16 @@
 ﻿@page
 @model INFP_Proj.Pages.LogoutModel
 @{
+    ViewData["Title"] = "Sign out";
 }
 
-
-<form method="post">
-	<div class="container mt-5">
-		<div class="row justify-content-center">
-			<div class="col-sm-12 col-md-12 col-lg-4">
-				<p> Are you sure you want to logout? </p>
-				<p> 
-					<button class="btn btn-primary" asp-page-handler="Logout">Yes</button>
-					<button class="btn btn-light ml-5 border-dark" asp-page-handler="DontLogout">No</button>
-				</p>
-			</div>
-		</div>	
-	</div>
-</form>
+<div class="auth-wrapper">
+    <div class="auth-card text-center">
+        <h1>Sign out</h1>
+        <p class="auth-lead">Are you sure you want to sign out?</p>
+        <form method="post" class="d-flex flex-column gap-2">
+            <button class="btn btn-primary" asp-page-handler="Logout">Yes, sign out</button>
+            <button class="btn btn-outline-secondary" asp-page-handler="DontLogout">Stay signed in</button>
+        </form>
+    </div>
+</div>

@@ -1,14 +1,27 @@
 @page
 @model INFP_Proj.Pages.Admin.DashboardModel
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Staff Dashboard";
 }
 
-<h1 class="display-6">Admin Dashboard</h1>
-<p class="text-muted mb-4">Admin content will go here.</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Staff Dashboard</h1>
+        <p class="page-subtitle text-muted">Manage patients, vitals, and hospital activity.</p>
+    </div>
+</div>
 
-<div class="d-flex flex-wrap gap-2">
-    <a class="btn btn-primary" asp-page="/Admin/Tracker">Vitals Tracker</a>
-    <a class="btn btn-outline-secondary" asp-page="/Admin/Index">Patient List</a>
-    <a class="btn btn-outline-secondary" asp-page="/Admin/Logs">Activity Log</a>
+<div class="dashboard-grid">
+    <a class="dashboard-tile" asp-page="/Admin/Index">
+        <span class="dashboard-tile-title">Patient list</span>
+        <p class="dashboard-tile-desc">View, edit, and register patients.</p>
+    </a>
+    <a class="dashboard-tile" asp-page="/Admin/Tracker">
+        <span class="dashboard-tile-title">Vitals tracker</span>
+        <p class="dashboard-tile-desc">Charts for heart rate, breathing, blood pressure, and temperature.</p>
+    </a>
+    <a class="dashboard-tile" asp-page="/Admin/Logs">
+        <span class="dashboard-tile-title">Activity log</span>
+        <p class="dashboard-tile-desc">Review system events with timestamps.</p>
+    </a>
 </div>

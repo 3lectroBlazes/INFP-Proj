@@ -1,13 +1,23 @@
 @page
 @model INFP_Proj.Pages.User.DashboardModel
 @{
-    ViewData["Title"] = "User Dashboard";
+    ViewData["Title"] = "My Dashboard";
 }
 
-<h1 class="display-6">User Dashboard</h1>
-<p class="text-muted mb-4">User content will go here.</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">My Dashboard</h1>
+        <p class="page-subtitle text-muted">Your vitals and personal activity.</p>
+    </div>
+</div>
 
-<div class="d-flex flex-wrap gap-2">
-    <a class="btn btn-primary" asp-page="/User/Tracker">Vitals Tracker</a>
-    <a class="btn btn-outline-secondary" asp-page="/User/Logs">My Activity Log</a>
+<div class="dashboard-grid">
+    <a class="dashboard-tile" asp-page="/User/Tracker">
+        <span class="dashboard-tile-title">Vitals tracker</span>
+        <p class="dashboard-tile-desc">View your health metrics over time.</p>
+    </a>
+    <a class="dashboard-tile" asp-page="/User/Logs">
+        <span class="dashboard-tile-title">My activity log</span>
+        <p class="dashboard-tile-desc">Events related to your care and account.</p>
+    </a>
 </div>

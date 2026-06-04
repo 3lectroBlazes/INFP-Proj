@@ -4,9 +4,14 @@
     ViewData["Title"] = "Vitals Tracker";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="display-6 mb-0">Vitals Tracker</h1>
-    <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Dashboard">Back to dashboard</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Vitals tracker</h1>
+        <p class="page-subtitle text-muted">Monitor patient vitals over time.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Dashboard">Dashboard</a>
+    </div>
 </div>
 
 <partial name="_VitalsTracker" model="Model.ChartData" />

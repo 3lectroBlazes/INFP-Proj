@@ -4,21 +4,26 @@
     ViewData["Title"] = "Activity Log";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="display-6 mb-0">Activity Log</h1>
-    <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Dashboard">Back to dashboard</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Activity log</h1>
+        <p class="page-subtitle text-muted">System events with timestamps (newest first).</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Dashboard">Dashboard</a>
+    </div>
 </div>
-
-<p class="text-muted mb-4">System events recorded with timestamps (newest first).</p>
 
 @if (Model.Logs.Count == 0)
 {
-    <div class="alert alert-info">No log entries yet.</div>
+    <div class="empty-state">
+        <p class="text-muted mb-0">No log entries yet.</p>
+    </div>
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
+    <div class="app-table-wrapper table-responsive">
+        <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
                     <th>Timestamp</th>
