@@ -7,86 +7,94 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - INFP_Proj</title>
+    <title>@ViewData["Title"] - Hospital Portal</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/INFP_Proj.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg app-navbar">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">INFP_Proj</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand" asp-area="" asp-page="/Index">Hospital Portal</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    @{
-                        if(SignInManager.IsSignedIn(User)){
-                            <ul class="navbar-nav d-flex justify-content-end">
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
+                        </li>
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            @if (User.IsInRole("Doctor") || User.IsInRole("Nurse") || User.IsInRole("Reception"))
+                            {
                                 <li class="nav-item">
-                                    <a class="btn btn-primary" asp-area="" asp-page="/Logout">Logout</a>
+                                    <a class="nav-link" asp-area="" asp-page="/Admin/Dashboard">Dashboard</a>
                                 </li>
-                            </ul>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Admin/Index">Patients</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Admin/Tracker">Vitals</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Admin/Logs">Activity Log</a>
+                                </li>
+                            }
+                            else if (User.IsInRole("Patient"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/User/Dashboard">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/User/Tracker">Vitals</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/User/Logs">My Log</a>
+                                </li>
+                            }
+                        }
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Privacy">Privacy</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item d-flex align-items-center me-2">
+                                <span class="text-muted small d-none d-md-inline">Signed in</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-outline-secondary btn-sm" asp-area="" asp-page="/Logout">Sign out</a>
+                            </li>
                         }
                         else
                         {
-                            <ul class="navbar-nav d-flex justify-content-end flex-grow-1">
-                                <li class="nav-item">
-                                    <a class="btn btn-primary me-2" asp-page="/Login">Login</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="btn btn-primary" asp-page="/Register">Register</a>
-                                </li>
-                            </ul>
-                        }   
-                    }
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                        @{
-                            if (User.IsInRole("Doctor") || User.IsInRole("Nurse") || User.IsInRole("Reception")) {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/Admin/Dashboard">Admin</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/Admin/Tracker">Admin Tracker</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/Admin/Logs">Admin Log</a>
-                                </li>
-                            }
-                            else if (User.IsInRole("Patient")) {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/User/Dashboard">User</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/User/Tracker">User Tracker</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-page="/User/Logs">My Log</a>
-                                </li>
-                            }
+                            <li class="nav-item me-2">
+                                <a class="btn btn-outline-primary btn-sm" asp-page="/Login">Sign in</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-primary btn-sm" asp-page="/Register">Register</a>
+                            </li>
                         }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+    <main class="app-main" role="main">
         <div class="container">
-            &copy; 2026 - INFP_Proj - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>&copy; @DateTime.Now.Year Hospital Portal</span>
+            <a asp-area="" asp-page="/Privacy">Privacy Policy</a>
         </div>
     </footer>
 

@@ -1,25 +1,30 @@
 ﻿@page
 @model INFP_Proj.Pages.Admin.CreateModel
 @{
-    ViewData["Title"] = "Add New Patient";
+    ViewData["Title"] = "Add Patient";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="display-6 mb-0">Add New Patient</h1>
-    <a class="btn btn-outline-secondary btn-sm" asp-page="Index">Back to patient list</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Add new patient</h1>
+        <p class="page-subtitle text-muted">Link a patient account to a bracelet.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="Index">Patient list</a>
+    </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="app-card card">
     <div class="card-body">
         <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
 
             <div class="mb-3">
                 <label asp-for="Patients.UserID" class="form-label">Patient user account</label>
                 <select asp-for="Patients.UserID" class="form-select" asp-items="Model.UserOptions">
                     <option value="">— Select user —</option>
                 </select>
-                <span asp-validation-for="Patients.UserID" class="text-danger"></span>
+                <span asp-validation-for="Patients.UserID" class="text-danger small"></span>
             </div>
 
             <div class="mb-3">
@@ -27,13 +32,13 @@
                 <select asp-for="Patients.BraceletID" class="form-select" asp-items="Model.BraceletOptions">
                     <option value="">— Select bracelet —</option>
                 </select>
-                <span asp-validation-for="Patients.BraceletID" class="text-danger"></span>
+                <span asp-validation-for="Patients.BraceletID" class="text-danger small"></span>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-4">
                 <label asp-for="Patients.Status" class="form-label">Status</label>
                 <input asp-for="Patients.Status" class="form-control" placeholder="Admitted" />
-                <span asp-validation-for="Patients.Status" class="text-danger"></span>
+                <span asp-validation-for="Patients.Status" class="text-danger small"></span>
             </div>
 
             <button type="submit" class="btn btn-primary">Create patient</button>

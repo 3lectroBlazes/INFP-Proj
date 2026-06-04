@@ -1,12 +1,17 @@
 @page
 @model INFP_Proj.Pages.User.TrackerModel
 @{
-    ViewData["Title"] = "Vitals Tracker";
+    ViewData["Title"] = "My Vitals";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="display-6 mb-0">Vitals Tracker</h1>
-    <a class="btn btn-outline-secondary btn-sm" asp-page="/User/Dashboard">Back to dashboard</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">My vitals</h1>
+        <p class="page-subtitle text-muted">Your health metrics over time.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/User/Dashboard">Dashboard</a>
+    </div>
 </div>
 
 <partial name="_VitalsTracker" model="Model.ChartData" />
