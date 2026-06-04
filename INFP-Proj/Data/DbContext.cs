@@ -41,17 +41,6 @@ namespace INFP_Proj.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserID)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Vitals>()
-                .HasOne(v => v.Patients)
-                .WithMany()
-                .HasForeignKey(v => v.PatientID)
-                .OnDelete(DeleteBehavior.Cascade)
-                .IsRequired();
-
-            modelBuilder.Entity<Patients>()
-                .Property(p => p.PatientID)
-                .ValueGeneratedOnAdd();
         }
     }
 }

@@ -9,20 +9,14 @@ namespace INFP_Proj.Data
     {
         public static async Task SeedAsync(IServiceProvider serviceProvider)
         {
-            using AppDbContext context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
-            UserManager<AppUser> userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
-            RoleManager<IdentityRole> roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            using var context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
+            var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             if (userManager.Users.Any()) return;
 
             // Seed Roles
-            string[] roles = { "User", "Nurse", "Doctor", "Reception", "Patient" };
-            /*
-             * Admin Roles: Doctor, Nurse, Reception
-             * Patient is patient
-             * User Role is non-admin non-patient
-             */
-
+            string[] roles = { "Admin", "Nurse", "Doctor", "Reception", "Patient" };
             foreach (var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
@@ -32,7 +26,7 @@ namespace INFP_Proj.Data
             // Seed Users
             async Task<AppUser> CreateUser(string firstName, string? middleName, string lastName, string email, string role)
             {
-                AppUser user = new AppUser
+                var user = new AppUser
                 {
                     FirstName = firstName,
                     MiddleName = middleName,
@@ -46,15 +40,14 @@ namespace INFP_Proj.Data
                 return user;
             }
 
-            AppUser user1 = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "Nurse");
-            AppUser user2 = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
-            AppUser user3 = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
-            AppUser user4 = await CreateUser("Sadev", null, "IDK", "sadev.idk@hospital.com", "Patient");
-            AppUser user5 = await CreateUser("Skibidi", null, "Toilet", "skibidi.toilet@hospital.com", "Patient");
-            AppUser user6 = await CreateUser("Yes", null, "No", "yes.no@hospital.com", "User");
+            var user1 = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "Nurse");
+            var user2 = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
+            var user3 = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
+            var user4 = await CreateUser("Sadev", null, "IDK", "sadev.idk@hospital.com", "Patient");
+            var user5 = await CreateUser("Skibidi", null, "Toilet", "skibidi.toilet@hospital.com", "Patient");
 
             // Hospitals
-            Hospitals hospital = new Hospitals
+            var hospital = new Hospitals
             {
                 HospitalName = "City General Hospital",
                 HospitalAddress = "123 Main Street"
@@ -62,7 +55,7 @@ namespace INFP_Proj.Data
             context.Hospitals.Add(hospital);
 
             // Wards
-            Wards ward = new Wards
+            var ward = new Wards
             {
                 WardName = "Ward A",
                 MaxCapacity = 20
@@ -70,16 +63,16 @@ namespace INFP_Proj.Data
             context.Wards.Add(ward);
 
             // Allergies
-            Allergies allergy1 = new Allergies { Allergy = "Penicillin" };
-            Allergies allergy2 = new Allergies { Allergy = "Peanuts" };
+            var allergy1 = new Allergies { Allergy = "Penicillin" };
+            var allergy2 = new Allergies { Allergy = "Peanuts" };
             context.Allergies.AddRange(allergy1, allergy2);
 
             // Diagnoses
-            Diagnoses diagnosis = new Diagnoses { DiagnosisName = "Hypertension" };
+            var diagnosis = new Diagnoses { DiagnosisName = "Hypertension" };
             context.Diagnoses.Add(diagnosis);
 
             // Medications
-            Medications medication = new Medications
+            var medication = new Medications
             {
                 MedicationName = "Paracetamol",
                 ConsumptionTime = new TimeOnly(8, 0)
@@ -90,7 +83,7 @@ namespace INFP_Proj.Data
             await context.SaveChangesAsync();
 
             // Bracelet
-            Bracelet bracelet = new Bracelet
+            var bracelet = new Bracelet
             {
                 PatientID = 0,
                 Battery = 85.5f,
@@ -104,7 +97,7 @@ namespace INFP_Proj.Data
             await context.SaveChangesAsync();
 
             // Patients
-            Patients patient = new Patients
+            var patient = new Patients
             {
                 BraceletID = bracelet.BraceletID,
                 UserID = user4.Id,
@@ -124,7 +117,7 @@ namespace INFP_Proj.Data
             );
 
             // MedicationList
-            MedicationList medList = new MedicationList
+            var medList = new MedicationList
             {
                 PatientID = patient.PatientID,
                 MedicationID = medication.MedicationID,
@@ -134,7 +127,7 @@ namespace INFP_Proj.Data
             await context.SaveChangesAsync();
 
             // Beds
-            Beds bed = new Beds
+            var bed = new Beds
             {
                 PatientID = patient.PatientID,
                 WardID = ward.WardID,
@@ -162,9 +155,30 @@ namespace INFP_Proj.Data
                 DischargeDateTime = null
             });
 
-            // Vitals — matches Vitals table: PatientID (FK), nullable real metrics, RecordedAt (datetime2 UTC)
-            // VitalsID is database-generated (identity); do not set it in seed data.
-            SeedVitalsForPatient(context, patient, DateTime.UtcNow.AddDays(-6));
+            // Vitals
+            var vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
+            var vitalsReadings = new (float bp, float hr, float rr, float temp)[]
+            {
+                (118, 68, 16, 36.4f), (120, 70, 17, 36.5f), (122, 72, 18, 36.5f),
+                (119, 74, 17, 36.6f), (121, 71, 18, 36.4f), (123, 75, 19, 36.7f),
+                (120, 73, 18, 36.5f), (118, 69, 16, 36.3f), (122, 76, 19, 36.6f),
+                (121, 72, 18, 36.5f), (119, 70, 17, 36.4f), (124, 77, 20, 36.8f),
+                (120, 71, 18, 36.5f), (118, 68, 16, 36.4f)
+            };
+
+            for (var i = 0; i < vitalsReadings.Length; i++)
+            {
+                var reading = vitalsReadings[i];
+                context.Vitals.Add(new Vitals
+                {
+                    PatientID = patient.PatientID,
+                    BloodPressure = reading.bp,
+                    HeartRate = reading.hr,
+                    RespiratoryRate = reading.rr,
+                    Temperature = reading.temp,
+                    RecordedAt = vitalsBaseTime.AddHours(i * 12)
+                });
+            }
 
             // Relationships
             context.Relationships.AddRange(
@@ -173,7 +187,7 @@ namespace INFP_Proj.Data
             );
 
             // Logs
-            DateTime logBaseTime = DateTime.UtcNow.AddDays(-3);
+            var logBaseTime = DateTime.UtcNow.AddDays(-3);
             context.Logs.AddRange(
                 new Log { UserID = user1.Id, Event = "log test 1", Emergency = false, Timestamp = logBaseTime },
                 new Log { UserID = user2.Id, Event = "log test 2", Emergency = false, Timestamp = logBaseTime.AddHours(4) },
@@ -186,70 +200,6 @@ namespace INFP_Proj.Data
                 new Log { UserID = user4.Id, Event = "log test 9", Emergency = true, Timestamp = logBaseTime.AddDays(1).AddHours(7) }
             );
 
-            await context.SaveChangesAsync();
-        }
-
-        /// <summary>
-        /// Seeds Vitals rows for a patient per schema: PatientID FK, optional floats, RecordedAt.
-        /// </summary>
-        private static void SeedVitalsForPatient(AppDbContext context, Patients patient, DateTime baseRecordedAtUtc)
-        {
-            (float? bloodPressure, float? heartRate, float? respiratoryRate, float? temperature)[] readings =
-            {
-                (118f, 68f, 16f, 36.4f),
-                (120f, 70f, 17f, 36.5f),
-                (122f, 72f, 18f, 36.5f),
-                (119f, 74f, 17f, 36.6f),
-                (121f, 71f, 18f, 36.4f),
-                (123f, 75f, 19f, 36.7f),
-                (120f, 73f, 18f, 36.5f),
-                (118f, 69f, 16f, 36.3f),
-                (122f, 76f, 19f, 36.6f),
-                (121f, 72f, 18f, 36.5f),
-                (119f, 70f, 17f, 36.4f),
-                (124f, 77f, 20f, 36.8f),
-                (120f, 71f, 18f, 36.5f),
-                (118f, 68f, 16f, 36.4f)
-            };
-
-            List<Vitals> vitals = new List<Vitals>();
-            for (int i = 0; i < readings.Length; i++)
-            {
-                (float? bloodPressure, float? heartRate, float? respiratoryRate, float? temperature) reading = readings[i];
-                vitals.Add(new Vitals
-                {
-                    PatientID = patient.PatientID,
-                    Patients = patient,
-                    BloodPressure = reading.bloodPressure,
-                    HeartRate = reading.heartRate,
-                    RespiratoryRate = reading.respiratoryRate,
-                    Temperature = reading.temperature,
-                    RecordedAt = DateTime.SpecifyKind(baseRecordedAtUtc.AddHours(i * 12), DateTimeKind.Utc)
-                });
-            }
-
-            context.Vitals.AddRange(vitals);
-        }
-
-        /// <summary>
-        /// When users were seeded earlier but vitals are missing, backfill vitals for the first patient.
-        /// </summary>
-        public static async Task SeedVitalsIfMissingAsync(IServiceProvider serviceProvider)
-        {
-            using AppDbContext context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
-
-            if (await context.Vitals.AnyAsync())
-            {
-                return;
-            }
-
-            Patients? patient = await context.Patients.OrderBy(p => p.PatientID).FirstOrDefaultAsync();
-            if (patient == null)
-            {
-                return;
-            }
-
-            SeedVitalsForPatient(context, patient, DateTime.UtcNow.AddDays(-6));
             await context.SaveChangesAsync();
         }
     }
