@@ -16,7 +16,13 @@ namespace INFP_Proj.Data
             if (userManager.Users.Any()) return;
 
             // Seed Roles
-            string[] roles = { "Admin", "Nurse", "Doctor", "Reception", "Patient" };
+            string[] roles = { "User", "Nurse", "Doctor", "Reception", "Patient" };
+            /*
+             * Admin Roles: Doctor, Nurse, Reception
+             * Patient is patient
+             * User Role is non-admin non-patient
+             */
+
             foreach (var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
@@ -40,14 +46,15 @@ namespace INFP_Proj.Data
                 return user;
             }
 
-            var user1 = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "Nurse");
-            var user2 = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
-            var user3 = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
-            var user4 = await CreateUser("Sadev", null, "IDK", "sadev.idk@hospital.com", "Patient");
-            var user5 = await CreateUser("Skibidi", null, "Toilet", "skibidi.toilet@hospital.com", "Patient");
+            AppUser user1 = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "Nurse");
+            AppUser user2 = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
+            AppUser user3 = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
+            AppUser user4 = await CreateUser("Sadev", null, "IDK", "sadev.idk@hospital.com", "Patient");
+            AppUser user5 = await CreateUser("Skibidi", null, "Toilet", "skibidi.toilet@hospital.com", "Patient");
+            AppUser user6 = await CreateUser("Yes", null, "No", "yes.no@hospital.com", "User");
 
             // Hospitals
-            var hospital = new Hospitals
+            Hospitals hospital = new Hospitals
             {
                 HospitalName = "City General Hospital",
                 HospitalAddress = "123 Main Street"
@@ -55,7 +62,7 @@ namespace INFP_Proj.Data
             context.Hospitals.Add(hospital);
 
             // Wards
-            var ward = new Wards
+            Wards ward = new Wards
             {
                 WardName = "Ward A",
                 MaxCapacity = 20
@@ -63,16 +70,16 @@ namespace INFP_Proj.Data
             context.Wards.Add(ward);
 
             // Allergies
-            var allergy1 = new Allergies { Allergy = "Penicillin" };
-            var allergy2 = new Allergies { Allergy = "Peanuts" };
+            Allergies allergy1 = new Allergies { Allergy = "Penicillin" };
+            Allergies allergy2 = new Allergies { Allergy = "Peanuts" };
             context.Allergies.AddRange(allergy1, allergy2);
 
             // Diagnoses
-            var diagnosis = new Diagnoses { DiagnosisName = "Hypertension" };
+            Diagnoses diagnosis = new Diagnoses { DiagnosisName = "Hypertension" };
             context.Diagnoses.Add(diagnosis);
 
             // Medications
-            var medication = new Medications
+            Medications medication = new Medications
             {
                 MedicationName = "Paracetamol",
                 ConsumptionTime = new TimeOnly(8, 0)
@@ -83,7 +90,7 @@ namespace INFP_Proj.Data
             await context.SaveChangesAsync();
 
             // Bracelet
-            var bracelet = new Bracelet
+            Bracelet bracelet = new Bracelet
             {
                 PatientID = 0,
                 Battery = 85.5f,
@@ -97,7 +104,7 @@ namespace INFP_Proj.Data
             await context.SaveChangesAsync();
 
             // Patients
-            var patient = new Patients
+            Patients patient = new Patients
             {
                 BraceletID = bracelet.BraceletID,
                 UserID = user4.Id,
@@ -117,7 +124,7 @@ namespace INFP_Proj.Data
             );
 
             // MedicationList
-            var medList = new MedicationList
+            MedicationList medList = new MedicationList
             {
                 PatientID = patient.PatientID,
                 MedicationID = medication.MedicationID,
@@ -127,7 +134,7 @@ namespace INFP_Proj.Data
             await context.SaveChangesAsync();
 
             // Beds
-            var bed = new Beds
+            Beds bed = new Beds
             {
                 PatientID = patient.PatientID,
                 WardID = ward.WardID,
@@ -156,7 +163,7 @@ namespace INFP_Proj.Data
             });
 
             // Vitals
-            var vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
+            DateTime vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
             var vitalsReadings = new (float bp, float hr, float rr, float temp)[]
             {
                 (118, 68, 16, 36.4f), (120, 70, 17, 36.5f), (122, 72, 18, 36.5f),
@@ -166,7 +173,7 @@ namespace INFP_Proj.Data
                 (120, 71, 18, 36.5f), (118, 68, 16, 36.4f)
             };
 
-            for (var i = 0; i < vitalsReadings.Length; i++)
+            for (int i = 0; i < vitalsReadings.Length; i++)
             {
                 var reading = vitalsReadings[i];
                 context.Vitals.Add(new Vitals
@@ -187,7 +194,7 @@ namespace INFP_Proj.Data
             );
 
             // Logs
-            var logBaseTime = DateTime.UtcNow.AddDays(-3);
+            DateTime logBaseTime = DateTime.UtcNow.AddDays(-3);
             context.Logs.AddRange(
                 new Log { UserID = user1.Id, Event = "log test 1", Emergency = false, Timestamp = logBaseTime },
                 new Log { UserID = user2.Id, Event = "log test 2", Emergency = false, Timestamp = logBaseTime.AddHours(4) },

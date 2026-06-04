@@ -5,7 +5,7 @@ using INFP_Proj.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<VitalsChartService>();
@@ -23,7 +23,7 @@ builder.Services.ConfigureApplicationCookie(Config =>
 });
 
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -40,9 +40,9 @@ app.UseAuthorization();
 app.MapRazorPages();
 
 // Seed the database
-using (var scope = app.Services.CreateScope())
+using (IServiceScope scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
+    IServiceProvider services = scope.ServiceProvider;
     await AppDbSeeder.SeedAsync(services);
 }
 
