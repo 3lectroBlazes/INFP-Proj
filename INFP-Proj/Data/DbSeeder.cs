@@ -9,9 +9,9 @@ namespace INFP_Proj.Data
     {
         public static async Task SeedAsync(IServiceProvider serviceProvider)
         {
-            using var context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
-            var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            using AppDbContext context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
+            UserManager<AppUser> userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
+            RoleManager<IdentityRole> roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             if (userManager.Users.Any()) return;
 
@@ -32,7 +32,7 @@ namespace INFP_Proj.Data
             // Seed Users
             async Task<AppUser> CreateUser(string firstName, string? middleName, string lastName, string email, string role)
             {
-                var user = new AppUser
+                AppUser user = new AppUser
                 {
                     FirstName = firstName,
                     MiddleName = middleName,
