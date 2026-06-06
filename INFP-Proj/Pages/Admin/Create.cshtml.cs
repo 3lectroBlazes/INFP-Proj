@@ -11,195 +11,350 @@ namespace INFP_Proj.Pages.Admin
 {
     public class CreateModel : PageModel
     {
-        private readonly AppDbContext _context;
-        private readonly AdminLogService _adminLogService;
-        private readonly UserManager<AppUser> _userManager;
+        private const string DefaultDosage = "As directed";
 
-        public CreateModel(AppDbContext context, AdminLogService adminLogService, UserManager<AppUser> userManager)
+        private readonly AppDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<AppRole> _roleManager;
+        private readonly AdminLogService _adminLogService;
+
+        public CreateModel(
+            AppDbContext context,
+            UserManager<AppUser> userManager,
+            RoleManager<AppRole> roleManager,
+            AdminLogService adminLogService)
         {
             _context = context;
-            _adminLogService = adminLogService;
             _userManager = userManager;
+            _roleManager = roleManager;
+            _adminLogService = adminLogService;
         }
 
         [BindProperty]
-        public RegisterPatientInput Input { get; set; } = new();
+        public PatientAdmissionInput Input { get; set; } = new();
 
         public SelectList UserOptions { get; set; } = default!;
         public SelectList BraceletOptions { get; set; } = default!;
+        public SelectList BedOptions { get; set; } = default!;
+        public SelectList WardOptions { get; set; } = default!;
+        public SelectList DiagnosisOptions { get; set; } = default!;
+        public MultiSelectList MedicationOptions { get; set; } = default!;
+        public bool HasAvailableBracelets { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
             await PopulateSelectListsAsync();
+            if (!HasAvailableBracelets)
+            {
+                Input.BraceletMode = "new";
+            }
+
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (string.IsNullOrWhiteSpace(Input.Status))
-            {
-                Input.Status = "Admitted";
-            }
+            var isNewBracelet = string.Equals(Input.BraceletMode, "new", StringComparison.OrdinalIgnoreCase);
 
-            if (Input.BraceletID <= 0)
+            if (isNewBracelet)
             {
-                ModelState.AddModelError(nameof(Input.BraceletID), "Please select a bracelet.");
-            }
-
-            var isNewUser = string.Equals(Input.AccountMode, "new", StringComparison.OrdinalIgnoreCase);
-            string? userId = null;
-
-            if (isNewUser)
-            {
-                ValidateNewUserFields();
-                if (ModelState.IsValid)
-                {
-                    userId = await CreatePatientUserAsync();
-                }
+                ModelState.Remove(nameof(Input.BraceletID));
             }
             else
             {
-                if (string.IsNullOrWhiteSpace(Input.ExistingUserId))
+                ModelState.Remove(nameof(Input.NewBraceletLocation));
+                if (Input.BraceletID is null or <= 0)
                 {
-                    ModelState.AddModelError(nameof(Input.ExistingUserId), "Please select an existing patient account.");
+                    ModelState.AddModelError(nameof(Input.BraceletID), "Please select a bracelet or create a new one.");
+                }
+            }
+
+            if (Input.MedicationIDs.Count == 0)
+            {
+                ModelState.AddModelError(nameof(Input.MedicationIDs), "Please select at least one medication.");
+            }
+
+            await ValidateSelectionsAsync(isNewBracelet);
+
+            if (!ModelState.IsValid)
+            {
+                await ReturnPageWithListsAsync();
+                return Page();
+            }
+
+            var hospital = await _context.Hospitals.OrderBy(h => h.HospitalID).FirstOrDefaultAsync();
+            if (hospital == null)
+            {
+                ModelState.AddModelError(string.Empty, "No hospital exists in the system. Add a hospital before admitting a patient.");
+                await ReturnPageWithListsAsync();
+                return Page();
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                Bracelet bracelet;
+                if (isNewBracelet)
+                {
+                    bracelet = new Bracelet
+                    {
+                        PatientID = 0,
+                        Location = string.IsNullOrWhiteSpace(Input.NewBraceletLocation)
+                            ? null
+                            : Input.NewBraceletLocation.Trim()
+                    };
+                    _context.Bracelets.Add(bracelet);
+                    await _context.SaveChangesAsync();
                 }
                 else
                 {
-                    userId = Input.ExistingUserId;
+                    bracelet = (await _context.Bracelets.FindAsync(Input.BraceletID!.Value))!;
                 }
-            }
 
-            if (!ModelState.IsValid || string.IsNullOrEmpty(userId))
-            {
-                await PopulateSelectListsAsync();
-                return Page();
-            }
-
-            var userAlreadyPatient = await _context.Patients.AnyAsync(p => p.UserID == userId);
-            if (userAlreadyPatient)
-            {
-                ModelState.AddModelError(
-                    isNewUser ? nameof(Input.NewEmail) : nameof(Input.ExistingUserId),
-                    "This user is already registered as a patient.");
-                await PopulateSelectListsAsync();
-                return Page();
-            }
-
-            var braceletInUse = await _context.Patients.AnyAsync(p => p.BraceletID == Input.BraceletID);
-            if (braceletInUse)
-            {
-                ModelState.AddModelError(nameof(Input.BraceletID), "This bracelet is already assigned.");
-                await PopulateSelectListsAsync();
-                return Page();
-            }
-
-            var bracelet = await _context.Bracelets.FindAsync(Input.BraceletID);
-            if (bracelet == null)
-            {
-                ModelState.AddModelError(nameof(Input.BraceletID), "Selected bracelet was not found.");
-                await PopulateSelectListsAsync();
-                return Page();
-            }
-
-            var patient = new Patients
-            {
-                UserID = userId!,
-                BraceletID = Input.BraceletID,
-                Status = Input.Status
-            };
-
-            _context.Patients.Add(patient);
-            await _context.SaveChangesAsync();
-
-            bracelet.PatientID = patient.PatientID;
-            await _context.SaveChangesAsync();
-
-            var user = await _userManager.FindByIdAsync(userId!);
-            var patientName = user != null
-                ? $"{user.FirstName} {user.LastName}"
-                : $"Patient #{patient.PatientID}";
-
-            await _adminLogService.AddLogAsync($"New patient registered: {patientName} (ID {patient.PatientID})");
-            await _adminLogService.AddLogAsync("Your patient account was created", userId: userId);
-
-            TempData["Message"] = $"Patient #{patient.PatientID} created successfully.";
-            return RedirectToPage("./Index");
-        }
-
-        private void ValidateNewUserFields()
-        {
-            if (string.IsNullOrWhiteSpace(Input.NewFirstName))
-            {
-                ModelState.AddModelError(nameof(Input.NewFirstName), "First name is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(Input.NewLastName))
-            {
-                ModelState.AddModelError(nameof(Input.NewLastName), "Last name is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(Input.NewEmail))
-            {
-                ModelState.AddModelError(nameof(Input.NewEmail), "Email is required.");
-            }
-
-            if (string.IsNullOrWhiteSpace(Input.NewPassword))
-            {
-                ModelState.AddModelError(nameof(Input.NewPassword), "Password is required.");
-            }
-        }
-
-        private async Task<string?> CreatePatientUserAsync()
-        {
-            var user = new AppUser
-            {
-                FirstName = Input.NewFirstName!.Trim(),
-                MiddleName = string.IsNullOrWhiteSpace(Input.NewMiddleName) ? null : Input.NewMiddleName.Trim(),
-                LastName = Input.NewLastName!.Trim(),
-                UserName = Input.NewEmail!.Trim(),
-                Email = Input.NewEmail.Trim(),
-                EmailConfirmed = true
-            };
-
-            var result = await _userManager.CreateAsync(user, Input.NewPassword!);
-            if (!result.Succeeded)
-            {
-                foreach (var error in result.Errors)
+                var patient = new Patients
                 {
-                    ModelState.AddModelError(nameof(Input.NewEmail), error.Description);
-                }
+                    UserID = Input.UserId!,
+                    BraceletID = bracelet.BraceletID,
+                    Status = "Admitted"
+                };
+                _context.Patients.Add(patient);
+                await _context.SaveChangesAsync();
 
-                return null;
+                bracelet.PatientID = patient.PatientID;
+                await _context.SaveChangesAsync();
+
+                var medicationLists = Input.MedicationIDs
+                    .Distinct()
+                    .Select(medicationId => new MedicationList
+                    {
+                        PatientID = patient.PatientID,
+                        MedicationID = medicationId,
+                        Dosage = DefaultDosage
+                    })
+                    .ToList();
+
+                _context.MedicationLists.AddRange(medicationLists);
+                await _context.SaveChangesAsync();
+
+                var record = new Records
+                {
+                    PatientID = patient.PatientID,
+                    BedID = Input.BedID,
+                    WardID = Input.WardID,
+                    HospitalID = hospital.HospitalID,
+                    DiagnosisID = Input.DiagnosisID,
+                    MedicationListID = medicationLists[0].MedicationListID,
+                    Description = string.IsNullOrWhiteSpace(Input.Description)
+                        ? "Admitted"
+                        : Input.Description.Trim(),
+                    AdmissionDateTime = DateTime.UtcNow,
+                    DischargeDateTime = null
+                };
+                _context.Records.Add(record);
+                await _context.SaveChangesAsync();
+
+                await EnsurePatientRoleAssignedAsync(Input.UserId!);
+
+                await transaction.CommitAsync();
+
+                var user = await _userManager.FindByIdAsync(Input.UserId!);
+                var patientName = user != null
+                    ? $"{user.FirstName} {user.LastName}"
+                    : $"Patient #{patient.PatientID}";
+
+                await _adminLogService.AddLogAsync($"New patient admitted: {patientName} (ID {patient.PatientID})");
+                await _adminLogService.AddLogAsync("You were admitted as a patient", userId: Input.UserId);
+
+                TempData["Message"] = $"Patient #{patient.PatientID} admitted successfully.";
+                return RedirectToPage("./Index");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError(string.Empty, $"Unable to admit patient: {ex.Message}");
+                await ReturnPageWithListsAsync();
+                return Page();
+            }
+        }
+
+        private async Task ValidateSelectionsAsync(bool isNewBracelet)
+        {
+            if (!string.IsNullOrWhiteSpace(Input.UserId))
+            {
+                var user = await _userManager.FindByIdAsync(Input.UserId);
+                if (user == null)
+                {
+                    ModelState.AddModelError(nameof(Input.UserId), "Selected user was not found.");
+                }
+                else if (!await IsEligibleUserAsync(user))
+                {
+                    ModelState.AddModelError(nameof(Input.UserId), "Only non-admin, non-patient users can be admitted.");
+                }
+                else if (await _context.Patients.AnyAsync(p => p.UserID == Input.UserId))
+                {
+                    ModelState.AddModelError(nameof(Input.UserId), "This user is already admitted as a patient.");
+                }
             }
 
-            await _userManager.AddToRoleAsync(user, "Patient");
-            return user.Id;
+            if (!isNewBracelet && Input.BraceletID is > 0)
+            {
+                if (!await _context.Bracelets.AnyAsync(b => b.BraceletID == Input.BraceletID))
+                {
+                    ModelState.AddModelError(nameof(Input.BraceletID), "Selected bracelet was not found.");
+                }
+                else if (await _context.Patients.AnyAsync(p => p.BraceletID == Input.BraceletID))
+                {
+                    ModelState.AddModelError(nameof(Input.BraceletID), "This bracelet is already assigned.");
+                }
+            }
+
+            if (Input.BedID > 0 && !await _context.Beds.AnyAsync(b => b.BedID == Input.BedID))
+            {
+                ModelState.AddModelError(nameof(Input.BedID), "Selected bed was not found.");
+            }
+
+            if (Input.WardID > 0 && !await _context.Wards.AnyAsync(w => w.WardID == Input.WardID))
+            {
+                ModelState.AddModelError(nameof(Input.WardID), "Selected ward was not found.");
+            }
+
+            if (Input.DiagnosisID > 0 && !await _context.Diagnoses.AnyAsync(d => d.DiagnosisID == Input.DiagnosisID))
+            {
+                ModelState.AddModelError(nameof(Input.DiagnosisID), "Selected diagnosis was not found.");
+            }
+
+            if (Input.MedicationIDs.Count > 0)
+            {
+                var validMedicationIds = await _context.Medications
+                    .Where(m => Input.MedicationIDs.Contains(m.MedicationID))
+                    .Select(m => m.MedicationID)
+                    .ToListAsync();
+
+                if (Input.MedicationIDs.Distinct().Any(id => !validMedicationIds.Contains(id)))
+                {
+                    ModelState.AddModelError(nameof(Input.MedicationIDs), "One or more selected medications were not found.");
+                }
+            }
+        }
+
+        private async Task EnsurePatientRoleAssignedAsync(string userId)
+        {
+            if (!await _roleManager.RoleExistsAsync("Patient"))
+            {
+                await _roleManager.CreateAsync(new AppRole { Name = "Patient" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null && !await _userManager.IsInRoleAsync(user, "Patient"))
+            {
+                var result = await _userManager.AddToRoleAsync(user, "Patient");
+                if (!result.Succeeded)
+                {
+                    throw new InvalidOperationException(string.Join(" ", result.Errors.Select(e => e.Description)));
+                }
+            }
+        }
+
+        private async Task<bool> IsEligibleUserAsync(AppUser user)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("Patient"))
+            {
+                return false;
+            }
+
+            var adminRoleNames = await GetAdminRoleNamesAsync();
+            return !roles.Any(r => adminRoleNames.Contains(r));
+        }
+
+        private async Task<HashSet<string>> GetAdminRoleNamesAsync()
+        {
+            return (await _roleManager.Roles
+                .Where(r => r.IsAdmin && r.Name != null)
+                .Select(r => r.Name!)
+                .ToListAsync())
+                .ToHashSet();
+        }
+
+        private async Task ReturnPageWithListsAsync()
+        {
+            await PopulateSelectListsAsync();
+            if (!HasAvailableBracelets)
+            {
+                Input.BraceletMode = "new";
+            }
         }
 
         private async Task PopulateSelectListsAsync()
         {
-            var assignedUserIds = await _context.Patients.Select(p => p.UserID).ToListAsync();
-            var assignedBraceletIds = await _context.Patients.Select(p => p.BraceletID).ToListAsync();
+            var assignedUserIds = (await _context.Patients.Select(p => p.UserID).ToListAsync()).ToHashSet();
 
-            var patientRoleUsers = await _userManager.GetUsersInRoleAsync("Patient");
-            var availableUsers = patientRoleUsers
-                .Where(u => !assignedUserIds.Contains(u.Id))
-                .OrderBy(u => u.LastName)
-                .Select(u => new { UserID = u.Id, Name = $"{u.FirstName} {u.LastName} ({u.Email})" })
+            var excludedUserIds = new HashSet<string>(assignedUserIds);
+            var adminRoleNames = await GetAdminRoleNamesAsync();
+            foreach (var roleName in adminRoleNames.Concat(["Patient"]))
+            {
+                foreach (var user in await _userManager.GetUsersInRoleAsync(roleName))
+                {
+                    excludedUserIds.Add(user.Id);
+                }
+            }
+
+            var availableUsers = (await _userManager.Users
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .ToListAsync())
+                .Where(u => !excludedUserIds.Contains(u.Id))
+                .Select(u => new
+                {
+                    u.Id,
+                    Name = $"{u.FirstName} {u.LastName}".Trim() + (u.Email != null ? $" ({u.Email})" : "")
+                })
                 .ToList();
 
-            var availableBracelets = await _context.Bracelets
+            var assignedBraceletIds = (await _context.Patients.Select(p => p.BraceletID).ToListAsync()).ToHashSet();
+            var availableBracelets = (await _context.Bracelets
+                    .OrderBy(b => b.BraceletID)
+                    .ToListAsync())
                 .Where(b => !assignedBraceletIds.Contains(b.BraceletID))
-                .OrderBy(b => b.BraceletID)
                 .Select(b => new
                 {
                     b.BraceletID,
                     Label = $"#{b.BraceletID}" + (b.Location != null ? $" — {b.Location}" : "")
                 })
+                .ToList();
+
+            var beds = await _context.Beds
+                .OrderBy(b => b.BedID)
+                .Select(b => new
+                {
+                    b.BedID,
+                    Label = $"Bed #{b.BedID} — Room {b.Room}, Sector {b.Sector}"
+                })
                 .ToListAsync();
 
-            UserOptions = new SelectList(availableUsers, "UserID", "Name", Input.ExistingUserId);
+            var wards = await _context.Wards
+                .OrderBy(w => w.WardName)
+                .Select(w => new { w.WardID, w.WardName })
+                .ToListAsync();
+
+            var diagnoses = await _context.Diagnoses
+                .OrderBy(d => d.DiagnosisName)
+                .Select(d => new { d.DiagnosisID, d.DiagnosisName })
+                .ToListAsync();
+
+            var medications = await _context.Medications
+                .OrderBy(m => m.MedicationName)
+                .Select(m => new { m.MedicationID, m.MedicationName })
+                .ToListAsync();
+
+            HasAvailableBracelets = availableBracelets.Count > 0;
+
+            UserOptions = new SelectList(availableUsers, "Id", "Name", Input.UserId);
             BraceletOptions = new SelectList(availableBracelets, "BraceletID", "Label", Input.BraceletID);
+            BedOptions = new SelectList(beds, "BedID", "Label", Input.BedID);
+            WardOptions = new SelectList(wards, "WardID", "WardName", Input.WardID);
+            DiagnosisOptions = new SelectList(diagnoses, "DiagnosisID", "DiagnosisName", Input.DiagnosisID);
+            MedicationOptions = new MultiSelectList(medications, "MedicationID", "MedicationName", Input.MedicationIDs);
         }
     }
 }

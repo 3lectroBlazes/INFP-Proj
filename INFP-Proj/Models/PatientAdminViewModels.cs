@@ -43,35 +43,38 @@ namespace INFP_Proj.Models
         public string? NewDosage { get; set; }
     }
 
-    public class RegisterPatientInput
+    public class PatientAdmissionInput
     {
+        [Required(ErrorMessage = "Please select a user to admit.")]
+        [Display(Name = "User")]
+        public string? UserId { get; set; }
+
         /// <summary>existing or new</summary>
-        public string AccountMode { get; set; } = "existing";
-
-        [Display(Name = "Existing patient account")]
-        public string? ExistingUserId { get; set; }
-
-        [Display(Name = "First name")]
-        public string? NewFirstName { get; set; }
-
-        [Display(Name = "Middle name")]
-        public string? NewMiddleName { get; set; }
-
-        [Display(Name = "Last name")]
-        public string? NewLastName { get; set; }
-
-        [Display(Name = "Email")]
-        [EmailAddress]
-        public string? NewEmail { get; set; }
-
-        [Display(Name = "Password")]
-        [DataType(DataType.Password)]
-        public string? NewPassword { get; set; }
-
         [Display(Name = "Bracelet")]
-        public int BraceletID { get; set; }
+        public string BraceletMode { get; set; } = "existing";
 
-        [Display(Name = "Status")]
-        public string Status { get; set; } = "Admitted";
+        [Display(Name = "Existing bracelet")]
+        public int? BraceletID { get; set; }
+
+        [Display(Name = "New bracelet location")]
+        public string? NewBraceletLocation { get; set; }
+
+        [Required(ErrorMessage = "Please select a bed.")]
+        [Display(Name = "Bed")]
+        public int BedID { get; set; }
+
+        [Required(ErrorMessage = "Please select a ward.")]
+        [Display(Name = "Ward")]
+        public int WardID { get; set; }
+
+        [Required(ErrorMessage = "Please select a diagnosis.")]
+        [Display(Name = "Diagnosis")]
+        public int DiagnosisID { get; set; }
+
+        [Display(Name = "Medications")]
+        public List<int> MedicationIDs { get; set; } = new();
+
+        [Display(Name = "Admission notes")]
+        public string? Description { get; set; }
     }
 }
