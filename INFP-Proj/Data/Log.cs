@@ -1,10 +1,13 @@
 ﻿using INFP_Proj.Models;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace INFP_Proj.Data
 {
     public class Log
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int LogID { get; set; }
         public string UserID { get; set; } 
         public required string Event { get; set; }

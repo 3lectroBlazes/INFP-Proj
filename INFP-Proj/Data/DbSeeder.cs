@@ -15,7 +15,7 @@ namespace INFP_Proj.Data
             if (userManager.Users.Any()) return;
 
             // Seed Roles
-            string[] roles = {"Nurse", "Doctor", "Reception", "User"};
+            string[] roles = {"Nurse", "Doctor", "Reception", "User", "Patient"};
 
             async Task<AppRole> CreateRole(string role)
             {

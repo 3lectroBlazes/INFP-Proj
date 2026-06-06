@@ -18,20 +18,33 @@ namespace INFP_Proj.Services
 
         public async Task AddLogAsync(string eventDescription, bool emergency = false, string? userId = null)
         {
-            if (userId == null)
+            if (string.IsNullOrEmpty(userId))
             {
                 var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
                 userId = adminUsers.FirstOrDefault()?.Id;
+
+                if (userId == null)
+                {
+                    foreach (var role in new[] { "Nurse", "Doctor", "Reception" })
+                    {
+                        var staffUsers = await _userManager.GetUsersInRoleAsync(role);
+                        userId = staffUsers.FirstOrDefault()?.Id;
+                        if (userId != null)
+                        {
+                            break;
+                        }
+                    }
+                }
             }
 
-            var nextId = await _context.Logs.AnyAsync()
-                ? await _context.Logs.MaxAsync(l => l.LogID) + 1
-                : 1;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return;
+            }
 
             _context.Logs.Add(new Log
             {
-                LogID = nextId,
-                UserID = userId ?? string.Empty,
+                UserID = userId,
                 Event = eventDescription,
                 Emergency = emergency,
                 Timestamp = DateTime.UtcNow
