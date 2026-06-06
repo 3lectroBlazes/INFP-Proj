@@ -110,6 +110,17 @@
     </div>
 </div>
 
+<div class="app-card card mb-4">
+    <div class="card-header">Doctor's Request</div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="SaveDoctorRequest" asp-route-id="@Model.Patient.PatientId">
+            <textarea name="RequestMessage" class="form-control mb-2" rows="4"
+                placeholder="Enter message for Doctor's Request">@Model.DoctorRequest.RequestMessage</textarea>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+
 <div class="app-card card section-danger">
     <div class="card-header">Discharge</div>
     <div class="card-body">

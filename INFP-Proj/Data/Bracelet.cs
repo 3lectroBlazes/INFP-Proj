@@ -8,7 +8,6 @@ namespace INFP_Proj.Data
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BraceletID { get; set; }
-        public int? PatientID { get; set; }
         public float? Battery { get; set; }
         public float? Respiration { get; set; }
         public string? Location { get; set; }
@@ -16,7 +15,6 @@ namespace INFP_Proj.Data
         public float? BloodPressure { get; set; }
         public float? HeartRate { get; set; }
 
-        [ForeignKey("PatientID")]
-        public Patients? Patients { get; set; }
+        public ICollection<BraceletRelation> BraceletRelations { get; set; }
     }
 }

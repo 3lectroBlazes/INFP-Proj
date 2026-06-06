@@ -23,22 +23,22 @@ namespace INFP_Proj.Pages.Admin
         public PatientEditViewModel Patient { get; set; } = new();
 
         public SelectList MedicationOptions { get; set; } = default!;
+        public DoctorRequest DoctorRequest { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var loaded = await LoadPatientAsync(id.Value);
-            if (loaded == null)
-            {
-                return NotFound();
-            }
+            if (loaded == null) return NotFound();
 
             Patient = loaded;
             await PopulateMedicationOptionsAsync();
+
+            DoctorRequest = await _context.DoctorRequests
+                .FirstOrDefaultAsync(dr => dr.PatientID == id.Value)
+                ?? new DoctorRequest { PatientID = id.Value };
+
             return Page();
         }
 
@@ -210,6 +210,21 @@ namespace INFP_Proj.Pages.Admin
             {
                 await _adminLogService.AddLogAsync(message, userId: userId);
             }
+        }
+        public async Task<IActionResult> OnPostSaveDoctorRequestAsync(int id)
+        {
+            var request = await _context.DoctorRequests.FirstOrDefaultAsync(dr => dr.PatientID == id);
+
+            if (request == null)
+            {
+                request = new DoctorRequest { PatientID = id };
+                _context.DoctorRequests.Add(request);
+            }
+
+            request.RequestMessage = Request.Form["RequestMessage"];
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage(new { id });
         }
     }
 }

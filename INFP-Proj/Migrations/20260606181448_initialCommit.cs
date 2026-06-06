@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace INFP_Proj.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class initialCommit : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -65,6 +65,24 @@ namespace INFP_Proj.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Bracelets",
+                columns: table => new
+                {
+                    BraceletID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Battery = table.Column<float>(type: "real", nullable: true),
+                    Respiration = table.Column<float>(type: "real", nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Movement = table.Column<float>(type: "real", nullable: true),
+                    BloodPressure = table.Column<float>(type: "real", nullable: true),
+                    HeartRate = table.Column<float>(type: "real", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Bracelets", x => x.BraceletID);
                 });
 
             migrationBuilder.CreateTable(
@@ -251,6 +269,27 @@ namespace INFP_Proj.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Patients",
+                columns: table => new
+                {
+                    PatientID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Patients", x => x.PatientID);
+                    table.ForeignKey(
+                        name: "FK_Patients_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AllergyLists",
                 columns: table => new
                 {
@@ -267,6 +306,12 @@ namespace INFP_Proj.Migrations
                         column: x => x.AllergyID,
                         principalTable: "Allergies",
                         principalColumn: "AllergyID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AllergyLists_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -289,6 +334,11 @@ namespace INFP_Proj.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Beds", x => x.BedID);
+                    table.ForeignKey(
+                        name: "FK_Beds_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID");
                     table.ForeignKey(
                         name: "FK_Beds_Wards_WardID",
                         column: x => x.WardID,
@@ -314,52 +364,56 @@ namespace INFP_Proj.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BloodWorks", x => x.BloodWorkID);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Bracelets",
-                columns: table => new
-                {
-                    BraceletID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PatientID = table.Column<int>(type: "int", nullable: true),
-                    Battery = table.Column<float>(type: "real", nullable: true),
-                    Respiration = table.Column<float>(type: "real", nullable: true),
-                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Movement = table.Column<float>(type: "real", nullable: true),
-                    BloodPressure = table.Column<float>(type: "real", nullable: true),
-                    HeartRate = table.Column<float>(type: "real", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Bracelets", x => x.BraceletID);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Patients",
-                columns: table => new
-                {
-                    PatientID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    BraceletID = table.Column<int>(type: "int", nullable: true),
-                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Patients", x => x.PatientID);
                     table.ForeignKey(
-                        name: "FK_Patients_AspNetUsers_UserID",
-                        column: x => x.UserID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
+                        name: "FK_BloodWorks_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BraceletRelations",
+                columns: table => new
+                {
+                    PatientID = table.Column<int>(type: "int", nullable: false),
+                    BraceletID = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BraceletRelations", x => new { x.PatientID, x.BraceletID });
                     table.ForeignKey(
-                        name: "FK_Patients_Bracelets_BraceletID",
+                        name: "FK_BraceletRelations_Bracelets_BraceletID",
                         column: x => x.BraceletID,
                         principalTable: "Bracelets",
                         principalColumn: "BraceletID");
+                    table.ForeignKey(
+                        name: "FK_BraceletRelations_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DoctorRequests",
+                columns: table => new
+                {
+                    DoctorRequestID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PatientID = table.Column<int>(type: "int", nullable: false),
+                    RequestMessage = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Completed = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DoctorRequests", x => x.DoctorRequestID);
+                    table.ForeignKey(
+                        name: "FK_DoctorRequests_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -557,11 +611,14 @@ namespace INFP_Proj.Migrations
                 column: "PatientID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bracelets_PatientID",
-                table: "Bracelets",
-                column: "PatientID",
-                unique: true,
-                filter: "[PatientID] IS NOT NULL");
+                name: "IX_BraceletRelations_BraceletID",
+                table: "BraceletRelations",
+                column: "BraceletID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DoctorRequests_PatientID",
+                table: "DoctorRequests",
+                column: "PatientID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Logs_UserID",
@@ -577,11 +634,6 @@ namespace INFP_Proj.Migrations
                 name: "IX_MedicationLists_PatientID",
                 table: "MedicationLists",
                 column: "PatientID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Patients_BraceletID",
-                table: "Patients",
-                column: "BraceletID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Patients_UserID",
@@ -627,45 +679,11 @@ namespace INFP_Proj.Migrations
                 name: "IX_Vitals_PatientID",
                 table: "Vitals",
                 column: "PatientID");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_AllergyLists_Patients_PatientID",
-                table: "AllergyLists",
-                column: "PatientID",
-                principalTable: "Patients",
-                principalColumn: "PatientID",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Beds_Patients_PatientID",
-                table: "Beds",
-                column: "PatientID",
-                principalTable: "Patients",
-                principalColumn: "PatientID");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_BloodWorks_Patients_PatientID",
-                table: "BloodWorks",
-                column: "PatientID",
-                principalTable: "Patients",
-                principalColumn: "PatientID",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Bracelets_Patients_PatientID",
-                table: "Bracelets",
-                column: "PatientID",
-                principalTable: "Patients",
-                principalColumn: "PatientID");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Bracelets_Patients_PatientID",
-                table: "Bracelets");
-
             migrationBuilder.DropTable(
                 name: "AllergyLists");
 
@@ -688,6 +706,12 @@ namespace INFP_Proj.Migrations
                 name: "BloodWorks");
 
             migrationBuilder.DropTable(
+                name: "BraceletRelations");
+
+            migrationBuilder.DropTable(
+                name: "DoctorRequests");
+
+            migrationBuilder.DropTable(
                 name: "Logs");
 
             migrationBuilder.DropTable(
@@ -704,6 +728,9 @@ namespace INFP_Proj.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Bracelets");
 
             migrationBuilder.DropTable(
                 name: "Beds");
@@ -728,9 +755,6 @@ namespace INFP_Proj.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
-                name: "Bracelets");
         }
     }
 }

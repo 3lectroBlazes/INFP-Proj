@@ -36,8 +36,10 @@ namespace INFP_Proj.Data
         public DbSet<Hospitals> Hospitals { get; set; }
         public DbSet<Diagnoses> Diagnoses { get; set; }
         public DbSet<Relationships> Relationships { get; set; }
+        public DbSet<BraceletRelation> BraceletRelations { get; set; }
         public DbSet<Log> Logs { get; set; }
         public DbSet<BloodWork> BloodWorks { get; set; }
+        public DbSet<DoctorRequest> DoctorRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -92,6 +94,21 @@ namespace INFP_Proj.Data
                 .HasOne<AppUser>()
                 .WithMany()
                 .HasForeignKey(r => r.UserID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<BraceletRelation>()
+                .HasKey(br => new { br.PatientID, br.BraceletID });
+
+            modelBuilder.Entity<BraceletRelation>()
+                .HasOne(br => br.Patient)
+                .WithMany(p => p.BraceletRelations)
+                .HasForeignKey(br => br.PatientID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<BraceletRelation>()
+                .HasOne(br => br.Bracelet)
+                .WithMany(b => b.BraceletRelations)  
+                .HasForeignKey(br => br.BraceletID)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

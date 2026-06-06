@@ -98,7 +98,6 @@ namespace INFP_Proj.Pages.Admin
                 {
                     bracelet = new Bracelet
                     {
-                        PatientID = 0,
                         Location = string.IsNullOrWhiteSpace(Input.NewBraceletLocation)
                             ? null
                             : Input.NewBraceletLocation.Trim()
@@ -114,13 +113,11 @@ namespace INFP_Proj.Pages.Admin
                 var patient = new Patients
                 {
                     UserID = Input.UserId!,
-                    BraceletID = bracelet.BraceletID,
                     Status = "Admitted"
                 };
                 _context.Patients.Add(patient);
                 await _context.SaveChangesAsync();
 
-                bracelet.PatientID = patient.PatientID;
                 await _context.SaveChangesAsync();
 
                 var medicationLists = Input.MedicationIDs
@@ -195,16 +192,15 @@ namespace INFP_Proj.Pages.Admin
                     ModelState.AddModelError(nameof(Input.UserId), "This user is already admitted as a patient.");
                 }
             }
-
             if (!isNewBracelet && Input.BraceletID is > 0)
             {
                 if (!await _context.Bracelets.AnyAsync(b => b.BraceletID == Input.BraceletID))
                 {
                     ModelState.AddModelError(nameof(Input.BraceletID), "Selected bracelet was not found.");
                 }
-                else if (await _context.Patients.AnyAsync(p => p.BraceletID == Input.BraceletID))
+                else if (await _context.BraceletRelations.AnyAsync(br => br.BraceletID == Input.BraceletID))
                 {
-                    ModelState.AddModelError(nameof(Input.BraceletID), "This bracelet is already assigned.");
+                    ModelState.AddModelError(nameof(Input.BraceletID), "This bracelet is already assigned to a patient.");
                 }
             }
 
@@ -311,7 +307,7 @@ namespace INFP_Proj.Pages.Admin
                 })
                 .ToList();
 
-            var assignedBraceletIds = (await _context.Patients.Select(p => p.BraceletID).ToListAsync()).ToHashSet();
+            var assignedBraceletIds = (await _context.BraceletRelations.Select(br => br.BraceletID).ToListAsync()).ToHashSet();
             var availableBracelets = (await _context.Bracelets
                     .OrderBy(b => b.BraceletID)
                     .ToListAsync())

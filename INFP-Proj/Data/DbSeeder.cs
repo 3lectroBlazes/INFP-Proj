@@ -160,23 +160,17 @@ namespace INFP_Proj.Data
             // Patients
             Patients sadevPatient = new Patients
             {
-                BraceletID = sadevBracelet.BraceletID,
                 UserID = sadev.Id,
                 Status = "Admitted"
             };
             Patients mikuPatient = new Patients
             {
-                BraceletID = mikuBracelet.BraceletID,
                 UserID = miku.Id,
                 Status = "Admitted"
             };
             context.Patients.AddRange(sadevPatient, mikuPatient);
             await context.SaveChangesAsync();
 
-            // Update bracelet to point to patient
-            sadevBracelet.PatientID = sadevPatient.PatientID;
-            mikuBracelet.PatientID = mikuPatient.PatientID;
-            await context.SaveChangesAsync();
 
             // AllergyList
             context.AllergyLists.AddRange(
@@ -286,6 +280,11 @@ namespace INFP_Proj.Data
             context.Relationships.AddRange(
                 new Relationships { PatientID = sadevPatient.PatientID, UserID = sasha.Id },
                 new Relationships { PatientID = mikuPatient.PatientID, UserID = teto.Id }
+            );
+
+            context.BraceletRelations.AddRange(
+                new BraceletRelation { BraceletID = sadevBracelet.BraceletID, PatientID = sadevPatient.PatientID },
+                new BraceletRelation { BraceletID = mikuBracelet.BraceletID, PatientID = mikuPatient.PatientID }
             );
 
             // Logs

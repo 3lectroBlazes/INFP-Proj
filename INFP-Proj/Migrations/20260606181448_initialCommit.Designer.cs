@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260606150034_initial")]
-    partial class initial
+    [Migration("20260606181448_initialCommit")]
+    partial class initialCommit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -176,19 +176,27 @@ namespace INFP_Proj.Migrations
                     b.Property<float?>("Movement")
                         .HasColumnType("real");
 
-                    b.Property<int?>("PatientID")
-                        .HasColumnType("int");
-
                     b.Property<float?>("Respiration")
                         .HasColumnType("real");
 
                     b.HasKey("BraceletID");
 
-                    b.HasIndex("PatientID")
-                        .IsUnique()
-                        .HasFilter("[PatientID] IS NOT NULL");
-
                     b.ToTable("Bracelets");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Data.BraceletRelation", b =>
+                {
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BraceletID")
+                        .HasColumnType("int");
+
+                    b.HasKey("PatientID", "BraceletID");
+
+                    b.HasIndex("BraceletID");
+
+                    b.ToTable("BraceletRelations");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Diagnoses", b =>
@@ -206,6 +214,34 @@ namespace INFP_Proj.Migrations
                     b.HasKey("DiagnosisID");
 
                     b.ToTable("Diagnoses");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Data.DoctorRequest", b =>
+                {
+                    b.Property<int>("DoctorRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DoctorRequestID"));
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RequestDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RequestMessage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("DoctorRequestID");
+
+                    b.HasIndex("PatientID");
+
+                    b.ToTable("DoctorRequests");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Hospitals", b =>
@@ -313,9 +349,6 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PatientID"));
 
-                    b.Property<int?>("BraceletID")
-                        .HasColumnType("int");
-
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
@@ -328,8 +361,6 @@ namespace INFP_Proj.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("PatientID");
-
-                    b.HasIndex("BraceletID");
 
                     b.HasIndex("UserID");
 
@@ -716,13 +747,34 @@ namespace INFP_Proj.Migrations
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("INFP_Proj.Data.Bracelet", b =>
+            modelBuilder.Entity("INFP_Proj.Data.BraceletRelation", b =>
                 {
-                    b.HasOne("INFP_Proj.Data.Patients", "Patients")
-                        .WithOne()
-                        .HasForeignKey("INFP_Proj.Data.Bracelet", "PatientID");
+                    b.HasOne("INFP_Proj.Data.Bracelet", "Bracelet")
+                        .WithMany("BraceletRelations")
+                        .HasForeignKey("BraceletID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
-                    b.Navigation("Patients");
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany("BraceletRelations")
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Bracelet");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Data.DoctorRequest", b =>
+                {
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Log", b =>
@@ -757,17 +809,11 @@ namespace INFP_Proj.Migrations
 
             modelBuilder.Entity("INFP_Proj.Data.Patients", b =>
                 {
-                    b.HasOne("INFP_Proj.Data.Bracelet", "Bracelet")
-                        .WithMany()
-                        .HasForeignKey("BraceletID");
-
                     b.HasOne("INFP_Proj.Models.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Bracelet");
 
                     b.Navigation("User");
                 });
@@ -902,9 +948,16 @@ namespace INFP_Proj.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("INFP_Proj.Data.Bracelet", b =>
+                {
+                    b.Navigation("BraceletRelations");
+                });
+
             modelBuilder.Entity("INFP_Proj.Data.Patients", b =>
                 {
                     b.Navigation("AllergyLists");
+
+                    b.Navigation("BraceletRelations");
 
                     b.Navigation("Relationships");
                 });
