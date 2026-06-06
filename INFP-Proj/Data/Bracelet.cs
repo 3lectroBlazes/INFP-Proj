@@ -6,6 +6,7 @@ namespace INFP_Proj.Data
     public class Bracelet
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int BraceletID { get; set; }
         public int? PatientID { get; set; }
         public float? Battery { get; set; }

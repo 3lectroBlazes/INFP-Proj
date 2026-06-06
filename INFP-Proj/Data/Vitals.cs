@@ -6,6 +6,7 @@ namespace INFP_Proj.Data
     public class Vitals
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int VitalsID { get; set; }
         public int PatientID { get; set; }
         public float? BloodPressure { get; set; }

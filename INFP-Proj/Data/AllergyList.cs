@@ -6,6 +6,7 @@ namespace INFP_Proj.Data
     public class AllergyList
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int AllergyListID { get; set; }
         public int PatientID { get; set; }
         public int AllergyID { get; set; }

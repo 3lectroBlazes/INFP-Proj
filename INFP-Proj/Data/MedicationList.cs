@@ -6,6 +6,7 @@ namespace INFP_Proj.Data
     public class MedicationList
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MedicationListID { get; set; }
         public int PatientID { get; set; }
         public int MedicationID { get; set; }

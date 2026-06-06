@@ -6,6 +6,7 @@ namespace INFP_Proj.Data
     public class Records
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int RecordID { get; set; }
         public int PatientID { get; set; }
         public int BedID { get; set; }

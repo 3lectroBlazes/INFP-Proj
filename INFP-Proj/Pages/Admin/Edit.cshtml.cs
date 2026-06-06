@@ -93,13 +93,8 @@ namespace INFP_Proj.Pages.Admin
                 return RedirectToPage(new { id });
             }
 
-            var nextId = await _context.MedicationLists.AnyAsync()
-                ? await _context.MedicationLists.MaxAsync(m => m.MedicationListID) + 1
-                : 1;
-
             _context.MedicationLists.Add(new MedicationList
             {
-                MedicationListID = nextId,
                 PatientID = id,
                 MedicationID = Patient.NewMedicationID.Value,
                 Dosage = Patient.NewDosage.Trim()
