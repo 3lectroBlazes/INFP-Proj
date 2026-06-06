@@ -7,7 +7,7 @@ namespace INFP_Proj.Data
     {
         [Key]
         public int BraceletID { get; set; }
-        public int PatientID { get; set; }
+        public int? PatientID { get; set; }
         public float? Battery { get; set; }
         public float? Respiration { get; set; }
         public string? Location { get; set; }

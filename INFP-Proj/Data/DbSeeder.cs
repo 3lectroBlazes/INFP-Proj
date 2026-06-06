@@ -8,14 +8,30 @@ namespace INFP_Proj.Data
     {
         public static async Task SeedAsync(IServiceProvider serviceProvider)
         {
-            using AppDbContext context = new AppDbContext(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext>>());
-            UserManager<AppUser> userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
-            RoleManager<AppRole> roleManager = serviceProvider.GetRequiredService<RoleManager<AppRole>>();
+            using IServiceScope scope = serviceProvider.CreateScope();
+            AppDbContext context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            UserManager<AppUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            RoleManager<AppRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
+
+            // NOTE: ANY EXTRA SEEDING LOGIC SHOULD BE PLACED BELOW THIS CHECK TO AVOID DUPLICATE SEEDING
+            //
+            // User uses special logic as below 
+            // AppUser EXTRA = await CreateUser("First", null, "last", "extra@hospital.com", "User");
+            //
+            // Example seeding logic for reference:
+            // <tableName> <name> = new <tableName> { <tableData> };
+            //  E.G Allergies Penicillin = new Allergies { Allergy = "Penicillin" };
+
+
+
+            // ^^ Extra seeds above. Please delete after use. ^^ 
 
             if (userManager.Users.Any()) return;
 
+            // Runs all code ONCE to seed the database with initial data. Extra seeds above ^^
+
             // Seed Roles
-            string[] roles = {"Nurse", "Doctor", "Reception", "User", "Patient"};
+            string[] roles = {"Nurse", "Doctor", "Reception", "User"};
 
             async Task<AppRole> CreateRole(string role)
             {
@@ -48,6 +64,7 @@ namespace INFP_Proj.Data
                     EmailConfirmed = true
                 };
                 await userManager.CreateAsync(user, "Password@123");
+                await context.SaveChangesAsync();
                 await userManager.AddToRoleAsync(user, role);
                 return user;
             }
@@ -56,9 +73,9 @@ namespace INFP_Proj.Data
             AppUser xavier = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
             AppUser evan = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
             AppUser sadev = await CreateUser("Sadev", null, "Mawadavilage", "sadev.mawadavilage@hospital.com", "User");
-            AppUser miku = await CreateUser("Hatsune", null, "Miku", "hastune.miku@hospital.com", "User");
+            AppUser miku = await CreateUser("Hatsune", null, "Miku", "hatsune.miku@hospital.com", "User");
             AppUser sasha = await CreateUser("Sasha", null, "Sasthi", "sasha.sasthi@hospital.com", "User");
-            AppUser teto = await CreateUser("Kasane", null, "Teto", "hastune.miku@hospital.com", "User");
+            AppUser teto = await CreateUser("Kasane", null, "Teto", "kasane.teto@hospital.com", "User");
 
             // Hospitals
             Hospitals hospital = new Hospitals
@@ -106,7 +123,6 @@ namespace INFP_Proj.Data
             // Bracelet
             Bracelet sadevBracelet = new Bracelet
             {
-                PatientID = 0,
                 Battery = 85.5f,
                 Respiration = 18.0f,
                 Location = "Ward A",
@@ -116,7 +132,6 @@ namespace INFP_Proj.Data
             };
             Bracelet mikuBracelet = new Bracelet
             {
-                PatientID = 0,
                 Battery = 90.0f,
                 Respiration = 16.0f,
                 Location = "Ward A",

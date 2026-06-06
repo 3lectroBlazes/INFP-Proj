@@ -42,6 +42,42 @@ namespace INFP_Proj.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Records>()
+                .HasOne(r => r.Patients)
+                .WithMany()
+                .HasForeignKey(r => r.PatientID)
+                .OnDelete(DeleteBehavior.Restrict);  
+
+            modelBuilder.Entity<Records>()
+                .HasOne(r => r.Beds)
+                .WithMany()
+                .HasForeignKey(r => r.BedID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Records>()
+                .HasOne(r => r.Wards)
+                .WithMany()
+                .HasForeignKey(r => r.WardID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Records>()
+                .HasOne(r => r.Hospitals)
+                .WithMany()
+                .HasForeignKey(r => r.HospitalID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Records>()
+                .HasOne(r => r.Diagnoses)
+                .WithMany()
+                .HasForeignKey(r => r.DiagnosisID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Records>()
+                .HasOne(r => r.MedicationList)
+                .WithMany()
+                .HasForeignKey(r => r.MedicationListID)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Relationships>()
                 .HasKey(r => new { r.PatientID, r.UserID });
 

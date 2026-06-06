@@ -47,23 +47,17 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AllergyListID"));
 
-                    b.Property<int?>("AllergiesAllergyID")
-                        .HasColumnType("int");
-
                     b.Property<int>("AllergyID")
                         .HasColumnType("int");
 
                     b.Property<int>("PatientID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PatientsPatientID")
-                        .HasColumnType("int");
-
                     b.HasKey("AllergyListID");
 
-                    b.HasIndex("AllergiesAllergyID");
+                    b.HasIndex("AllergyID");
 
-                    b.HasIndex("PatientsPatientID");
+                    b.HasIndex("PatientID");
 
                     b.ToTable("AllergyLists");
                 });
@@ -86,9 +80,6 @@ namespace INFP_Proj.Migrations
                     b.Property<int?>("PatientID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PatientsPatientID")
-                        .HasColumnType("int");
-
                     b.Property<string>("Room")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -103,17 +94,14 @@ namespace INFP_Proj.Migrations
                     b.Property<int>("WardID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("WardsWardID")
-                        .HasColumnType("int");
-
                     b.Property<float>("Weight")
                         .HasColumnType("real");
 
                     b.HasKey("BedID");
 
-                    b.HasIndex("PatientsPatientID");
+                    b.HasIndex("PatientID");
 
-                    b.HasIndex("WardsWardID");
+                    b.HasIndex("WardID");
 
                     b.ToTable("Beds");
                 });
@@ -141,13 +129,17 @@ namespace INFP_Proj.Migrations
                     b.Property<float?>("Movement")
                         .HasColumnType("real");
 
-                    b.Property<int>("PatientID")
+                    b.Property<int?>("PatientID")
                         .HasColumnType("int");
 
                     b.Property<float?>("Respiration")
                         .HasColumnType("real");
 
                     b.HasKey("BraceletID");
+
+                    b.HasIndex("PatientID")
+                        .IsUnique()
+                        .HasFilter("[PatientID] IS NOT NULL");
 
                     b.ToTable("Bracelets");
                 });
@@ -234,20 +226,14 @@ namespace INFP_Proj.Migrations
                     b.Property<int>("MedicationID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("MedicationsMedicationID")
-                        .HasColumnType("int");
-
                     b.Property<int>("PatientID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PatientsPatientID")
                         .HasColumnType("int");
 
                     b.HasKey("MedicationListID");
 
-                    b.HasIndex("MedicationsMedicationID");
+                    b.HasIndex("MedicationID");
 
-                    b.HasIndex("PatientsPatientID");
+                    b.HasIndex("PatientID");
 
                     b.ToTable("MedicationLists");
                 });
@@ -280,7 +266,7 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PatientID"));
 
-                    b.Property<int>("BraceletID")
+                    b.Property<int?>("BraceletID")
                         .HasColumnType("int");
 
                     b.Property<string>("Status")
@@ -293,8 +279,7 @@ namespace INFP_Proj.Migrations
 
                     b.HasKey("PatientID");
 
-                    b.HasIndex("BraceletID")
-                        .IsUnique();
+                    b.HasIndex("BraceletID");
 
                     b.HasIndex("UserID");
 
@@ -315,15 +300,9 @@ namespace INFP_Proj.Migrations
                     b.Property<int>("BedID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("BedsBedID")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("DiagnosesDiagnosisID")
-                        .HasColumnType("int");
 
                     b.Property<int>("DiagnosisID")
                         .HasColumnType("int");
@@ -334,37 +313,28 @@ namespace INFP_Proj.Migrations
                     b.Property<int>("HospitalID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("HospitalsHospitalID")
-                        .HasColumnType("int");
-
                     b.Property<int>("MedicationListID")
                         .HasColumnType("int");
 
                     b.Property<int>("PatientID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PatientsPatientID")
-                        .HasColumnType("int");
-
                     b.Property<int>("WardID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("WardsWardID")
                         .HasColumnType("int");
 
                     b.HasKey("RecordID");
 
-                    b.HasIndex("BedsBedID");
+                    b.HasIndex("BedID");
 
-                    b.HasIndex("DiagnosesDiagnosisID");
+                    b.HasIndex("DiagnosisID");
 
-                    b.HasIndex("HospitalsHospitalID");
+                    b.HasIndex("HospitalID");
 
                     b.HasIndex("MedicationListID");
 
-                    b.HasIndex("PatientsPatientID");
+                    b.HasIndex("PatientID");
 
-                    b.HasIndex("WardsWardID");
+                    b.HasIndex("WardID");
 
                     b.ToTable("Records");
                 });
@@ -401,9 +371,6 @@ namespace INFP_Proj.Migrations
                     b.Property<int>("PatientID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PatientsPatientID")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("RecordedAt")
                         .HasColumnType("datetime2");
 
@@ -415,7 +382,7 @@ namespace INFP_Proj.Migrations
 
                     b.HasKey("VitalsID");
 
-                    b.HasIndex("PatientsPatientID");
+                    b.HasIndex("PatientID");
 
                     b.ToTable("Vitals");
                 });
@@ -656,11 +623,15 @@ namespace INFP_Proj.Migrations
                 {
                     b.HasOne("INFP_Proj.Data.Allergies", "Allergies")
                         .WithMany()
-                        .HasForeignKey("AllergiesAllergyID");
+                        .HasForeignKey("AllergyID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
                         .WithMany("AllergyLists")
-                        .HasForeignKey("PatientsPatientID");
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Allergies");
 
@@ -671,15 +642,26 @@ namespace INFP_Proj.Migrations
                 {
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
                         .WithMany()
-                        .HasForeignKey("PatientsPatientID");
+                        .HasForeignKey("PatientID");
 
                     b.HasOne("INFP_Proj.Data.Wards", "Wards")
                         .WithMany()
-                        .HasForeignKey("WardsWardID");
+                        .HasForeignKey("WardID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Patients");
 
                     b.Navigation("Wards");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Data.Bracelet", b =>
+                {
+                    b.HasOne("INFP_Proj.Data.Patients", "Patients")
+                        .WithOne()
+                        .HasForeignKey("INFP_Proj.Data.Bracelet", "PatientID");
+
+                    b.Navigation("Patients");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Log", b =>
@@ -697,11 +679,15 @@ namespace INFP_Proj.Migrations
                 {
                     b.HasOne("INFP_Proj.Data.Medications", "Medications")
                         .WithMany()
-                        .HasForeignKey("MedicationsMedicationID");
+                        .HasForeignKey("MedicationID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
                         .WithMany()
-                        .HasForeignKey("PatientsPatientID");
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Medications");
 
@@ -711,10 +697,8 @@ namespace INFP_Proj.Migrations
             modelBuilder.Entity("INFP_Proj.Data.Patients", b =>
                 {
                     b.HasOne("INFP_Proj.Data.Bracelet", "Bracelet")
-                        .WithOne("Patients")
-                        .HasForeignKey("INFP_Proj.Data.Patients", "BraceletID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany()
+                        .HasForeignKey("BraceletID");
 
                     b.HasOne("INFP_Proj.Models.AppUser", "User")
                         .WithMany()
@@ -731,15 +715,21 @@ namespace INFP_Proj.Migrations
                 {
                     b.HasOne("INFP_Proj.Data.Beds", "Beds")
                         .WithMany()
-                        .HasForeignKey("BedsBedID");
+                        .HasForeignKey("BedID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("INFP_Proj.Data.Diagnoses", "Diagnoses")
                         .WithMany()
-                        .HasForeignKey("DiagnosesDiagnosisID");
+                        .HasForeignKey("DiagnosisID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("INFP_Proj.Data.Hospitals", "Hospitals")
                         .WithMany()
-                        .HasForeignKey("HospitalsHospitalID");
+                        .HasForeignKey("HospitalID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("INFP_Proj.Data.MedicationList", "MedicationList")
                         .WithMany()
@@ -749,11 +739,15 @@ namespace INFP_Proj.Migrations
 
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
                         .WithMany()
-                        .HasForeignKey("PatientsPatientID");
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("INFP_Proj.Data.Wards", "Wards")
                         .WithMany()
-                        .HasForeignKey("WardsWardID");
+                        .HasForeignKey("WardID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Beds");
 
@@ -789,7 +783,9 @@ namespace INFP_Proj.Migrations
                 {
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
                         .WithMany()
-                        .HasForeignKey("PatientsPatientID");
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Patients");
                 });
@@ -843,11 +839,6 @@ namespace INFP_Proj.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("INFP_Proj.Data.Bracelet", b =>
-                {
-                    b.Navigation("Patients");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Patients", b =>

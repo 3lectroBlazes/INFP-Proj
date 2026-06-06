@@ -9,7 +9,7 @@ namespace INFP_Proj.Data
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int PatientID { get; set; }
-        public int BraceletID { get; set; }
+        public int? BraceletID { get; set; }
         public string UserID { get; set; }
         public required string Status { get; set; }
         public List<AllergyList>? AllergyLists { get; set; } = new();
