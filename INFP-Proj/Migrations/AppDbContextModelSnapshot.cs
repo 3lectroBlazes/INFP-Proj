@@ -97,6 +97,9 @@ namespace INFP_Proj.Migrations
                     b.Property<float>("Weight")
                         .HasColumnType("real");
 
+                    b.Property<bool>("buttonPressed")
+                        .HasColumnType("bit");
+
                     b.HasKey("BedID");
 
                     b.HasIndex("PatientID");

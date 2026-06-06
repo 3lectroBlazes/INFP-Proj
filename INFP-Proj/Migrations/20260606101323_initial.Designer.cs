@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260606091606_initial-commit")]
-    partial class initialcommit
+    [Migration("20260606101323_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -99,6 +99,9 @@ namespace INFP_Proj.Migrations
 
                     b.Property<float>("Weight")
                         .HasColumnType("real");
+
+                    b.Property<bool>("buttonPressed")
+                        .HasColumnType("bit");
 
                     b.HasKey("BedID");
 
