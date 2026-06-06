@@ -2,6 +2,7 @@ using INFP_Proj.Data;
 using INFP_Proj.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.CodeAnalysis.Scripting.Hosting;
 using Microsoft.EntityFrameworkCore;
 
 namespace INFP_Proj.Pages
@@ -34,22 +35,26 @@ namespace INFP_Proj.Pages
                 .Where(m => patientIds.Contains(m.PatientID))
                 .ToListAsync();
 
+            var beds = await _context.Beds
+                .Where(b => patientIds.Contains((int)b.PatientID))
+                .Select(b => new { b.PatientID, b.buttonPressed })
+                .ToListAsync();
+
             var records = await _context.Records
                 .Where(r => patientIds.Contains(r.PatientID))
                 .ToListAsync();
 
             Patients = patients.Select(p =>
             {
-                var patientMeds = medicationLists.Where(m => m.PatientID == p.PatientID).ToList();
-                var latestRecord = records
-                    .Where(r => r.PatientID == p.PatientID)
-                    .OrderByDescending(r => r.AdmissionDateTime)
-                    .FirstOrDefault();
+                var patientMeds = medicationLists.Where(m => m.PatientID == p.PatientID).ToList();;
 
                 var medSummary = patientMeds.Count == 0
                     ? "None"
                     : string.Join(", ", patientMeds.Select(m =>
                         $"{m.Medications?.MedicationName ?? "Unknown"} ({m.Dosage})"));
+
+                var nurseCall = beds
+                    .Any(b => b.PatientID == p.PatientID && b.buttonPressed);
 
                 return new PatientListItem
                 {
@@ -59,8 +64,7 @@ namespace INFP_Proj.Pages
                         : $"Patient #{p.PatientID}",
                     Status = p.Status,
                     MedicationsSummary = medSummary,
-                    AdmissionDateTime = latestRecord?.AdmissionDateTime,
-                    DischargeDateTime = latestRecord?.DischargeDateTime
+                    NurseCall = nurseCall
                 };
             }).ToList();
         }

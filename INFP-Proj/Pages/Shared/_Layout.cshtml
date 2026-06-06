@@ -28,7 +28,7 @@
                         </li>
                         @if (SignInManager.IsSignedIn(User))
                         {
-                            @if (User.IsInRole("Doctor") || User.IsInRole("Nurse") || User.IsInRole("Reception"))
+                            @if (User.FindFirst("IsAdmin")?.Value == "True")
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-area="" asp-page="/Admin/Dashboard">Dashboard</a>
@@ -43,7 +43,7 @@
                                     <a class="nav-link" asp-area="" asp-page="/Admin/Logs">Activity Log</a>
                                 </li>
                             }
-                            else if (User.IsInRole("Patient"))
+                            else
                             {
                                 <li class="nav-item">
                                     <a class="nav-link" asp-area="" asp-page="/User/Dashboard">Dashboard</a>

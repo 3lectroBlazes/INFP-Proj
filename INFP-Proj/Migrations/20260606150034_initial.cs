@@ -298,6 +298,25 @@ namespace INFP_Proj.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BloodWorks",
+                columns: table => new
+                {
+                    BloodWorkID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PatientID = table.Column<int>(type: "int", nullable: false),
+                    TestDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    BloodType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Cholesterol = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    BloodSugar = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Hemoglobin = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TotalBloodCount = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BloodWorks", x => x.BloodWorkID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Bracelets",
                 columns: table => new
                 {
@@ -324,7 +343,8 @@ namespace INFP_Proj.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BraceletID = table.Column<int>(type: "int", nullable: true),
                     UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -532,6 +552,11 @@ namespace INFP_Proj.Migrations
                 column: "WardID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BloodWorks_PatientID",
+                table: "BloodWorks",
+                column: "PatientID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Bracelets_PatientID",
                 table: "Bracelets",
                 column: "PatientID",
@@ -619,6 +644,14 @@ namespace INFP_Proj.Migrations
                 principalColumn: "PatientID");
 
             migrationBuilder.AddForeignKey(
+                name: "FK_BloodWorks_Patients_PatientID",
+                table: "BloodWorks",
+                column: "PatientID",
+                principalTable: "Patients",
+                principalColumn: "PatientID",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
                 name: "FK_Bracelets_Patients_PatientID",
                 table: "Bracelets",
                 column: "PatientID",
@@ -650,6 +683,9 @@ namespace INFP_Proj.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "BloodWorks");
 
             migrationBuilder.DropTable(
                 name: "Logs");

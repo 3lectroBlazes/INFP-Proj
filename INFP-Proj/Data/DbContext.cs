@@ -37,6 +37,7 @@ namespace INFP_Proj.Data
         public DbSet<Diagnoses> Diagnoses { get; set; }
         public DbSet<Relationships> Relationships { get; set; }
         public DbSet<Log> Logs { get; set; }
+        public DbSet<BloodWork> BloodWorks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

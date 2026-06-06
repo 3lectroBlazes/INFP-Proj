@@ -14,6 +14,7 @@ namespace INFP_Proj.Data
         public required string Status { get; set; }
         public List<AllergyList>? AllergyLists { get; set; } = new();
         public List<Relationships> Relationships { get; set; } = new();
+        public string? Notes { get; set; }
 
         [ForeignKey("BraceletID")]
         public Bracelet? Bracelet { get; set; }

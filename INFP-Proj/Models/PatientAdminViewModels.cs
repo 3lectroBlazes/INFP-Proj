@@ -11,6 +11,7 @@ namespace INFP_Proj.Models
         public DateTime? AdmissionDateTime { get; set; }
         public DateTime? DischargeDateTime { get; set; }
         public bool IsDischarged => DischargeDateTime.HasValue;
+        public bool NurseCall { get; set; } = false;
     }
 
     public class MedicationListEditItem

@@ -34,6 +34,11 @@ namespace INFP_Proj.Pages.Admin
                 .Where(r => patientIds.Contains(r.PatientID))
                 .ToListAsync();
 
+            var beds = await _context.Beds
+                .Where(b => patientIds.Contains((int)b.PatientID))
+                .Select(b => new { b.PatientID, b.buttonPressed })
+                .ToListAsync();
+
             Patients = patients.Select(p =>
             {
                 var patientMeds = medicationLists.Where(m => m.PatientID == p.PatientID).ToList();
@@ -47,6 +52,9 @@ namespace INFP_Proj.Pages.Admin
                     : string.Join(", ", patientMeds.Select(m =>
                         $"{m.Medications?.MedicationName ?? "Unknown"} ({m.Dosage})"));
 
+                var nurseCall = beds
+                    .Any(b => b.PatientID == p.PatientID && b.buttonPressed);
+
                 return new PatientListItem
                 {
                     PatientId = p.PatientID,
@@ -56,7 +64,8 @@ namespace INFP_Proj.Pages.Admin
                     Status = p.Status,
                     MedicationsSummary = medSummary,
                     AdmissionDateTime = latestRecord?.AdmissionDateTime,
-                    DischargeDateTime = latestRecord?.DischargeDateTime
+                    DischargeDateTime = latestRecord?.DischargeDateTime,
+                    NurseCall = nurseCall
                 };
             }).ToList();
         }

@@ -236,7 +236,7 @@ namespace INFP_Proj.Data
                 HospitalID = hospital.HospitalID,
                 DiagnosisID = diagnosis.DiagnosisID,
                 MedicationListID = sadevList.MedicationListID,
-                Description = "Patient admitted for monitoring",
+                Description = "Patient mentions Severe Chest Pain",
                 AdmissionDateTime = DateTime.UtcNow,
                 DischargeDateTime = null
             });
@@ -248,7 +248,7 @@ namespace INFP_Proj.Data
                 HospitalID = hospital.HospitalID,
                 DiagnosisID = autism.DiagnosisID,
                 MedicationListID = mikuList.MedicationListID,
-                Description = "Patient admitted for monitoring",
+                Description = "Patient is constantly singing",
                 AdmissionDateTime = DateTime.UtcNow,
                 DischargeDateTime = null
             });

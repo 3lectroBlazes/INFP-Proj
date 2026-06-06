@@ -39,6 +39,7 @@ else
                     <th>Medications</th>
                     <th>Admitted</th>
                     <th>Discharged</th>
+                    <th>Nurse Call</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -55,6 +56,16 @@ else
                         <td class="text-muted small">@patient.MedicationsSummary</td>
                         <td>@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
                         <td>@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                        <td>
+                            @if (patient.NurseCall)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactive</span>
+                            }
+                        </td>
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
                         </td>

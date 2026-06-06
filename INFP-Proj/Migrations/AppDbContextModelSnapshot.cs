@@ -109,6 +109,47 @@ namespace INFP_Proj.Migrations
                     b.ToTable("Beds");
                 });
 
+            modelBuilder.Entity("INFP_Proj.Data.BloodWork", b =>
+                {
+                    b.Property<int>("BloodWorkID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BloodWorkID"));
+
+                    b.Property<string>("BloodSugar")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BloodType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Cholesterol")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Hemoglobin")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("TestDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TotalBloodCount")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("BloodWorkID");
+
+                    b.HasIndex("PatientID");
+
+                    b.ToTable("BloodWorks");
+                });
+
             modelBuilder.Entity("INFP_Proj.Data.Bracelet", b =>
                 {
                     b.Property<int>("BraceletID")
@@ -271,6 +312,9 @@ namespace INFP_Proj.Migrations
 
                     b.Property<int?>("BraceletID")
                         .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -656,6 +700,17 @@ namespace INFP_Proj.Migrations
                     b.Navigation("Patients");
 
                     b.Navigation("Wards");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Data.BloodWork", b =>
+                {
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Bracelet", b =>
