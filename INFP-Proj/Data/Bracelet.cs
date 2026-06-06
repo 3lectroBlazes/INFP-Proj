@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace INFP_Proj.Data
 {
@@ -14,6 +15,7 @@ namespace INFP_Proj.Data
         public float? BloodPressure { get; set; }
         public float? HeartRate { get; set; }
 
-        public Patients? Patients { get; set; }   
-}
+        [ForeignKey("PatientID")]
+        public Patients? Patients { get; set; }
+    }
 }

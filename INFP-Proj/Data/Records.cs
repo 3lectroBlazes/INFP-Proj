@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace INFP_Proj.Data
 {
@@ -15,11 +16,18 @@ namespace INFP_Proj.Data
         public required string Description { get; set; }
         public required DateTime AdmissionDateTime { get; set; } = DateTime.UtcNow;
         public DateTime? DischargeDateTime { get; set; }
+
+        [ForeignKey("PatientID")]
         public Patients? Patients { get; set; }
+        [ForeignKey("BedID")]
         public Beds? Beds { get; set; }
+        [ForeignKey("MedicationListID")]
         public MedicationList? MedicationList { get; set; }
+        [ForeignKey("WardID")]
         public Wards? Wards { get; set; }
+        [ForeignKey("HospitalID")]
         public Hospitals? Hospitals { get; set; }
+        [ForeignKey("DiagnosisID")]
         public Diagnoses? Diagnoses { get; set; }
     }
 }
