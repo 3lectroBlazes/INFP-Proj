@@ -86,12 +86,27 @@ namespace INFP_Proj.Data
             context.Hospitals.Add(hospital);
 
             // Wards
-            Wards ward = new Wards
+            Wards AE = new Wards
             {
-                WardName = "Ward A",
+                WardName = "A&E",
                 MaxCapacity = 20
             };
-            context.Wards.Add(ward);
+            Wards general = new Wards
+            {
+                WardName = "General",
+                MaxCapacity = 50
+            };
+            Wards disease = new Wards
+            {
+                WardName = "Diseases",
+                MaxCapacity = 30
+            };
+            Wards special = new Wards
+            {
+                WardName = "Specialized",
+                MaxCapacity = 10
+            };
+            context.Wards.AddRange(AE, general, disease, special);
 
             // Allergies
             Allergies Penicillin = new Allergies { Allergy = "Penicillin" };
@@ -190,7 +205,7 @@ namespace INFP_Proj.Data
             Beds sadevBed = new Beds
             {
                 PatientID = sadevPatient.PatientID,
-                WardID = ward.WardID,
+                WardID = general.WardID,
                 Sector = "A",
                 Floor = "1",
                 Room = "101",
@@ -201,7 +216,7 @@ namespace INFP_Proj.Data
             Beds mikuBed = new Beds
             {
                 PatientID = mikuPatient.PatientID,
-                WardID = ward.WardID,
+                WardID = general.WardID,
                 Sector = "A",
                 Floor = "1",
                 Room = "102",
@@ -217,7 +232,7 @@ namespace INFP_Proj.Data
             {
                 PatientID = sadevPatient.PatientID,
                 BedID = sadevBed.BedID,
-                WardID = ward.WardID,
+                WardID = general.WardID,
                 HospitalID = hospital.HospitalID,
                 DiagnosisID = diagnosis.DiagnosisID,
                 MedicationListID = sadevList.MedicationListID,
@@ -229,7 +244,7 @@ namespace INFP_Proj.Data
             {
                 PatientID = mikuPatient.PatientID,
                 BedID = mikuBed.BedID,
-                WardID = ward.WardID,
+                WardID = general.WardID,
                 HospitalID = hospital.HospitalID,
                 DiagnosisID = autism.DiagnosisID,
                 MedicationListID = mikuList.MedicationListID,

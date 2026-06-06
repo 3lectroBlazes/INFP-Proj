@@ -6,25 +6,39 @@ using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddScoped<VitalsChartService>();
 builder.Services.AddScoped<AdminLogService>();
 builder.Services.AddScoped<UserContextService>();
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, AdminRestricts>();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnectionString")));
-builder.Services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<AppDbContext>();
-builder.Services.AddRazorPages();
 
+builder.Services.AddIdentity<AppUser, AppRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
 
-builder.Services.ConfigureApplicationCookie(Config =>
+builder.Services.AddAuthorization(options =>
 {
-    Config.LoginPath = "/Login";
+    options.AddPolicy("AdminOnlyPolicy", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var isAdminClaim = context.User.FindFirst("IsAdmin");
+            return isAdminClaim != null && bool.Parse(isAdminClaim.Value);
+        }));
 });
 
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Admin", "AdminOnlyPolicy");
+});
 
-WebApplication app = builder.Build();
+builder.Services.ConfigureApplicationCookie(config =>
+{
+    config.LoginPath = "/Login";
+});
 
-// Configure the HTTP request pipeline.
+var app = builder.Build();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
