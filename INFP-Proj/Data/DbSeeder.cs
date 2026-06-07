@@ -154,7 +154,17 @@ namespace INFP_Proj.Data
                 BloodPressure = 110.0f,
                 HeartRate = 68.0f
             };
-            context.Bracelets.AddRange(sadevBracelet, mikuBracelet);
+
+            Bracelet testBracelet = new Bracelet
+            {
+                Battery = 100.0f,
+                Respiration = 16.0f,
+                Location = "Ward A",
+                Movement = 0.0f,
+                BloodPressure = 110.0f,
+                HeartRate = 68.0f
+            };
+            context.Bracelets.AddRange(sadevBracelet, mikuBracelet, testBracelet);
             await context.SaveChangesAsync();
 
             // Patients
@@ -218,7 +228,18 @@ namespace INFP_Proj.Data
                 Weight = 60.0f,
                 Location = "Near Door"
             };
-            context.Beds.AddRange(sadevBed, mikuBed);
+            Beds testBed = new Beds
+            {
+                WardID = general.WardID,
+                Sector = "A",
+                Floor = "1",
+                Room = "103",
+                Temperature = 36.6f,
+                Weight = 60.0f,
+                Location = "Middle"
+            };
+
+            context.Beds.AddRange(sadevBed, mikuBed, testBed);
             await context.SaveChangesAsync();
 
             // Records

@@ -42,6 +42,12 @@
                                 <li class="nav-item">
                                     <a class="nav-link" asp-area="" asp-page="/Admin/Logs">Activity Log</a>
                                 </li>
+                                @if (User.IsInRole("Reception"))
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-page="/Admin/Reception/RegisterPatient">Register Patients</a>
+                                    </li>
+                                }
                             }
                             else
                             {
