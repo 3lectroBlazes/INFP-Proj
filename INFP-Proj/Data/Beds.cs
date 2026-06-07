@@ -15,7 +15,6 @@ namespace INFP_Proj.Data
         public float Temperature { get; set; }
         public float Weight { get; set; }
         public string? Location { get; set; }
-        public bool buttonPressed { get; set; } = false;
 
         [ForeignKey("PatientID")]
         public Patients? Patients { get; set; }

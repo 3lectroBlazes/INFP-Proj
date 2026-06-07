@@ -97,9 +97,6 @@ namespace INFP_Proj.Migrations
                     b.Property<float>("Weight")
                         .HasColumnType("real");
 
-                    b.Property<bool>("buttonPressed")
-                        .HasColumnType("bit");
-
                     b.HasKey("BedID");
 
                     b.HasIndex("PatientID");
@@ -226,6 +223,10 @@ namespace INFP_Proj.Migrations
 
                     b.Property<int>("PatientID")
                         .HasColumnType("int");
+
+                    b.Property<string>("ReplyMessage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("RequestDate")
                         .HasColumnType("datetime2");
@@ -472,6 +473,9 @@ namespace INFP_Proj.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WardID"));
+
+                    b.Property<int>("CurrentOccupancy")
+                        .HasColumnType("int");
 
                     b.Property<int>("MaxCapacity")
                         .HasColumnType("int");
