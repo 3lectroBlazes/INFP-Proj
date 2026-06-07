@@ -24,6 +24,7 @@ namespace INFP_Proj.Pages.Admin
 
         public SelectList MedicationOptions { get; set; } = default!;
         public DoctorRequest DoctorRequest { get; set; } = new();
+        public List<DoctorRequest> DoctorRequests { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -38,6 +39,11 @@ namespace INFP_Proj.Pages.Admin
             DoctorRequest = await _context.DoctorRequests
                 .FirstOrDefaultAsync(dr => dr.PatientID == id.Value)
                 ?? new DoctorRequest { PatientID = id.Value };
+
+            DoctorRequests = await _context.DoctorRequests
+                .Where(dr => dr.PatientID == id.Value)
+                .OrderByDescending(dr => dr.DoctorRequestID)
+                .ToListAsync();
 
             return Page();
         }
@@ -225,6 +231,18 @@ namespace INFP_Proj.Pages.Admin
             TempData["Message"] = "Doctor request sent!";
             await _context.SaveChangesAsync();
 
+            return RedirectToPage(new { id });
+        }
+        public async Task<IActionResult> OnPostReplyDoctorRequestAsync(int id, int requestId)
+        {
+            var request = await _context.DoctorRequests.FindAsync(requestId);
+            if (request == null) return NotFound();
+
+            request.ReplyMessage = Request.Form["ReplyMessage"];
+            request.Completed = true;
+
+            await _context.SaveChangesAsync();
+            TempData["Message"] = "Reply sent!";
             return RedirectToPage(new { id });
         }
     }
