@@ -75,12 +75,11 @@ namespace INFP_Proj.Pages.Admin.Reception
             string displayWardName = newBed.Wards?.WardName ?? $"Ward {newBed.WardID}";
             TempData["SuccessMessage"] = $"Patient successfully transferred to Bed #{newBed.BedID} in the {displayWardName} ward.";
 
-            return RedirectToPage("./TransferPatient");
+            return RedirectToPage("./WardBedChange");
         }
 
         private async Task PopulatePageDataAsync()
         {
-            // 1. Fetch all required data at once to optimize performance
             var allBeds = await _context.Beds.Include(b => b.Wards).ToListAsync();
             var allWards = await _context.Wards.ToListAsync();
             var patientsInBeds = allBeds.Where(b => b.PatientID != null).ToList();
@@ -91,7 +90,6 @@ namespace INFP_Proj.Pages.Admin.Reception
                 .Where(p => admittedPatientIds.Contains(p.PatientID))
                 .ToListAsync();
 
-            // 2. --- POPULATE DROPDOWNS ---
             AdmittedPatients = patients.Select(p => {
                 var currentBed = patientsInBeds.First(b => b.PatientID == p.PatientID);
                 string wardName = currentBed.Wards?.WardName ?? $"Ward {currentBed.WardID}";
