@@ -79,9 +79,23 @@ namespace INFP_Proj.Pages.Admin
                         : $"User #{l.UserID}",
                     Event = l.Event,
                     Emergency = l.Emergency,
+                    Resolved = l.Resolved,
                     Timestamp = l.Timestamp
                 })
                 .ToListAsync();
+        }
+
+        public async Task<IActionResult> OnPostResolveAsync(int id)
+        {
+            var log = await _context.Logs.FirstOrDefaultAsync(l => l.LogID == id);
+            if (log != null && log.Emergency && !log.Resolved)
+            {
+                log.Resolved = true;
+                await _context.SaveChangesAsync();
+                TempData["Message"] = "Emergency marked as resolved.";
+            }
+
+            return RedirectToPage(new { FromDate, ToDate, UserId, EmergencyFilter });
         }
 
         private async Task PopulateUserOptionsAsync()
