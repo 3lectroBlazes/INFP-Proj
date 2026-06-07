@@ -34,39 +34,28 @@ namespace INFP_Proj.Pages.Admin
         public PatientAdmissionInput Input { get; set; } = new();
 
         public SelectList UserOptions { get; set; } = default!;
-        public SelectList BraceletOptions { get; set; } = default!;
+        public List<SelectListItem> BraceletOptions { get; set; } = new();
         public SelectList BedOptions { get; set; } = default!;
         public SelectList WardOptions { get; set; } = default!;
         public SelectList DiagnosisOptions { get; set; } = default!;
         public MultiSelectList MedicationOptions { get; set; } = default!;
-        public bool HasAvailableBracelets { get; set; }
+
+        // BraceletID == 0 means "create a new bracelet"; null means nothing selected.
+        private const int NewBraceletValue = 0;
 
         public async Task<IActionResult> OnGetAsync()
         {
             await PopulateSelectListsAsync();
-            if (!HasAvailableBracelets)
-            {
-                Input.BraceletMode = "new";
-            }
-
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var isNewBracelet = string.Equals(Input.BraceletMode, "new", StringComparison.OrdinalIgnoreCase);
+            var isNewBracelet = Input.BraceletID == NewBraceletValue;
 
-            if (isNewBracelet)
+            if (Input.BraceletID is null)
             {
-                ModelState.Remove(nameof(Input.BraceletID));
-            }
-            else
-            {
-                ModelState.Remove(nameof(Input.NewBraceletLocation));
-                if (Input.BraceletID is null or <= 0)
-                {
-                    ModelState.AddModelError(nameof(Input.BraceletID), "Please select a bracelet or create a new one.");
-                }
+                ModelState.AddModelError(nameof(Input.BraceletID), "Please select a bracelet.");
             }
 
             if (Input.MedicationIDs.Count == 0)
@@ -74,7 +63,7 @@ namespace INFP_Proj.Pages.Admin
                 ModelState.AddModelError(nameof(Input.MedicationIDs), "Please select at least one medication.");
             }
 
-            await ValidateSelectionsAsync(isNewBracelet);
+            await ValidateSelectionsAsync();
 
             if (!ModelState.IsValid)
             {
@@ -96,12 +85,7 @@ namespace INFP_Proj.Pages.Admin
                 Bracelet bracelet;
                 if (isNewBracelet)
                 {
-                    bracelet = new Bracelet
-                    {
-                        Location = string.IsNullOrWhiteSpace(Input.NewBraceletLocation)
-                            ? null
-                            : Input.NewBraceletLocation.Trim()
-                    };
+                    bracelet = new Bracelet();
                     _context.Bracelets.Add(bracelet);
                     await _context.SaveChangesAsync();
                 }
@@ -110,14 +94,37 @@ namespace INFP_Proj.Pages.Admin
                     bracelet = (await _context.Bracelets.FindAsync(Input.BraceletID!.Value))!;
                 }
 
-                var patient = new Patients
+                var patient = await _context.Patients
+                    .FirstOrDefaultAsync(p => p.UserID == Input.UserId);
+                if (patient == null)
                 {
-                    UserID = Input.UserId!,
-                    Status = "Admitted"
-                };
-                _context.Patients.Add(patient);
-                await _context.SaveChangesAsync();
+                    patient = new Patients
+                    {
+                        UserID = Input.UserId!,
+                        Status = "Admitted"
+                    };
+                    _context.Patients.Add(patient);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // Readmission: reuse the existing patient record and free any previous bracelet.
+                    patient.Status = "Admitted";
+                    var oldRelations = await _context.BraceletRelations
+                        .Where(br => br.PatientID == patient.PatientID)
+                        .ToListAsync();
+                    if (oldRelations.Count > 0)
+                    {
+                        _context.BraceletRelations.RemoveRange(oldRelations);
+                    }
+                    await _context.SaveChangesAsync();
+                }
 
+                _context.BraceletRelations.Add(new BraceletRelation
+                {
+                    PatientID = patient.PatientID,
+                    BraceletID = bracelet.BraceletID
+                });
                 await _context.SaveChangesAsync();
 
                 var medicationLists = Input.MedicationIDs
@@ -174,7 +181,7 @@ namespace INFP_Proj.Pages.Admin
             }
         }
 
-        private async Task ValidateSelectionsAsync(bool isNewBracelet)
+        private async Task ValidateSelectionsAsync()
         {
             if (!string.IsNullOrWhiteSpace(Input.UserId))
             {
@@ -185,14 +192,14 @@ namespace INFP_Proj.Pages.Admin
                 }
                 else if (!await IsEligibleUserAsync(user))
                 {
-                    ModelState.AddModelError(nameof(Input.UserId), "Only non-admin, non-patient users can be admitted.");
+                    ModelState.AddModelError(nameof(Input.UserId), "Only non-admin users can be admitted.");
                 }
-                else if (await _context.Patients.AnyAsync(p => p.UserID == Input.UserId))
+                else if (await _context.Patients.AnyAsync(p => p.UserID == Input.UserId && p.Status == "Admitted"))
                 {
-                    ModelState.AddModelError(nameof(Input.UserId), "This user is already admitted as a patient.");
+                    ModelState.AddModelError(nameof(Input.UserId), "This user is already currently admitted.");
                 }
             }
-            if (!isNewBracelet && Input.BraceletID is > 0)
+            if (Input.BraceletID is > 0)
             {
                 if (!await _context.Bracelets.AnyAsync(b => b.BraceletID == Input.BraceletID))
                 {
@@ -254,11 +261,6 @@ namespace INFP_Proj.Pages.Admin
         private async Task<bool> IsEligibleUserAsync(AppUser user)
         {
             var roles = await _userManager.GetRolesAsync(user);
-            if (roles.Contains("Patient"))
-            {
-                return false;
-            }
-
             var adminRoleNames = await GetAdminRoleNamesAsync();
             return !roles.Any(r => adminRoleNames.Contains(r));
         }
@@ -275,19 +277,18 @@ namespace INFP_Proj.Pages.Admin
         private async Task ReturnPageWithListsAsync()
         {
             await PopulateSelectListsAsync();
-            if (!HasAvailableBracelets)
-            {
-                Input.BraceletMode = "new";
-            }
         }
 
         private async Task PopulateSelectListsAsync()
         {
-            var assignedUserIds = (await _context.Patients.Select(p => p.UserID).ToListAsync()).ToHashSet();
+            var admittedUserIds = (await _context.Patients
+                .Where(p => p.Status == "Admitted")
+                .Select(p => p.UserID)
+                .ToListAsync()).ToHashSet();
 
-            var excludedUserIds = new HashSet<string>(assignedUserIds);
+            var excludedUserIds = new HashSet<string>(admittedUserIds);
             var adminRoleNames = await GetAdminRoleNamesAsync();
-            foreach (var roleName in adminRoleNames.Concat(["Patient"]))
+            foreach (var roleName in adminRoleNames)
             {
                 foreach (var user in await _userManager.GetUsersInRoleAsync(roleName))
                 {
@@ -308,16 +309,24 @@ namespace INFP_Proj.Pages.Admin
                 .ToList();
 
             var assignedBraceletIds = (await _context.BraceletRelations.Select(br => br.BraceletID).ToListAsync()).ToHashSet();
-            var availableBracelets = (await _context.Bracelets
+            var braceletOptions = (await _context.Bracelets
                     .OrderBy(b => b.BraceletID)
                     .ToListAsync())
                 .Where(b => !assignedBraceletIds.Contains(b.BraceletID))
-                .Select(b => new
+                .Select(b => new SelectListItem
                 {
-                    b.BraceletID,
-                    Label = $"#{b.BraceletID}" + (b.Location != null ? $" — {b.Location}" : "")
+                    Value = b.BraceletID.ToString(),
+                    Text = $"#{b.BraceletID}" + (b.Location != null ? $" — {b.Location}" : ""),
+                    Selected = Input.BraceletID == b.BraceletID
                 })
                 .ToList();
+
+            braceletOptions.Add(new SelectListItem
+            {
+                Value = NewBraceletValue.ToString(),
+                Text = "Create new bracelet",
+                Selected = Input.BraceletID == NewBraceletValue
+            });
 
             var beds = await _context.Beds
                 .OrderBy(b => b.BedID)
@@ -343,10 +352,8 @@ namespace INFP_Proj.Pages.Admin
                 .Select(m => new { m.MedicationID, m.MedicationName })
                 .ToListAsync();
 
-            HasAvailableBracelets = availableBracelets.Count > 0;
-
             UserOptions = new SelectList(availableUsers, "Id", "Name", Input.UserId);
-            BraceletOptions = new SelectList(availableBracelets, "BraceletID", "Label", Input.BraceletID);
+            BraceletOptions = braceletOptions;
             BedOptions = new SelectList(beds, "BedID", "Label", Input.BedID);
             WardOptions = new SelectList(wards, "WardID", "WardName", Input.WardID);
             DiagnosisOptions = new SelectList(diagnoses, "DiagnosisID", "DiagnosisName", Input.DiagnosisID);
