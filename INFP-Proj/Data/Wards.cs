@@ -10,5 +10,6 @@ namespace INFP_Proj.Data
         public int WardID { get; set; }
         public required string WardName { get; set; }
         public required int MaxCapacity { get; set; }
+        public int CurrentOccupancy { get; set; }
     }
 }

@@ -222,6 +222,7 @@ namespace INFP_Proj.Pages.Admin
             }
 
             request.RequestMessage = Request.Form["RequestMessage"];
+            TempData["Message"] = "Doctor request sent!";
             await _context.SaveChangesAsync();
 
             return RedirectToPage(new { id });

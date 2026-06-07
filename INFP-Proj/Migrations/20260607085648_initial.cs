@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace INFP_Proj.Migrations
 {
     /// <inheritdoc />
-    public partial class initialCommit : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -133,7 +133,8 @@ namespace INFP_Proj.Migrations
                     WardID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WardName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MaxCapacity = table.Column<int>(type: "int", nullable: false)
+                    MaxCapacity = table.Column<int>(type: "int", nullable: false),
+                    CurrentOccupancy = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -328,8 +329,7 @@ namespace INFP_Proj.Migrations
                     Room = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Temperature = table.Column<float>(type: "real", nullable: false),
                     Weight = table.Column<float>(type: "real", nullable: false),
-                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    buttonPressed = table.Column<bool>(type: "bit", nullable: false)
+                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -403,6 +403,7 @@ namespace INFP_Proj.Migrations
                     PatientID = table.Column<int>(type: "int", nullable: false),
                     RequestMessage = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReplyMessage = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Completed = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>

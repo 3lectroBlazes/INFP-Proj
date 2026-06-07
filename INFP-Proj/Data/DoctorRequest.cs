@@ -9,6 +9,7 @@ namespace INFP_Proj.Data
         public int PatientID { get; set; }
         public string RequestMessage { get; set; }
         public DateTime RequestDate { get; set; } = DateTime.UtcNow;
+        public string ReplyMessage { get; set; }
         public bool Completed { get; set; } = false;
 
         [ForeignKey("PatientID")]
