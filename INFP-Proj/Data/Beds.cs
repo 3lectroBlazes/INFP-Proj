@@ -20,6 +20,6 @@ namespace INFP_Proj.Data
         [ForeignKey("PatientID")]
         public Patients? Patients { get; set; }
         [ForeignKey("WardID")]
-        public Wards? Wards { get; set; }
+        public virtual Wards? Wards { get; set; }
     }
 }
