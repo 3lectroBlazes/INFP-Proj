@@ -50,15 +50,8 @@ namespace INFP_Proj.Models
         [Display(Name = "User")]
         public string? UserId { get; set; }
 
-        /// <summary>existing or new</summary>
         [Display(Name = "Bracelet")]
-        public string BraceletMode { get; set; } = "existing";
-
-        [Display(Name = "Existing bracelet")]
         public int? BraceletID { get; set; }
-
-        [Display(Name = "New bracelet location")]
-        public string? NewBraceletLocation { get; set; }
 
         [Required(ErrorMessage = "Please select a bed.")]
         [Display(Name = "Bed")]

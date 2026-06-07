@@ -28,47 +28,21 @@
                             <option value="">— Select user —</option>
                         </select>
                         <span asp-validation-for="Input.UserId" class="text-danger small"></span>
-                        <p class="form-text text-muted mb-0">Non-admin, non-patient users only.</p>
+                        <p class="form-text text-muted mb-0">Non-admin users who are not currently admitted (discharged patients can be readmitted).</p>
                     </div>
                 </div>
             </fieldset>
 
             <fieldset class="mb-4">
                 <legend class="h6 text-primary mb-3">Bracelet</legend>
-                <div class="btn-group mb-3" role="group" aria-label="Bracelet type">
-                    <input type="radio" class="btn-check" name="Input.BraceletMode" id="braceletExisting" value="existing"
-                           @(Model.Input.BraceletMode != "new" ? "checked" : null) autocomplete="off" />
-                    <label class="btn btn-outline-primary" for="braceletExisting">Use existing bracelet</label>
-
-                    <input type="radio" class="btn-check" name="Input.BraceletMode" id="braceletNew" value="new"
-                           @(Model.Input.BraceletMode == "new" ? "checked" : null) autocomplete="off" />
-                    <label class="btn btn-outline-primary" for="braceletNew">Create new bracelet</label>
-                </div>
-
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div id="existingBraceletSection" class="@(Model.Input.BraceletMode == "new" ? "d-none" : "")">
-                            <label asp-for="Input.BraceletID" class="form-label"></label>
-                            <select asp-for="Input.BraceletID" class="form-select" asp-items="Model.BraceletOptions">
-                                <option value="">— Select bracelet —</option>
-                            </select>
-                            <span asp-validation-for="Input.BraceletID" class="text-danger small"></span>
-                            @if (!Model.HasAvailableBracelets)
-                            {
-                                <p class="form-text text-warning mb-0">No unassigned bracelets available — create a new one instead.</p>
-                            }
-                            else
-                            {
-                                <p class="form-text text-muted mb-0">Unassigned bracelets only.</p>
-                            }
-                        </div>
-
-                        <div id="newBraceletSection" class="@(Model.Input.BraceletMode == "new" ? "" : "d-none")">
-                            <label asp-for="Input.NewBraceletLocation" class="form-label"></label>
-                            <input asp-for="Input.NewBraceletLocation" class="form-control" placeholder="e.g. Ward A" />
-                            <span asp-validation-for="Input.NewBraceletLocation" class="text-danger small"></span>
-                            <p class="form-text text-muted mb-0">A new bracelet is created and assigned to this patient.</p>
-                        </div>
+                        <label asp-for="Input.BraceletID" class="form-label"></label>
+                        <select asp-for="Input.BraceletID" class="form-select" asp-items="Model.BraceletOptions">
+                            <option value="">— Select bracelet —</option>
+                        </select>
+                        <span asp-validation-for="Input.BraceletID" class="text-danger small"></span>
+                        <p class="form-text text-muted mb-0">Pick an unassigned bracelet, or choose "Create new bracelet".</p>
                     </div>
                 </div>
             </fieldset>
@@ -119,20 +93,4 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script>
-        (function () {
-            const existingBraceletSection = document.getElementById('existingBraceletSection');
-            const newBraceletSection = document.getElementById('newBraceletSection');
-
-            function updateSections() {
-                const isNewBracelet = document.getElementById('braceletNew')?.checked;
-                existingBraceletSection?.classList.toggle('d-none', isNewBracelet);
-                newBraceletSection?.classList.toggle('d-none', !isNewBracelet);
-            }
-
-            document.querySelectorAll('input[name="Input.BraceletMode"]')
-                .forEach(r => r.addEventListener('change', updateSections));
-            updateSections();
-        })();
-    </script>
 }

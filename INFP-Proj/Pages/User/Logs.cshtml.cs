@@ -1,22 +1,21 @@
 using INFP_Proj.Data;
 using INFP_Proj.Models;
-using INFP_Proj.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace INFP_Proj.Pages.User
 {
+    [Authorize]
     public class LogsModel : PageModel
     {
         private readonly AppDbContext _context;
-        private readonly UserContextService _userContextService;
         private readonly UserManager<AppUser> _userManager;
 
-        public LogsModel(AppDbContext context, UserContextService userContextService, UserManager<AppUser> userManager)
+        public LogsModel(AppDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
-            _userContextService = userContextService;
             _userManager = userManager;
         }
 
@@ -25,9 +24,12 @@ namespace INFP_Proj.Pages.User
 
         public async Task OnGetAsync()
         {
-            var currentUserId = await _userContextService.GetCurrentUserIdAsync();
+            var currentUserId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return;
+            }
 
-            // Use UserManager instead of _context.Users
             var user = await _userManager.FindByIdAsync(currentUserId);
             CurrentUserName = user != null
                 ? $"{user.FirstName} {user.LastName}"

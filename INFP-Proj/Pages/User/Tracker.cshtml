@@ -14,7 +14,14 @@
     </div>
 </div>
 
-<partial name="_VitalsTracker" model="Model.ChartData" />
+@if (!Model.HasPatientRecord)
+{
+    <div class="alert alert-info">You don't have an active patient record, so there are no vitals to display.</div>
+}
+else
+{
+    <partial name="_VitalsTracker" model="Model.ChartData" />
+}
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

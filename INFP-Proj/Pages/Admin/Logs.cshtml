@@ -14,10 +14,45 @@
     </div>
 </div>
 
+<div class="app-card card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-sm-6 col-md-3">
+                <label asp-for="FromDate" class="form-label">From</label>
+                <input asp-for="FromDate" type="date" class="form-control" />
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <label asp-for="ToDate" class="form-label">To</label>
+                <input asp-for="ToDate" type="date" class="form-control" />
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <label asp-for="UserId" class="form-label">User</label>
+                <select asp-for="UserId" class="form-select" asp-items="Model.UserOptions">
+                    <option value="">All users</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <label asp-for="EmergencyFilter" class="form-label">Emergency</label>
+                <select asp-for="EmergencyFilter" class="form-select">
+                    <option value="all">All</option>
+                    <option value="yes">Emergency only</option>
+                    <option value="no">Non-emergency</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-grid">
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+            <div class="col-12">
+                <a class="btn btn-link btn-sm px-0" asp-page="/Admin/Logs">Clear filters</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 @if (Model.Logs.Count == 0)
 {
     <div class="empty-state">
-        <p class="text-muted mb-0">No log entries yet.</p>
+        <p class="text-muted mb-0">No log entries match the selected filters.</p>
     </div>
 }
 else
