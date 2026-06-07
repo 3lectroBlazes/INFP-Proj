@@ -25,3 +25,97 @@
         <p class="dashboard-tile-desc">Review system events with timestamps.</p>
     </a>
 </div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-6">
+        <div class="app-card card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h6 text-primary mb-0">Doctor requests</h2>
+                    <span class="badge bg-primary">@Model.DoctorRequests.Count pending</span>
+                </div>
+
+                @if (Model.DoctorRequests.Count == 0)
+                {
+                    <p class="text-muted small mb-0">No pending doctor requests.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Request</th>
+                                    <th class="text-nowrap">Requested</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var request in Model.DoctorRequests)
+                                {
+                                    <tr>
+                                        <td class="fw-medium">@request.PatientName</td>
+                                        <td class="text-muted">@request.RequestMessage</td>
+                                        <td class="text-nowrap">
+                                            <time datetime="@request.RequestDate.ToString("o")">
+                                                @request.RequestDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                            </time>
+                                        </td>
+                                        <td class="text-end">
+                                            <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@request.PatientId">Open</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="app-card card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h6 text-danger mb-0">Emergency logs</h2>
+                    <a class="btn btn-sm btn-outline-secondary" asp-page="/Admin/Logs" asp-route-EmergencyFilter="yes">View all</a>
+                </div>
+
+                @if (Model.EmergencyLogs.Count == 0)
+                {
+                    <p class="text-muted small mb-0">No emergency events logged.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-nowrap">Timestamp</th>
+                                    <th>User</th>
+                                    <th>Event</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in Model.EmergencyLogs)
+                                {
+                                    <tr class="table-danger">
+                                        <td class="text-nowrap">
+                                            <time datetime="@log.Timestamp.ToString("o")">
+                                                @log.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                            </time>
+                                        </td>
+                                        <td>@log.UserName</td>
+                                        <td>@log.Event</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
