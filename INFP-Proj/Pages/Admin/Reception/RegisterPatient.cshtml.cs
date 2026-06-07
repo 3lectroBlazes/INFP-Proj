@@ -71,7 +71,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 };
                 _context.BraceletRelations.Add(braceletRelation);
 
-                var selectedBed = await _context.Beds.FindAsync(Input.BedID);
+                Beds? selectedBed = await _context.Beds.FindAsync(Input.BedID);
                 int assignedWardID = 0;
                 if (selectedBed != null)
                 {
@@ -98,7 +98,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 return RedirectToPage("./RegisterPatient");
             }
 
-            foreach (var error in result.Errors)
+            foreach (IdentityError? error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
@@ -109,7 +109,7 @@ namespace INFP_Proj.Pages.Admin.Reception
 
         private void PopulateDropdowns()
         {
-            var assignedBraceletIds = _context.BraceletRelations
+            List<int> assignedBraceletIds = _context.BraceletRelations
                 .Select(br => br.BraceletID)
                 .ToList();
 

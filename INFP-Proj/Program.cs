@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using INFP_Proj.Data;
 using INFP_Proj.Models;
 using INFP_Proj.Services;
@@ -22,7 +23,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnlyPolicy", policy =>
         policy.RequireAssertion(context =>
         {
-            var isAdminClaim = context.User.FindFirst("IsAdmin");
+            Claim? isAdminClaim = context.User.FindFirst("IsAdmin");
             return isAdminClaim != null && bool.Parse(isAdminClaim.Value);
         }));
 });
@@ -37,7 +38,9 @@ builder.Services.ConfigureApplicationCookie(config =>
     config.LoginPath = "/Login";
 });
 
-var app = builder.Build();
+builder.Services.AddTransient<ISmsService, MockSmsService>();
+
+WebApplication app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {

@@ -1,4 +1,135 @@
 ﻿@page
-@model INFP_Proj.Pages.Admin.Reception.NotificationsModel
+@model INFP_Proj.Pages.Admin.Reception.ManageNotificationsModel
 @{
+    ViewData["Title"] = "SMS Notifications Dashboard";
+}
+
+<div class="container mt-4 mb-5">
+    <h2 class="mb-4"><i class="bi bi-broadcast me-2"></i>Communication & Alerts Center</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100 border-0 border-top border-primary border-4">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-person-lines-fill text-primary me-2"></i>Patient/Family Updates
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="PatientAlert">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Select Patient</label>
+                            <select name="targetUserId" asp-items="Model.PatientList" class="form-select" required>
+                                <option value="">-- Choose Patient --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Update Type</label>
+                            <select name="messageType" class="form-select" required>
+                                <option value="Surgery Update">Surgery Update</option>
+                                <option value="Appointment Reminder">Appointment Reminder</option>
+                                <option value="Discharge Notice">Discharge Notice</option>
+                                <option value="General Info">General Info</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Custom Message</label>
+                            <textarea name="customMessage" class="form-control" rows="3" required placeholder="Enter SMS text..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Send Patient SMS</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100 border-0 border-top border-warning border-4">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-smartwatch text-warning me-2"></i>Bracelet Hardware Alert
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="HardwareAlert">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Target Nurse</label>
+                            <select name="targetNurseId" asp-items="Model.NurseList" class="form-select" required>
+                                <option value="">-- Notify Which Nurse? --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Faulty Bracelet</label>
+                            <select name="braceletId" asp-items="Model.BraceletList" class="form-select" required>
+                                <option value="">-- Select Bracelet --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Issue Description</label>
+                            <textarea name="issueDescription" class="form-control" rows="3" required placeholder="e.g., Low battery, sensor offline, strap broken..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold w-100">Notify Nurse</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100 border-0 border-top border-danger border-4">
+                <div class="card-header bg-white fw-bold">
+                    <i class="bi bi-exclamation-octagon-fill text-danger me-2"></i>Emergency Broadcast
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="EmergencyAlert">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Target Group</label>
+                            <select name="targetGroup" class="form-select" required>
+                                <option value="Doctors">Doctors Only</option>
+                                <option value="Nurses">Nurses Only</option>
+                                <option value="Both">All Medical Staff (Both)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Emergency Type</label>
+                            <select name="emergencyType" class="form-select" required>
+                                <option value="Code Blue (Cardiac Arrest)">Code Blue</option>
+                                <option value="Fall Alert">Fall Alert</option>
+                                <option value="Security Incident">Security Incident</option>
+                                <option value="Evacuation">Evacuation</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Location / Details</label>
+                            <textarea name="locationDetails" class="form-control" rows="3" required placeholder="e.g., Ward 2, Bed 12. Patient unresponsive."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 fw-bold">BROADCAST EMERGENCY</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    @if (TempData["AlertMessage"] != null)
+    {
+        <script>
+            // Ensure the string is safely escaped for JavaScript
+            var alertText = @Json.Serialize(TempData["AlertMessage"]?.ToString());
+            window.alert(alertText);
+        </script>
+    }
 }

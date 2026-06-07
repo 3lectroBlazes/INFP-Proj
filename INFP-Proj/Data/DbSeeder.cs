@@ -52,7 +52,7 @@ namespace INFP_Proj.Data
             }
 
             // Seed Users
-            async Task<AppUser> CreateUser(string firstName, string? middleName, string lastName, string email, string role)
+            async Task<AppUser> CreateUser(string firstName, string? middleName, string lastName, string email, string phoneNumber,string role)
             {
                 AppUser user = new AppUser
                 {
@@ -61,6 +61,7 @@ namespace INFP_Proj.Data
                     LastName = lastName,
                     UserName = email,
                     Email = email,
+                    PhoneNumber = phoneNumber,
                     EmailConfirmed = true
                 };
                 await userManager.CreateAsync(user, "Password@123");
@@ -69,13 +70,13 @@ namespace INFP_Proj.Data
                 return user;
             }
 
-            AppUser kailuo = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "Nurse");
-            AppUser xavier = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "Doctor");
-            AppUser evan = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "Reception");
-            AppUser sadev = await CreateUser("Sadev", null, "Mawadavilage", "sadev.mawadavilage@hospital.com", "User");
-            AppUser miku = await CreateUser("Hatsune", null, "Miku", "hatsune.miku@hospital.com", "User");
-            AppUser sasha = await CreateUser("Sasha", null, "Sasthi", "sasha.sasthi@hospital.com", "User");
-            AppUser teto = await CreateUser("Kasane", null, "Teto", "kasane.teto@hospital.com", "User");
+            AppUser kailuo = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "12345678", "Nurse");
+            AppUser xavier = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "12345678", "Doctor");
+            AppUser evan = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "12345678", "Reception");
+            AppUser sadev = await CreateUser("Sadev", null, "Mawadavilage", "sadev.mawadavilage@hospital.com", "12345678", "User");
+            AppUser miku = await CreateUser("Hatsune", null, "Miku", "hatsune.miku@hospital.com", "12345678", "User");
+            AppUser sasha = await CreateUser("Sasha", null, "Sasthi", "sasha.sasthi@hospital.com", "12345678", "User");
+            AppUser teto = await CreateUser("Kasane", null, "Teto", "kasane.teto@hospital.com", "12345678", "User");
 
             // Hospitals
             Hospitals hospital = new Hospitals
