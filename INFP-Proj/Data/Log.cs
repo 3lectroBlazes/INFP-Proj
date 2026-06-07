@@ -11,7 +11,8 @@ namespace INFP_Proj.Data
         public int LogID { get; set; }
         public string UserID { get; set; }
         public required string Event { get; set; }
-        public bool Emergency { get; set; }
+        public bool Emergency { get; set; } = false;
+        public bool Resolved { get; set; } = false;
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("UserID")]

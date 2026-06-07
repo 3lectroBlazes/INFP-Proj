@@ -256,6 +256,7 @@ namespace INFP_Proj.Migrations
                     UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Event = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Emergency = table.Column<bool>(type: "bit", nullable: false),
+                    Resolved = table.Column<bool>(type: "bit", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -348,31 +349,6 @@ namespace INFP_Proj.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BloodWorks",
-                columns: table => new
-                {
-                    BloodWorkID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PatientID = table.Column<int>(type: "int", nullable: false),
-                    TestDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    BloodType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Cholesterol = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    BloodSugar = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Hemoglobin = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TotalBloodCount = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BloodWorks", x => x.BloodWorkID);
-                    table.ForeignKey(
-                        name: "FK_BloodWorks_Patients_PatientID",
-                        column: x => x.PatientID,
-                        principalTable: "Patients",
-                        principalColumn: "PatientID",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "BraceletRelations",
                 columns: table => new
                 {
@@ -403,7 +379,7 @@ namespace INFP_Proj.Migrations
                     PatientID = table.Column<int>(type: "int", nullable: false),
                     RequestMessage = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RequestDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReplyMessage = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ReplyMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Completed = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -607,11 +583,6 @@ namespace INFP_Proj.Migrations
                 column: "WardID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BloodWorks_PatientID",
-                table: "BloodWorks",
-                column: "PatientID");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_BraceletRelations_BraceletID",
                 table: "BraceletRelations",
                 column: "BraceletID");
@@ -702,9 +673,6 @@ namespace INFP_Proj.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
-
-            migrationBuilder.DropTable(
-                name: "BloodWorks");
 
             migrationBuilder.DropTable(
                 name: "BraceletRelations");

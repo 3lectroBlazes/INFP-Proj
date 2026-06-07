@@ -113,11 +113,39 @@
 <div class="app-card card mb-4">
     <div class="card-header">Doctor's Request</div>
     <div class="card-body">
+
+        @foreach (var request in Model.DoctorRequests)
+        {
+            <div class="card mb-2 @(request.Completed ? "bg-success.bg-gradient text-white" : "")">
+                <div class="card-body">
+                    <p class="mb-1">@request.RequestMessage</p>
+                    @if (request.Completed)
+                    {
+                        <p class="mb-1"><strong>Reply:</strong> @request.ReplyMessage</p>
+                    }
+                    <small class="@(request.Completed ? "text-white-50" : "text-muted")">
+                        @request.RequestDate.ToString("dd MMM yyyy, hh:mm tt")
+                    </small>
+
+                    @if (!request.Completed)
+                    {
+                        <form method="post" asp-page-handler="ReplyDoctorRequest" asp-route-id="@Model.Patient.PatientId" class="d-flex gap-2 mt-2">
+                            <input type="hidden" name="requestId" value="@request.DoctorRequestID" />
+                            <input type="text" name="ReplyMessage" class="form-control" placeholder="Text" />
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+
         <form method="post" asp-page-handler="SaveDoctorRequest" asp-route-id="@Model.Patient.PatientId">
             <textarea name="RequestMessage" class="form-control mb-2" rows="4"
                 placeholder="Enter message for Doctor's Request">@Model.DoctorRequest.RequestMessage</textarea>
-            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="submit" class="btn btn-primary" 
+                disabled="@Model.Patient.IsDischarged">Save</button>
         </form>
+
     </div>
 </div>
 
