@@ -41,7 +41,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 return Page();
             }
 
-            var newBed = await _context.Beds.Include(b => b.Wards).FirstOrDefaultAsync(b => b.BedID == Input.NewBedID);
+            Beds newBed = await _context.Beds.Include(b => b.Wards).FirstOrDefaultAsync(b => b.BedID == Input.NewBedID);
             if (newBed == null || newBed.PatientID != null)
             {
                 ModelState.AddModelError("Input.NewBedID", "This bed is no longer available.");
@@ -49,7 +49,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 return Page();
             }
 
-            var oldBed = await _context.Beds.FirstOrDefaultAsync(b => b.PatientID == Input.PatientID);
+            Beds oldBed = await _context.Beds.FirstOrDefaultAsync(b => b.PatientID == Input.PatientID);
             if (oldBed != null)
             {
                 oldBed.PatientID = null;
@@ -57,7 +57,7 @@ namespace INFP_Proj.Pages.Admin.Reception
 
             newBed.PatientID = Input.PatientID;
 
-            var latestRecord = await _context.Records
+            Records? latestRecord = await _context.Records
                 .Where(r => r.PatientID == Input.PatientID)
                 .OrderByDescending(r => r.AdmissionDateTime)
                 .FirstOrDefaultAsync();
@@ -80,18 +80,18 @@ namespace INFP_Proj.Pages.Admin.Reception
 
         private async Task PopulatePageDataAsync()
         {
-            var allBeds = await _context.Beds.Include(b => b.Wards).ToListAsync();
-            var allWards = await _context.Wards.ToListAsync();
-            var patientsInBeds = allBeds.Where(b => b.PatientID != null).ToList();
-            var admittedPatientIds = patientsInBeds.Select(b => b.PatientID).ToList();
+            List<Beds> allBeds = await _context.Beds.Include(b => b.Wards).ToListAsync();
+            List<Wards> allWards = await _context.Wards.ToListAsync();
+            List<Beds> patientsInBeds = allBeds.Where(b => b.PatientID != null).ToList();
+            List<int?> admittedPatientIds = patientsInBeds.Select(b => b.PatientID).ToList();
 
-            var patients = await _context.Patients
+            List<Patients> patients = await _context.Patients
                 .Include(p => p.User)
                 .Where(p => admittedPatientIds.Contains(p.PatientID))
                 .ToListAsync();
 
             AdmittedPatients = patients.Select(p => {
-                var currentBed = patientsInBeds.First(b => b.PatientID == p.PatientID);
+                Beds currentBed = patientsInBeds.First(b => b.PatientID == p.PatientID);
                 string wardName = currentBed.Wards?.WardName ?? $"Ward {currentBed.WardID}";
                 return new SelectListItem
                 {
@@ -110,9 +110,9 @@ namespace INFP_Proj.Pages.Admin.Reception
                 .ToList();
 
             WardStats.Clear();
-            foreach (var ward in allWards)
+            foreach (Wards? ward in allWards)
             {
-                var bedsInWard = allBeds.Where(b => b.WardID == ward.WardID).ToList();
+                List<Beds> bedsInWard = allBeds.Where(b => b.WardID == ward.WardID).ToList();
                 WardStats.Add(new WardStatViewModel
                 {
                     WardID = ward.WardID,
