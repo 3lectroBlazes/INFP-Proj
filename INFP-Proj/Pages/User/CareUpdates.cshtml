@@ -1,0 +1,249 @@
+﻿@page
+@model INFP_Proj.Pages.User.CareUpdatesModel
+@{
+    ViewData["Title"] = "My Care Updates";
+    var data = Model.CareData;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">My Care Updates</h1>
+        <p class="page-subtitle text-muted">
+            View upcoming appointments, doctor updates, and submit questions about your care.
+        </p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/User/Dashboard">Dashboard</a>
+    </div>
+</div>
+
+@if (TempData["CareUpdateMessage"] != null)
+{
+    <div class="alert alert-info">
+        @TempData["CareUpdateMessage"]
+    </div>
+}
+
+@if (!data.HasPatientRecord)
+{
+    <div class="alert alert-info">
+        You do not have an active patient record linked to your account yet.
+    </div>
+}
+else
+{
+    <div class="hero-panel mb-4">
+        <h1 class="mb-3">Care updates for @data.PatientName</h1>
+        <p>Keep track of upcoming appointments and communication with the doctor.</p>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+            <div class="app-card card h-100">
+                <div class="card-header">
+                    Upcoming Appointment
+                </div>
+
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Title:</strong> @data.UpcomingAppointment.Title
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Doctor:</strong> @data.UpcomingAppointment.DoctorName
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Date & Time:</strong>
+                        @data.UpcomingAppointment.AppointmentDateTime.ToString("yyyy-MM-dd HH:mm")
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Location:</strong> @data.UpcomingAppointment.Location
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Status:</strong>
+                        @if (data.AppointmentAcknowledged)
+                        {
+                            <span class="badge bg-success">Acknowledged</span>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(data.AppointmentChangeRequest))
+                        {
+                            <span class="badge bg-warning text-dark">Change Requested</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">@data.UpcomingAppointment.Status</span>
+                        }
+                    </p>
+
+                    <p class="mb-3 text-muted">
+                        @data.UpcomingAppointment.Purpose
+                    </p>
+
+                    @if (!string.IsNullOrWhiteSpace(data.AppointmentChangeRequest))
+                    {
+                        <div class="alert alert-info mb-3">
+                            <strong>Change request submitted:</strong>
+                            @data.AppointmentChangeRequest
+                        </div>
+                    }
+
+                    @if (!data.AppointmentAcknowledged)
+                    {
+                        <form method="post" asp-page-handler="AcknowledgeAppointment" class="mb-3">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                Acknowledge Appointment
+                            </button>
+                        </form>
+                    }
+
+                    <hr />
+
+                    <form method="post" asp-page-handler="RequestAppointmentChange">
+                        <div class="mb-3">
+                            <label asp-for="AppointmentChangeReason" class="form-label">
+                                Cannot attend or need to change?
+                            </label>
+                            <textarea asp-for="AppointmentChangeReason"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Example: I cannot attend at 10:30 AM. Can we change to afternoon?"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                            Submit Change Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="app-card card h-100">
+                <div class="card-header">
+                    Ask Doctor a Question
+                </div>
+
+                <div class="card-body">
+                    <form method="post" asp-page-handler="AskDoctor">
+                        <div class="mb-3">
+                            <label asp-for="QuestionMessage" class="form-label">
+                                Question or concern
+                            </label>
+
+                            <textarea asp-for="QuestionMessage"
+                                      class="form-control"
+                                      rows="5"
+                                      placeholder="Example: Should the patient take the medication before or after meals?"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Submit Question
+                        </button>
+                    </form>
+
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-card card mb-4">
+        <div class="card-header">
+            Latest Doctor Communication
+        </div>
+
+        <div class="card-body">
+            @if (data.DoctorCommunications.Count == 0)
+            {
+                <p class="text-muted mb-0">No doctor communication yet.</p>
+            }
+            else
+            {
+                var latest = data.DoctorCommunications.First();
+
+                <div class="row g-3 align-items-start">
+                    <div class="col-md-8">
+                        <p class="mb-2"><strong>Message:</strong></p>
+                        <p class="mb-3">@latest.Message</p>
+
+                        <p class="mb-2"><strong>Reply:</strong></p>
+                        <p class="mb-0 text-muted">@latest.ReplyMessage</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <p class="mb-2">
+                            <strong>Status:</strong>
+                            @if (latest.Completed)
+                            {
+                                <span class="badge bg-success">Completed</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                        </p>
+
+                        <p class="mb-0 text-muted">
+                            @latest.RequestDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Question & Update History</h2>
+    </div>
+
+    @if (data.DoctorCommunications.Count == 0)
+    {
+        <div class="empty-state">
+            <p class="text-muted mb-0">No questions or doctor updates have been recorded yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="app-table-wrapper table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Message / Question</th>
+                        <th>Reply</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in data.DoctorCommunications)
+                    {
+                        <tr>
+                            <td class="text-nowrap">
+                                @item.RequestDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            </td>
+
+                            <td>@item.Message</td>
+
+                            <td>@item.ReplyMessage</td>
+
+                            <td>
+                                @if (item.Completed)
+                                {
+                                    <span class="badge bg-success">Completed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

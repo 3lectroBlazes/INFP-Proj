@@ -2,22 +2,285 @@
 @model INFP_Proj.Pages.User.DashboardModel
 @{
     ViewData["Title"] = "My Dashboard";
+    var data = Model.DashboardData;
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-title">My Dashboard</h1>
-        <p class="page-subtitle text-muted">Your vitals and personal activity.</p>
+@if (!data.HasPatientRecord)
+{
+    <div class="hero-panel mb-4">
+        <h1 class="mb-3">Welcome to Your Dashboard</h1>
+        <p>Monitor your care summary, vitals, and personal activity in one place.</p>
     </div>
-</div>
 
-<div class="dashboard-grid">
-    <a class="dashboard-tile" asp-page="/User/Tracker">
-        <span class="dashboard-tile-title">Vitals tracker</span>
-        <p class="dashboard-tile-desc">View your health metrics over time.</p>
-    </a>
-    <a class="dashboard-tile" asp-page="/User/Logs">
-        <span class="dashboard-tile-title">My activity log</span>
-        <p class="dashboard-tile-desc">Events related to your care and account.</p>
-    </a>
-</div>
+    <div class="alert alert-info">
+        You do not have an active patient record linked to your account yet.
+    </div>
+}
+else
+{
+    <div class="hero-panel mb-4">
+        <h1 class="mb-3">Welcome back, @data.PatientName</h1>
+        <p>Monitor your care summary, vitals, and personal activity in one place.</p>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Patient Overview</h2>
+                    <p class="mb-2"><strong>Name:</strong> @data.PatientName</p>
+                    <p class="mb-2">
+                        <strong>Status:</strong>
+                        <span class="badge bg-success">@data.PatientStatus</span>
+                    </p>
+                    <p class="mb-2"><strong>Patient ID:</strong> @data.PatientId</p>
+                    <p class="mb-0 text-muted">@data.PatientNotes</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Bed / Ward</h2>
+                    <p class="mb-2"><strong>Ward:</strong> @data.WardName</p>
+                    <p class="mb-2"><strong>Room:</strong> @data.Room</p>
+                    <p class="mb-2"><strong>Floor:</strong> @data.Floor</p>
+                    <p class="mb-2"><strong>Sector:</strong> @data.Sector</p>
+                    <p class="mb-0"><strong>Location:</strong> @data.BedLocation</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Current Vitals</h2>
+
+                    <p class="mb-2">
+                        <strong>Heart Rate:</strong>
+                        <span id="heartRateValue">@(data.HeartRate.HasValue? data.HeartRate.Value.ToString("0") : "N/A")</span> bpm
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Blood Pressure:</strong>
+                        <span id="bloodPressureValue">@(data.BloodPressure.HasValue? data.BloodPressure.Value.ToString("0") : "N/A")</span> mmHg
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Respiration:</strong>
+                        <span id="respirationValue">@(data.Respiration.HasValue? data.Respiration.Value.ToString("0") : "N/A")</span> breaths/min
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Temperature:</strong>
+                        <span id="temperatureValue">@(data.Temperature.HasValue? data.Temperature.Value.ToString("0.0") : "N/A")</span> °C
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="app-card card h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-primary mb-3">Device Status</h2>
+
+                    <p class="mb-2">
+                        <strong>Battery:</strong>
+                        <span id="batteryValue">@(data.BraceletBattery.HasValue? data.BraceletBattery.Value.ToString("0.0") : "N/A")</span>%
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Movement:</strong>
+                        <span id="movementValue">@(data.Movement.HasValue? data.Movement.Value.ToString("0.0") : "N/A")</span>
+                    </p>
+
+                    <p class="mb-2"><strong>Bracelet Location:</strong> @data.BraceletLocation</p>
+
+                    <p class="mb-0 text-muted">
+                        Updated:
+                        <span id="lastUpdatedValue">
+                            @(data.LatestVitalsRecordedAt.HasValue
+                                                    ? data.LatestVitalsRecordedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                                    : "N/A")
+                                                        </span>
+                                                    </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+    <div class="app-card card h-100">
+        <div class="card-header">
+            Care Summary
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <p class="mb-2"><strong>Hospital:</strong> @data.HospitalName</p>
+                    <p class="mb-2"><strong>Address:</strong> @data.HospitalAddress</p>
+                    <p class="mb-2"><strong>Diagnosis:</strong> @data.Diagnosis</p>
+                    <p class="mb-2"><strong>Record:</strong> @data.RecordDescription</p>
+
+                    <p class="mb-2">
+                        <strong>Admitted:</strong>
+                        @(data.AdmissionDateTime.HasValue
+                                            ? data.AdmissionDateTime.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                            : "N/A")
+                </p>
+
+                    <p class="mb-0">
+                        <strong>Status:</strong>
+                    @if (data.DischargeDateTime.HasValue)
+                        {
+                            <span>Discharged</span>
+                        }
+                        else
+                        {
+                            <span>Admitted</span>
+                        }
+                    </p>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <strong>Medication:</strong>
+
+                        @if (data.CurrentMedications.Count == 0)
+                        {
+                            <p class="text-muted mb-0 mt-1">No active medication assigned.</p>
+                        }
+                        else
+                        {
+                            <div class="mt-2">
+                                @foreach (var medication in data.CurrentMedications)
+                                {
+                                    <div class="border rounded p-2 mb-2 bg-light">
+                                        <div class="fw-semibold">@medication.MedicationName</div>
+                                        <div class="small text-muted">
+                                            Dosage: @medication.Dosage
+                                        </div>
+                                        <div class="small text-muted">
+                                            Time:
+                                            @(medication.ConsumptionTime.HasValue
+                                                                            ? medication.ConsumptionTime.Value.ToString("HH:mm")
+                                                                            : "N/A")
+                            </div>
+                        </div>
+                                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-card card mb-4">
+        <div class="card-header">
+            Latest Doctor Update
+        </div>
+
+        <div class="card-body">
+            @if (!data.HasDoctorRequest)
+            {
+                <p class="text-muted mb-0">No doctor updates available yet.</p>
+            }
+            else
+            {
+                <div class="row g-3 align-items-start">
+                    <div class="col-md-8">
+                        <p class="mb-2">
+                            <strong>Message from doctor:</strong>
+                        </p>
+                        <p class="mb-0">@data.LatestDoctorRequestMessage</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <p class="mb-2">
+                            <strong>Status:</strong>
+                            @if (data.LatestDoctorRequestCompleted)
+                            {
+                                <span class="badge bg-success">Acknowledged</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">New Doctor Update</span>
+                            }
+                </p>
+
+                <p class="mb-3 text-muted">
+                    @(data.LatestDoctorRequestDate.HasValue
+                                        ? data.LatestDoctorRequestDate.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                        : "N/A")
+                </p>
+
+                @if (!data.LatestDoctorRequestCompleted && data.LatestDoctorRequestId.HasValue)
+                        {
+                            <form method="post" asp-page-handler="AcknowledgeDoctorUpdate">
+                                <input type="hidden" name="doctorRequestId" value="@data.LatestDoctorRequestId.Value" />
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    Acknowledge
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <a class="dashboard-tile" asp-page="/User/Tracker">
+            <span class="dashboard-tile-title">Vitals tracker</span>
+            <p class="dashboard-tile-desc">View your health metrics over time.</p>
+        </a>
+
+        <a class="dashboard-tile" asp-page="/User/Logs">
+            <span class="dashboard-tile-title">My activity log</span>
+            <p class="dashboard-tile-desc">Events related to your care and account.</p>
+        </a>
+
+        <a class="dashboard-tile" asp-page="/User/CareUpdates">
+            <span class="dashboard-tile-title">My care updates</span>
+            <p class="dashboard-tile-desc">View appointments and ask doctor questions.</p>
+        </a>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        async function refreshLatestVitals() {
+            try {
+                const response = await fetch('/User/Dashboard?handler=LatestVitals');
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.log(data.message);
+                    return;
+                }
+
+                document.getElementById('heartRateValue').textContent = data.heartRate;
+                document.getElementById('bloodPressureValue').textContent = data.bloodPressure;
+                document.getElementById('respirationValue').textContent = data.respiration;
+                document.getElementById('temperatureValue').textContent = data.temperature;
+                document.getElementById('batteryValue').textContent = data.battery;
+                document.getElementById('movementValue').textContent = data.movement;
+                document.getElementById('lastUpdatedValue').textContent = data.updatedAt;
+
+                const alertMessage = document.getElementById('alertMessageValue');
+                if (alertMessage) {
+                    alertMessage.textContent = data.alertMessage;
+                }
+
+            } catch (error) {
+                console.error('Failed to refresh latest vitals:', error);
+            }
+        }
+
+        refreshLatestVitals();
+
+        setInterval(refreshLatestVitals, 30000);
+    </script>
+}
