@@ -64,6 +64,18 @@ namespace INFP_Proj.Pages
             Patients = patients.Select(p =>
             {
                 var patientMeds = medicationLists.Where(m => m.PatientID == p.PatientID).ToList();
+                var latestRecord = records
+                    .Where(r => r.PatientID == p.PatientID)
+                    .OrderByDescending(r => r.AdmissionDateTime)
+                    .FirstOrDefault();
+
+                // Only show medications for the current admission (medications attached to,
+                // or added after, the latest record's medication list).
+                var patientMeds = medicationLists
+                    .Where(m => m.PatientID == p.PatientID
+                        && (latestRecord == null || m.MedicationListID >= latestRecord.MedicationListID))
+                    .ToList();
+
                 var medSummary = patientMeds.Count == 0
                     ? "None"
                     : string.Join(", ", patientMeds.Select(m =>
