@@ -41,7 +41,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 return Page();
             }
 
-            Beds newBed = await _context.Beds.Include(b => b.Wards).FirstOrDefaultAsync(b => b.BedID == Input.NewBedID);
+            Beds? newBed = await _context.Beds.Include(b => b.Wards).FirstOrDefaultAsync(b => b.BedID == Input.NewBedID);
             if (newBed == null || newBed.PatientID != null)
             {
                 ModelState.AddModelError("Input.NewBedID", "This bed is no longer available.");
@@ -49,7 +49,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 return Page();
             }
 
-            Beds oldBed = await _context.Beds.FirstOrDefaultAsync(b => b.PatientID == Input.PatientID);
+            Beds? oldBed = await _context.Beds.FirstOrDefaultAsync(b => b.PatientID == Input.PatientID);
             if (oldBed != null)
             {
                 oldBed.PatientID = null;
