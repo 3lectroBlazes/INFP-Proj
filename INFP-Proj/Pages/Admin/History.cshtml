@@ -1,0 +1,102 @@
+@page
+@model INFP_Proj.Pages.Admin.HistoryModel
+@{
+    ViewData["Title"] = "Admission History";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Admission history</h1>
+        <p class="page-subtitle text-muted">All patient admission records (newest first).</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Dashboard">Dashboard</a>
+    </div>
+</div>
+
+<div class="app-card card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-sm-8 col-md-5">
+                <label asp-for="PatientId" class="form-label">Patient</label>
+                <select asp-for="PatientId" class="form-select" asp-items="Model.PatientOptions">
+                    <option value="">All patients</option>
+                </select>
+            </div>
+            <div class="col-auto d-grid">
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+            <div class="col-12">
+                <a class="btn btn-link btn-sm px-0" asp-page="/Admin/History">Clear filter</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Admissions.Count == 0)
+{
+    <div class="empty-state">
+        <p class="text-muted mb-0">No admission records found.</p>
+    </div>
+}
+else
+{
+    <div class="app-table-wrapper table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Diagnosis</th>
+                    <th>Ward / Bed</th>
+                    <th>Admitted</th>
+                    <th>Discharged</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Admissions)
+                {
+                    <tr>
+                        <td class="fw-medium">@item.PatientName</td>
+                        <td>@item.Diagnosis</td>
+                        <td class="small text-muted">
+                            <div>@item.Ward</div>
+                            <div>@item.Bed</div>
+                        </td>
+                        <td class="text-nowrap">
+                            <time datetime="@item.AdmissionDateTime.ToString("o")">
+                                @item.AdmissionDateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                            </time>
+                        </td>
+                        <td class="text-nowrap">
+                            @if (item.DischargeDateTime.HasValue)
+                            {
+                                <time datetime="@item.DischargeDateTime.Value.ToString("o")">
+                                    @item.DischargeDateTime.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                </time>
+                            }
+                            else
+                            {
+                                <span class="text-muted">&mdash;</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Discharged</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@item.PatientId">Open</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
