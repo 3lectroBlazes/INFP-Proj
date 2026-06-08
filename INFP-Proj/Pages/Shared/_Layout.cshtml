@@ -30,26 +30,38 @@
                         {
                             @if (User.FindFirst("IsAdmin")?.Value == "True")
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-area="" asp-page="/Admin/Dashboard">Dashboard</a>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navDashboard" role="button" data-bs-toggle="dropdown" aria-expanded="false">Dashboard</a>
+                                    <ul class="dropdown-menu" aria-labelledby="navDashboard">
+                                        <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Dashboard">Dashboard</a></li>
+                                    </ul>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-area="" asp-page="/Admin/Index">Patients</a>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navPatients" role="button" data-bs-toggle="dropdown" aria-expanded="false">Patients</a>
+                                    <ul class="dropdown-menu" aria-labelledby="navPatients">
+                                        <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Index">Patients</a></li>
+                                        <li><a class="dropdown-item" asp-area="" asp-page="/Admin/History">Admissions</a></li>
+                                        <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Tracker">Vitals</a></li>
+                                        @if (User.IsInRole("Reception"))
+                                        {
+                                            <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/RegisterPatient">Register Patients</a></li>
+                                        }
+                                    </ul>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-area="" asp-page="/Admin/Tracker">Vitals</a>
-                                </li>
+                                @if (User.IsInRole("Reception"))
+                                {
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="navWards" role="button" data-bs-toggle="dropdown" aria-expanded="false">Wards</a>
+                                        <ul class="dropdown-menu" aria-labelledby="navWards">
+                                            <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/WardBedChange">Wards and Beds</a></li>
+                                        </ul>
+                                    </li>
+                                }
                                 <li class="nav-item">
                                     <a class="nav-link" asp-area="" asp-page="/Admin/Logs">Activity Log</a>
                                 </li>
                                 @if (User.IsInRole("Reception"))
                                 {
-                                    <li class="nav-item">
-                                        <a class="nav-link" asp-area="" asp-page="/Admin/Reception/RegisterPatient">Register Patients</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" asp-area="" asp-page="/Admin/Reception/WardBedChange">Wards and Beds</a>
-                                    </li>
                                     <li class="nav-item">
                                         <a class="nav-link" asp-area="" asp-page="/Admin/Reception/Notifications">Send Notifications</a>
                                     </li>

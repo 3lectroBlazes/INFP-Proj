@@ -110,6 +110,36 @@ body {
   background-color: var(--app-primary-light);
 }
 
+/* Navbar grouped dropdowns */
+.app-navbar .dropdown-menu {
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow-lg);
+  border-radius: var(--app-radius);
+  margin-top: 0.25rem;
+}
+
+.app-navbar .dropdown-item {
+  font-weight: 500;
+  border-radius: calc(var(--app-radius) - 0.2rem);
+}
+
+.app-navbar .dropdown-item:hover,
+.app-navbar .dropdown-item:focus {
+  color: var(--app-primary);
+  background-color: var(--app-primary-light);
+}
+
+/* Open the grouped menus on hover on desktop; click still works on mobile */
+@media (min-width: 992px) {
+  .app-navbar .nav-item.dropdown:hover > .dropdown-menu {
+    display: block;
+  }
+
+  .app-navbar .nav-item.dropdown > .dropdown-menu {
+    margin-top: 0;
+  }
+}
+
 .app-main {
   flex: 1;
   padding-top: 1.75rem;

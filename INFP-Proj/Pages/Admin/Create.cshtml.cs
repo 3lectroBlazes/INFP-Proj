@@ -108,7 +108,7 @@ namespace INFP_Proj.Pages.Admin
                 }
                 else
                 {
-                    // Readmission: reuse the existing patient record and free any previous bracelet.
+                    // Readmission: reuse the existing patient row and free any previous bracelet.
                     patient.Status = "Admitted";
                     var oldRelations = await _context.BraceletRelations
                         .Where(br => br.PatientID == patient.PatientID)
@@ -117,6 +117,17 @@ namespace INFP_Proj.Pages.Admin
                     {
                         _context.BraceletRelations.RemoveRange(oldRelations);
                     }
+
+                    // Close out any still-open admission so the new admission is a fresh,
+                    // separate record rather than overwriting the previous one.
+                    var openRecords = await _context.Records
+                        .Where(r => r.PatientID == patient.PatientID && r.DischargeDateTime == null)
+                        .ToListAsync();
+                    foreach (var openRecord in openRecords)
+                    {
+                        openRecord.DischargeDateTime = DateTime.UtcNow;
+                    }
+
                     await _context.SaveChangesAsync();
                 }
 
