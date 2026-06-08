@@ -167,15 +167,18 @@ namespace INFP_Proj.Pages.Admin
                 return null;
             }
 
-            var medications = await _context.MedicationLists
-                .Where(m => m.PatientID == patientId)
-                .OrderBy(m => m.MedicationListID)
-                .ToListAsync();
-
             var record = await _context.Records
                 .Where(r => r.PatientID == patientId)
                 .OrderByDescending(r => r.AdmissionDateTime)
                 .FirstOrDefaultAsync();
+
+            // Only show medications for the current admission (medications attached to,
+            // or added after, the latest record's medication list).
+            var medications = await _context.MedicationLists
+                .Where(m => m.PatientID == patientId
+                    && (record == null || m.MedicationListID >= record.MedicationListID))
+                .OrderBy(m => m.MedicationListID)
+                .ToListAsync();
 
             return new PatientEditViewModel
             {
