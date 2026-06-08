@@ -93,6 +93,10 @@
                                 {
                                     <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@patient.PatientId">Edit</a>
                                 }
+                                else if (User.IsInRole("User"))
+                                {
+                                    <a class="btn btn-sm btn-outline-primary" asp-page="/User/View" asp-route-id="@patient.PatientId">View</a>
+                                }
                                 else
                                 {
                                     <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@patient.PatientId">View</a>

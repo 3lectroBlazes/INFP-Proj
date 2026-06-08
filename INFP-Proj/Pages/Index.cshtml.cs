@@ -1,13 +1,14 @@
 using INFP_Proj.Data;
 using INFP_Proj.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.CodeAnalysis.Scripting.Hosting;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace INFP_Proj.Pages
 {
-    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;
@@ -22,11 +23,32 @@ namespace INFP_Proj.Pages
         public IList<PatientListItem> Patients { get; set; } = new List<PatientListItem>();
 
         public async Task OnGetAsync()
-        {
-            var patients = await _context.Patients
-                .Include(p => p.User)
-                .OrderBy(p => p.PatientID)
-                .ToListAsync();
+        { 
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isUserRole = User.IsInRole("User");
+
+            List<Patients> patients;
+
+            if (isUserRole && userId != null)
+            {
+                var relatedPatientIds = await _context.Relationships
+                    .Where(r => r.UserID == userId)
+                    .Select(r => r.PatientID)
+                    .ToListAsync();
+
+                patients = await _context.Patients
+                    .Include(p => p.User)
+                    .Where(p => p.UserID == userId || relatedPatientIds.Contains(p.PatientID))
+                    .OrderBy(p => p.PatientID)
+                    .ToListAsync();
+            }
+            else
+            {
+                patients = await _context.Patients
+                    .Include(p => p.User)
+                    .OrderBy(p => p.PatientID)
+                    .ToListAsync();
+            }
 
             var patientIds = patients.Select(p => p.PatientID).ToList();
 
@@ -41,14 +63,11 @@ namespace INFP_Proj.Pages
 
             Patients = patients.Select(p =>
             {
-                var patientMeds = medicationLists.Where(m => m.PatientID == p.PatientID).ToList();;
-
+                var patientMeds = medicationLists.Where(m => m.PatientID == p.PatientID).ToList();
                 var medSummary = patientMeds.Count == 0
                     ? "None"
                     : string.Join(", ", patientMeds.Select(m =>
                         $"{m.Medications?.MedicationName ?? "Unknown"} ({m.Dosage})"));
-
-
 
                 return new PatientListItem
                 {

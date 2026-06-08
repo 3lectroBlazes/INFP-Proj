@@ -20,6 +20,10 @@ builder.Services.AddIdentity<AppUser, AppRole>()
 
 builder.Services.AddAuthorization(options =>
 {
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+    .RequireAuthenticatedUser()
+    .Build();
+
     options.AddPolicy("AdminOnlyPolicy", policy =>
         policy.RequireAssertion(context =>
         {
