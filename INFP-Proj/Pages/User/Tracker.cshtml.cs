@@ -120,6 +120,8 @@ namespace INFP_Proj.Pages.User
                 BloodPressure = bloodPressure,
                 RespiratoryRate = respiration,
                 Temperature = temperature,
+
+                // Store in database as UTC
                 RecordedAt = DateTime.UtcNow
             };
 
@@ -144,6 +146,8 @@ namespace INFP_Proj.Pages.User
                 bloodPressure = bloodPressure.ToString("0"),
                 respiration = respiration.ToString("0"),
                 temperature = temperature.ToString("0.0"),
+
+                // Convert to Singapore time before sending to browser
                 updatedAt = ToSingaporeTime(newVitals.RecordedAt).ToString("yyyy-MM-dd HH:mm:ss"),
 
                 heartRateStatus,
@@ -171,7 +175,11 @@ namespace INFP_Proj.Pages.User
             LatestBloodPressure = bracelet?.BloodPressure ?? latestVitals?.BloodPressure;
             LatestRespiration = bracelet?.Respiration ?? latestVitals?.RespiratoryRate;
             LatestTemperature = latestVitals?.Temperature;
-            LatestUpdatedAt = latestVitals?.RecordedAt;
+
+            // Convert UTC database time to Singapore time ONCE here
+            LatestUpdatedAt = latestVitals == null
+                ? null
+                : ToSingaporeTime(latestVitals.RecordedAt);
 
             HeartRateStatus = GetHeartRateStatus(LatestHeartRate);
             BloodPressureStatus = GetBloodPressureStatus(LatestBloodPressure);

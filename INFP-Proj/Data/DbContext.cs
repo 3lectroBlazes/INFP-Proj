@@ -1,8 +1,10 @@
 ﻿using Humanizer;
 using INFP_Proj.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using static INFP_Proj.Pages.User.CareUpdatesModel;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace INFP_Proj.Data
@@ -39,6 +41,7 @@ namespace INFP_Proj.Data
         public DbSet<BraceletRelation> BraceletRelations { get; set; }
         public DbSet<Log> Logs { get; set; }
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
+        public DbSet<AppointmentRequest> AppointmentRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

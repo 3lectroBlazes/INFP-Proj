@@ -3,6 +3,27 @@
 @{
     ViewData["Title"] = "My Care Updates";
     var data = Model.CareData;
+
+    string AppointmentStatusBadge(string status)
+    {
+        return status switch
+        {
+            "Approved" => "bg-success",
+            "Rejected" => "bg-danger",
+            "Rescheduled" => "bg-warning text-dark",
+            "Pending" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    string UrgencyBadge(string urgency)
+    {
+        return urgency switch
+        {
+            "Urgent" => "bg-danger",
+            _ => "bg-primary"
+        };
+    }
 }
 
 <div class="page-header">
@@ -143,10 +164,122 @@ else
                             Submit Question
                         </button>
                     </form>
-
-                    
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="app-card card mb-4">
+        <div class="card-header">
+            Request a New Appointment
+        </div>
+
+        <div class="card-body">
+            <p class="text-muted">
+                Use this if you would like to meet the doctor even though no appointment has been arranged.
+            </p>
+
+            <form method="post" asp-page-handler="RequestNewAppointment">
+                <div class="mb-3">
+                    <label asp-for="NewAppointmentRequest.PreferredDateTime" class="form-label">
+                        Preferred Date and Time
+                    </label>
+                    <input asp-for="NewAppointmentRequest.PreferredDateTime"
+                           type="datetime-local"
+                           class="form-control" />
+                    <span asp-validation-for="NewAppointmentRequest.PreferredDateTime" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="NewAppointmentRequest.Reason" class="form-label">
+                        Reason for Appointment
+                    </label>
+                    <textarea asp-for="NewAppointmentRequest.Reason"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Example: I would like to discuss my medication, symptoms, or recovery progress."></textarea>
+                    <span asp-validation-for="NewAppointmentRequest.Reason" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="NewAppointmentRequest.Urgency" class="form-label">
+                        Urgency
+                    </label>
+                    <select asp-for="NewAppointmentRequest.Urgency" class="form-select">
+                        <option value="Normal">Normal</option>
+                        <option value="Urgent">Urgent</option>
+                    </select>
+                    <span asp-validation-for="NewAppointmentRequest.Urgency" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Submit Appointment Request
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-card card mb-4">
+        <div class="card-header">
+            My Appointment Requests
+        </div>
+
+        <div class="card-body">
+            @if (Model.AppointmentRequests.Count == 0)
+            {
+                <p class="text-muted mb-0">
+                    You have not submitted any appointment requests yet.
+                </p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Preferred Date</th>
+                                <th>Reason</th>
+                                <th>Urgency</th>
+                                <th>Status</th>
+                                <th>Doctor Response</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var request in Model.AppointmentRequests)
+                            {
+                                <tr>
+                                    <td class="text-nowrap">
+                                        @request.PreferredDateTime.ToString("yyyy-MM-dd HH:mm")
+                                    </td>
+
+                                    <td>
+                                        @request.Reason
+                                    </td>
+
+                                    <td>
+                                        <span class="badge @UrgencyBadge(request.Urgency)">
+                                            @request.Urgency
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge @AppointmentStatusBadge(request.Status)">
+                                            @request.Status
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        @(string.IsNullOrWhiteSpace(request.DoctorResponse)
+                                                                    ? "-"
+                                                                    : request.DoctorResponse)
+                        </td>
+                    </tr>
+                                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 
@@ -246,4 +379,8 @@ else
             </table>
         </div>
     }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

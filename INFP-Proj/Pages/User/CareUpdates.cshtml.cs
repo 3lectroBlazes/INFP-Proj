@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using INFP_Proj.Data;
 using INFP_Proj.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,11 +23,29 @@ namespace INFP_Proj.Pages.User
 
         public CareUpdatesViewModel CareData { get; set; } = new();
 
+        public List<AppointmentRequest> AppointmentRequests { get; set; } = new();
+
         [BindProperty]
         public string QuestionMessage { get; set; } = string.Empty;
 
         [BindProperty]
         public string AppointmentChangeReason { get; set; } = string.Empty;
+
+        [BindProperty]
+        public AppointmentRequestInput NewAppointmentRequest { get; set; } = new();
+
+        public class AppointmentRequestInput
+        {
+            [Required(ErrorMessage = "Please choose a preferred date and time.")]
+            public DateTime PreferredDateTime { get; set; }
+
+            [Required(ErrorMessage = "Please enter a reason for the appointment.")]
+            [StringLength(500, ErrorMessage = "Reason cannot be more than 500 characters.")]
+            public string Reason { get; set; } = string.Empty;
+
+            [Required]
+            public string Urgency { get; set; } = "Normal";
+        }
 
         public async Task OnGetAsync()
         {
@@ -92,6 +111,64 @@ namespace INFP_Proj.Pages.User
             return RedirectToPage();
         }
 
+        public async Task<IActionResult> OnPostRequestNewAppointmentAsync()
+        {
+            string? currentUserId = _userManager.GetUserId(User);
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            Patients? patient = await GetLinkedPatientAsync(currentUserId);
+
+            if (patient == null)
+            {
+                TempData["CareUpdateMessage"] = "No patient record is linked to your account.";
+                return RedirectToPage();
+            }
+
+            if (NewAppointmentRequest.PreferredDateTime == default)
+            {
+                TempData["CareUpdateMessage"] = "Please choose a preferred date and time.";
+                return RedirectToPage();
+            }
+
+            if (string.IsNullOrWhiteSpace(NewAppointmentRequest.Reason))
+            {
+                TempData["CareUpdateMessage"] = "Please enter a reason for the appointment.";
+                return RedirectToPage();
+            }
+
+            if (string.IsNullOrWhiteSpace(NewAppointmentRequest.Urgency))
+            {
+                NewAppointmentRequest.Urgency = "Normal";
+            }
+
+            if (NewAppointmentRequest.PreferredDateTime < DateTime.Now)
+            {
+                TempData["CareUpdateMessage"] = "Please select a future date and time for the appointment.";
+                return RedirectToPage();
+            }
+
+            var appointmentRequest = new AppointmentRequest
+            {
+                PatientID = patient.PatientID,
+                PreferredDateTime = NewAppointmentRequest.PreferredDateTime,
+                Reason = NewAppointmentRequest.Reason.Trim(),
+                Urgency = NewAppointmentRequest.Urgency,
+                Status = "Pending",
+                DoctorResponse = null,
+                RequestedAt = DateTime.UtcNow
+            };
+
+            _context.AppointmentRequests.Add(appointmentRequest);
+            await _context.SaveChangesAsync();
+
+            TempData["CareUpdateMessage"] = "Your appointment request has been submitted. Please wait for the care team to confirm.";
+            return RedirectToPage();
+        }
+
         private async Task LoadCareUpdatesAsync()
         {
             string? currentUserId = _userManager.GetUserId(User);
@@ -124,6 +201,11 @@ namespace INFP_Proj.Pages.User
                 })
                 .ToListAsync();
 
+            AppointmentRequests = await _context.AppointmentRequests
+                .Where(ar => ar.PatientID == patient.PatientID)
+                .OrderByDescending(ar => ar.RequestedAt)
+                .ToListAsync();
+
             CareData = new CareUpdatesViewModel
             {
                 HasPatientRecord = true,
@@ -132,7 +214,6 @@ namespace INFP_Proj.Pages.User
                     ? $"{patient.User.FirstName} {patient.User.LastName}"
                     : $"Patient #{patient.PatientID}",
 
-                // Dummy appointment data is loaded here.
                 UpcomingAppointment = GetDummyAppointment(),
 
                 AppointmentAcknowledged = TempData["AppointmentAcknowledged"]?.ToString() == "true",
@@ -141,7 +222,6 @@ namespace INFP_Proj.Pages.User
                 DoctorCommunications = communications
             };
 
-            // Keep TempData values for one more request so they can still display after redirect.
             TempData.Keep("AppointmentAcknowledged");
             TempData.Keep("AppointmentChangeRequest");
         }
@@ -152,10 +232,7 @@ namespace INFP_Proj.Pages.User
             {
                 Title = "Follow-up Review",
                 DoctorName = "Dr Xavier Wee",
-
-                // This is dummy data for prototype display.
                 AppointmentDateTime = DateTime.Today.AddDays(5).AddHours(10).AddMinutes(30),
-
                 Location = "General Ward Consultation Room",
                 Status = "Scheduled",
                 Purpose = "Review patient condition, medication, and latest vitals."

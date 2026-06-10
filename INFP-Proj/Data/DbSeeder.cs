@@ -324,7 +324,7 @@ namespace INFP_Proj.Data
             });
 
             // Vitals
-            DateTime vitalsBaseTime = DateTime.Now.AddDays(-6);
+            DateTime vitalsBaseTime = DateTime.Now.AddDays(-7);
             var goodReadings = new (float bp, float hr, float rr, float temp)[]
             {
                 (119, 70, 16, 36.4f), (120, 71, 17, 36.5f), (121, 70, 16, 36.4f),
