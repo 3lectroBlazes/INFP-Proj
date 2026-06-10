@@ -84,11 +84,11 @@ namespace INFP_Proj.Pages.Admin.Reception
                     PatientID = patient.PatientID,
                     BedID = Input.BedID,
                     WardID = assignedWardID,
-                    HospitalID = 1,       
-                    DiagnosisID = 1,      
-                    MedicationListID = 1, 
+                    HospitalID = 1,
+                    DiagnosisID = 1,
+                    MedicationListID = 1,
                     Description = Input.Description,
-                    AdmissionDateTime = DateTime.Now
+                    AdmissionDateTime = DateTime.UtcNow
                 };
                 _context.Records.Add(patrec);
 

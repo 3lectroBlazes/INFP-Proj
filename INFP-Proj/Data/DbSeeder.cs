@@ -141,7 +141,7 @@ namespace INFP_Proj.Data
             {
                 Battery = 85.5f,
                 Respiration = 18.0f,
-                Location = "Ward A",
+                Location = "Ward " + Convert.ToString(general.WardID),
                 Movement = 0.5f,
                 BloodPressure = 120.0f,
                 HeartRate = 72.0f
@@ -150,22 +150,49 @@ namespace INFP_Proj.Data
             {
                 Battery = 90.0f,
                 Respiration = 16.0f,
-                Location = "Ward A",
+                Location = "Ward " + Convert.ToString(general.WardID),
                 Movement = 0.3f,
                 BloodPressure = 110.0f,
                 HeartRate = 68.0f
             };
 
-            Bracelet testBracelet = new Bracelet
+            Bracelet emptyBracelet1 = new Bracelet
             {
                 Battery = 100.0f,
                 Respiration = 16.0f,
-                Location = "Ward A",
+                Location = "Ward " + Convert.ToString(general.WardID),
                 Movement = 0.0f,
                 BloodPressure = 110.0f,
                 HeartRate = 68.0f
             };
-            context.Bracelets.AddRange(sadevBracelet, mikuBracelet, testBracelet);
+
+            Bracelet emptyBracelet2 = new Bracelet
+            {
+                Battery = 100.0f,
+                Respiration = 16.0f,
+                Location = "Ward " + Convert.ToString(disease.WardID),
+                Movement = 0.0f,
+                BloodPressure = 110.0f,
+                HeartRate = 68.0f
+            };
+
+            Bracelet emptyBracelet3 = new Bracelet
+            {
+                Battery = 100.0f,
+                Respiration = 16.0f,
+                Location = "Ward " + Convert.ToString(special.WardID),
+                Movement = 0.0f,
+                BloodPressure = 110.0f,
+                HeartRate = 68.0f
+            };
+
+            context.Bracelets.AddRange(
+                sadevBracelet, 
+                mikuBracelet, 
+                emptyBracelet1, 
+                emptyBracelet2, 
+                emptyBracelet3
+            );
             await context.SaveChangesAsync();
 
             // Patients
@@ -229,7 +256,7 @@ namespace INFP_Proj.Data
                 Weight = 60.0f,
                 Location = "Near Door"
             };
-            Beds testBed = new Beds
+            Beds emptyBed1 = new Beds
             {
                 WardID = general.WardID,
                 Sector = "A",
@@ -239,8 +266,34 @@ namespace INFP_Proj.Data
                 Weight = 60.0f,
                 Location = "Middle"
             };
+            Beds emptyBed2 = new Beds
+            {
+                WardID = disease.WardID,
+                Sector = "A",
+                Floor = "1",
+                Room = "103",
+                Temperature = 36.6f,
+                Weight = 60.0f,
+                Location = "Near Window"
+            };
+            Beds emptyBed3 = new Beds
+            {
+                WardID = special.WardID,
+                Sector = "A",
+                Floor = "1",
+                Room = "103",
+                Temperature = 36.6f,
+                Weight = 60.0f,
+                Location = "Near Door"
+            };
 
-            context.Beds.AddRange(sadevBed, mikuBed, testBed);
+            context.Beds.AddRange(
+                sadevBed, 
+                mikuBed, 
+                emptyBed1, 
+                emptyBed2, 
+                emptyBed3
+            );
             await context.SaveChangesAsync();
 
             // Records
