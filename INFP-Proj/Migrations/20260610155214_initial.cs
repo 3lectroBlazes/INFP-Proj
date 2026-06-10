@@ -249,29 +249,6 @@ namespace INFP_Proj.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Logs",
-                columns: table => new
-                {
-                    LogID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Event = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Emergency = table.Column<bool>(type: "bit", nullable: false),
-                    Resolved = table.Column<bool>(type: "bit", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Logs", x => x.LogID);
-                    table.ForeignKey(
-                        name: "FK_Logs_AspNetUsers_UserID",
-                        column: x => x.UserID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Patients",
                 columns: table => new
                 {
@@ -312,6 +289,31 @@ namespace INFP_Proj.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_AllergyLists_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Appointments",
+                columns: table => new
+                {
+                    AppointmentRequestID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PatientID = table.Column<int>(type: "int", nullable: false),
+                    PreferredDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Urgency = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DoctorResponse = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Appointments", x => x.AppointmentRequestID);
+                    table.ForeignKey(
+                        name: "FK_Appointments_Patients_PatientID",
                         column: x => x.PatientID,
                         principalTable: "Patients",
                         principalColumn: "PatientID",
@@ -392,6 +394,42 @@ namespace INFP_Proj.Migrations
                         principalTable: "Patients",
                         principalColumn: "PatientID",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Logs",
+                columns: table => new
+                {
+                    LogID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    PatientID = table.Column<int>(type: "int", nullable: true),
+                    Event = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MedicationID = table.Column<int>(type: "int", nullable: true),
+                    Dosage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Emergency = table.Column<bool>(type: "bit", nullable: false),
+                    Resolved = table.Column<bool>(type: "bit", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Logs", x => x.LogID);
+                    table.ForeignKey(
+                        name: "FK_Logs_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Logs_Medications_MedicationID",
+                        column: x => x.MedicationID,
+                        principalTable: "Medications",
+                        principalColumn: "MedicationID");
+                    table.ForeignKey(
+                        name: "FK_Logs_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID");
                 });
 
             migrationBuilder.CreateTable(
@@ -535,6 +573,11 @@ namespace INFP_Proj.Migrations
                 column: "PatientID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Appointments_PatientID",
+                table: "Appointments",
+                column: "PatientID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
@@ -591,6 +634,16 @@ namespace INFP_Proj.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_DoctorRequests_PatientID",
                 table: "DoctorRequests",
+                column: "PatientID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Logs_MedicationID",
+                table: "Logs",
+                column: "MedicationID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Logs_PatientID",
+                table: "Logs",
                 column: "PatientID");
 
             migrationBuilder.CreateIndex(
@@ -659,6 +712,9 @@ namespace INFP_Proj.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AllergyLists");
+
+            migrationBuilder.DropTable(
+                name: "Appointments");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");

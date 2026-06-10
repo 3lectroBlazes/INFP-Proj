@@ -1,6 +1,6 @@
 using INFP_Proj.Data;
-using INFP_Proj.Models;
 using INFP_Proj.Services;
+using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -93,23 +93,57 @@ namespace INFP_Proj.Pages.Admin
                 return NotFound();
             }
 
-            if (!Patient.NewMedicationID.HasValue || string.IsNullOrWhiteSpace(Patient.NewDosage))
+            Medications medication = await _context.Medications.FindAsync(Patient.NewMedicationID.Value);
+
+            if (medication == null || string.IsNullOrWhiteSpace(Patient.NewDosage))
             {
                 TempData["Error"] = "Select a medication and enter a dosage to add.";
                 return RedirectToPage(new { id });
             }
-
-            _context.MedicationLists.Add(new MedicationList
+            else
             {
-                PatientID = id,
-                MedicationID = Patient.NewMedicationID.Value,
-                Dosage = Patient.NewDosage.Trim()
-            });
+                var alreadyExists = await _context.MedicationLists
+                .AnyAsync(m => m.PatientID == id && m.MedicationID == Patient.NewMedicationID.Value);
+                if (alreadyExists)
+                {
+                    TempData["Error"] = "This medication is already assigned to this patient.";
+                    return RedirectToPage(new { id });
+                }
 
-            await _context.SaveChangesAsync();
-            await _adminLogService.AddLogAsync($"Medication added for patient #{id}");
-            await AddPatientLogIfLinkedAsync(id, "A new medication was added to your schedule");
-            TempData["Message"] = "Medication added.";
+                if (medication.Approval)
+                {
+                    await _adminLogService.AddLogAsync($"Medication requested for patient #{id}", true, null, id, medication.MedicationID, Patient.NewDosage.Trim());
+                    TempData["Message"] = "Medication Requested.";
+                    return RedirectToPage(new { id });
+                }
+                else
+                {
+                    _context.MedicationLists.Add(new MedicationList
+                    {
+                        PatientID = id,
+                        MedicationID = Patient.NewMedicationID.Value,
+                        Dosage = Patient.NewDosage.Trim()
+                    });
+
+                    await _context.SaveChangesAsync();
+                    await _adminLogService.AddLogAsync($"Medication added for patient #{id}");
+                    await AddPatientLogIfLinkedAsync(id, "A new medication was added to your schedule");
+                    TempData["Message"] = "Medication added.";
+                    return RedirectToPage(new { id });
+                }
+            }
+        }
+        public async Task<IActionResult> OnPostRemoveMedicationAsync(int id, int medicationListId)
+        {
+            var entry = await _context.MedicationLists.FindAsync(medicationListId);
+            if (entry != null)
+            {
+                _context.MedicationLists.Remove(entry);
+                await _context.SaveChangesAsync();
+                await _adminLogService.AddLogAsync($"Medication removed for patient #{id}");
+                await AddPatientLogIfLinkedAsync(id, "A medication was removed from your schedule");
+                TempData["Message"] = "Medication removed.";
+            }
             return RedirectToPage(new { id });
         }
 
@@ -204,7 +238,7 @@ namespace INFP_Proj.Pages.Admin
                 .OrderBy(m => m.MedicationName)
                 .ToListAsync();
 
-            MedicationOptions = new SelectList(medications, "MedicationID", "MedicationName");
+            MedicationOptions = new SelectList(medications, "MedicationID", "MedicationName", "Approval");
         }
 
         private async Task AddPatientLogIfLinkedAsync(int patientId, string message)

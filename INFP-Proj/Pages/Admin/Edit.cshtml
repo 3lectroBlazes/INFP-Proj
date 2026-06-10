@@ -53,10 +53,16 @@
             <form method="post" asp-page-handler="UpdateMedications" asp-route-id="@Model.Patient.PatientId">
                 <div class="app-table-wrapper table-responsive mb-3">
                     <table class="table align-middle mb-0">
+                        <colgroup>
+                            <col class="col-5" />
+                            <col class="col-5" />
+                            <col class="col-2" />
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th>Medication</th>
                                 <th>Dosage</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -74,6 +80,18 @@
                                         <input asp-for="Patient.MedicationLists[i].Dosage"
                                                class="form-control"
                                                disabled="@Model.Patient.IsDischarged" />
+                                    </td>
+                                    <td>
+                                        @if (!Model.Patient.IsDischarged)
+                                        {
+                                            <button type="submit"
+                                                    asp-page-handler="RemoveMedication"
+                                                    asp-route-medicationListId="@Model.Patient.MedicationLists[i].MedicationListID"
+                                                    asp-route-id="@Model.Patient.PatientId"
+                                                    class="btn btn-outline-danger btn-sm">
+                                                Remove
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }

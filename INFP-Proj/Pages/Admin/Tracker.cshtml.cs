@@ -1,5 +1,5 @@
-using INFP_Proj.Models;
 using INFP_Proj.Services;
+using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 

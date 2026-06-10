@@ -1,4 +1,4 @@
-﻿namespace INFP_Proj.Models
+﻿namespace INFP_Proj.ViewModel
 {
     public class WardStatViewModel
     {
@@ -8,6 +8,6 @@
         public int OccupiedBeds { get; set; }
         public int AvailableBeds { get; set; }
 
-        public double OccupancyRate => MaxCapacity > 0 ? ((double)OccupiedBeds / MaxCapacity) * 100 : 0;
+        public double OccupancyRate => MaxCapacity > 0 ? (double)OccupiedBeds / MaxCapacity * 100 : 0;
     }
 }

@@ -11,18 +11,6 @@ namespace INFP_Proj.Data
 {
     public class AppDbContext : IdentityDbContext<AppUser, AppRole, string>
     {
-        // ^^^
-        // IF required to add on stuff to the ASP tables, create a new class in Models
-        // that inherits the relevant class. E.g AppUser.cs & AppRole.cs in Models Folder
-
-        //IdentityUser        → AspNetUsers
-        //IdentityRole        → AspNetRoles
-        //IdentityUserRole    → AspNetUserRoles(join table, user↔role)
-        //IdentityUserClaim   → AspNetUserClaims(extra user data/permissions)
-        //IdentityUserLogin   → AspNetUserLogins(external logins, e.g.Google)
-        //IdentityUserToken   → AspNetUserTokens(auth tokens, refresh tokens)
-        //IdentityRoleClaim   → AspNetRoleClaims(permissions attached to roles)
-
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
         public DbSet<Patients> Patients { get; set; }
@@ -41,7 +29,7 @@ namespace INFP_Proj.Data
         public DbSet<BraceletRelation> BraceletRelations { get; set; }
         public DbSet<Log> Logs { get; set; }
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
-        public DbSet<AppointmentRequest> AppointmentRequests { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

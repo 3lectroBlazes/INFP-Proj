@@ -1,10 +1,10 @@
 using INFP_Proj.Data;
-using INFP_Proj.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using INFP_Proj.ViewModel;
 
 namespace INFP_Proj.Pages.User
 {

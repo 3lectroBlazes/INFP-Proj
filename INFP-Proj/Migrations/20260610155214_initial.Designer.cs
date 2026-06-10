@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260610100849_initial")]
+    [Migration("20260610155214_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -63,6 +63,46 @@ namespace INFP_Proj.Migrations
                     b.HasIndex("PatientID");
 
                     b.ToTable("AllergyLists");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Data.Appointment", b =>
+                {
+                    b.Property<int>("AppointmentRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentRequestID"));
+
+                    b.Property<string>("DoctorResponse")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("PreferredDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Urgency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("AppointmentRequestID");
+
+                    b.HasIndex("PatientID");
+
+                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Beds", b =>
@@ -232,12 +272,21 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogID"));
 
+                    b.Property<string>("Dosage")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("Emergency")
                         .HasColumnType("bit");
 
                     b.Property<string>("Event")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("MedicationID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PatientID")
+                        .HasColumnType("int");
 
                     b.Property<bool>("Resolved")
                         .HasColumnType("bit");
@@ -250,6 +299,10 @@ namespace INFP_Proj.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("LogID");
+
+                    b.HasIndex("MedicationID");
+
+                    b.HasIndex("PatientID");
 
                     b.HasIndex("UserID");
 
@@ -687,6 +740,17 @@ namespace INFP_Proj.Migrations
                     b.Navigation("Patients");
                 });
 
+            modelBuilder.Entity("INFP_Proj.Data.Appointment", b =>
+                {
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("INFP_Proj.Data.Beds", b =>
                 {
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
@@ -736,11 +800,23 @@ namespace INFP_Proj.Migrations
 
             modelBuilder.Entity("INFP_Proj.Data.Log", b =>
                 {
+                    b.HasOne("INFP_Proj.Data.Medications", "Medication")
+                        .WithMany()
+                        .HasForeignKey("MedicationID");
+
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientID");
+
                     b.HasOne("INFP_Proj.Models.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Medication");
+
+                    b.Navigation("Patient");
 
                     b.Navigation("User");
                 });

@@ -225,7 +225,7 @@ else
         </div>
 
         <div class="card-body">
-            @if (Model.AppointmentRequests.Count == 0)
+            @if (Model.Appointments.Count == 0)
             {
                 <p class="text-muted mb-0">
                     You have not submitted any appointment requests yet.
@@ -246,7 +246,7 @@ else
                         </thead>
 
                         <tbody>
-                            @foreach (var request in Model.AppointmentRequests)
+                            @foreach (var request in Model.Appointments)
                             {
                                 <tr>
                                     <td class="text-nowrap">

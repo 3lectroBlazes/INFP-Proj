@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using INFP_Proj.Data;
 using INFP_Proj.Models;
+using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace INFP_Proj.Pages.User
 
         public CareUpdatesViewModel CareData { get; set; } = new();
 
-        public List<AppointmentRequest> AppointmentRequests { get; set; } = new();
+        public List<Appointment> Appointments { get; set; } = new();
 
         [BindProperty]
         public string QuestionMessage { get; set; } = string.Empty;
@@ -151,7 +152,7 @@ namespace INFP_Proj.Pages.User
                 return RedirectToPage();
             }
 
-            var appointmentRequest = new AppointmentRequest
+            var appointmentRequest = new Appointment
             {
                 PatientID = patient.PatientID,
                 PreferredDateTime = NewAppointmentRequest.PreferredDateTime,
@@ -162,7 +163,7 @@ namespace INFP_Proj.Pages.User
                 RequestedAt = DateTime.UtcNow
             };
 
-            _context.AppointmentRequests.Add(appointmentRequest);
+            _context.Appointments.Add(appointmentRequest);
             await _context.SaveChangesAsync();
 
             TempData["CareUpdateMessage"] = "Your appointment request has been submitted. Please wait for the care team to confirm.";
@@ -201,7 +202,7 @@ namespace INFP_Proj.Pages.User
                 })
                 .ToListAsync();
 
-            AppointmentRequests = await _context.AppointmentRequests
+            Appointments = await _context.Appointments
                 .Where(ar => ar.PatientID == patient.PatientID)
                 .OrderByDescending(ar => ar.RequestedAt)
                 .ToListAsync();

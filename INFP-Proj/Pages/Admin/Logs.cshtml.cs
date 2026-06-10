@@ -1,20 +1,23 @@
-using INFP_Proj.Models;
 using INFP_Proj.Data;
-using System.ComponentModel.DataAnnotations;
+using INFP_Proj.Services;
+using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace INFP_Proj.Pages.Admin
 {
     public class LogsModel : PageModel
     {
         private readonly AppDbContext _context;
+        private readonly AdminLogService _adminLogService;
 
-        public LogsModel(AppDbContext context)
+        public LogsModel(AppDbContext context, AdminLogService adminLogService)
         {
             _context = context;
+            _adminLogService = adminLogService;
         }
 
         public IList<LogListItem> Logs { get; set; } = new List<LogListItem>();
@@ -92,10 +95,39 @@ namespace INFP_Proj.Pages.Admin
             {
                 log.Resolved = true;
                 await _context.SaveChangesAsync();
-                TempData["Message"] = "Emergency marked as resolved.";
+                if (log.MedicationID.HasValue)
+                {
+                    _context.MedicationLists.Add(new MedicationList
+                    {
+                        PatientID = log.PatientID.Value,
+                        MedicationID = log.MedicationID.Value,
+                        Dosage = log.Dosage.Trim()
+                    });
+
+                    log.Event = $"Medication added for patient #{log.PatientID.Value}";
+                    await _context.SaveChangesAsync();
+                    await AddPatientLogIfLinkedAsync(log.PatientID.Value, "A new medication was added to your schedule");
+                    TempData["Message"] = "Medication added.";
+                }
+                else
+                {
+                    TempData["Message"] = "Emergency marked as resolved.";
+                }
             }
 
             return RedirectToPage(new { FromDate, ToDate, UserId, EmergencyFilter });
+        }
+        private async Task AddPatientLogIfLinkedAsync(int patientId, string message)
+        {
+            var userId = await _context.Patients
+                .Where(p => p.PatientID == patientId)
+                .Select(p => p.UserID)
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await _adminLogService.AddLogAsync(message, userId: userId);
+            }
         }
 
         private async Task PopulateUserOptionsAsync()

@@ -1,5 +1,5 @@
 using INFP_Proj.Data;
-using INFP_Proj.Models;
+using INFP_Proj.ViewModel;
 using Microsoft.EntityFrameworkCore;
 
 namespace INFP_Proj.Services

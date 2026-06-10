@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace INFP_Proj.Models
+namespace INFP_Proj.ViewModel
 {
     public class PatientListItem
     {
