@@ -47,6 +47,10 @@
             scales: {
                 x: {
                     ticks: { maxRotation: 45, minRotation: 0 }
+                },
+                y: {
+                    suggestedMin: 60,  
+                    suggestedMax: 120
                 }
             }
         }
