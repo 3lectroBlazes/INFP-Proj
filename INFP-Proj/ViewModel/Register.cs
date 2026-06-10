@@ -5,6 +5,17 @@ namespace INFP_Proj.ViewModel
     public class Register
     {
         [Required]
+        [Display(Name = "First name")]
+        public required string FirstName { get; set; }
+
+        [Display(Name = "Middle name")]
+        public string? MiddleName { get; set; }
+
+        [Required]
+        [Display(Name = "Last name")]
+        public required string LastName { get; set; }
+
+        [Required]
         [DataType(DataType.EmailAddress)]
         public required string Email { get; set; }
 

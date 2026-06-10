@@ -12,14 +12,19 @@ namespace INFP_Proj.Pages
     {
         private UserManager<AppUser> userManager { get; }
         private SignInManager<AppUser> signInManager { get; }
+        private RoleManager<AppRole> roleManager { get; }
 
         [BindProperty]
         public Register RModel { get; set; }
 
-        public RegisterModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+        public RegisterModel(
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
+            RoleManager<AppRole> roleManager)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
+            this.roleManager = roleManager;
         }
 
         public void OnGet() { }
@@ -32,12 +37,21 @@ namespace INFP_Proj.Pages
                 {
                     UserName = RModel.Email,
                     Email = RModel.Email,
-                    FirstName = string.Empty,
-                    LastName = string.Empty
+                    FirstName = RModel.FirstName,
+                    MiddleName = string.IsNullOrWhiteSpace(RModel.MiddleName) ? null : RModel.MiddleName.Trim(),
+                    LastName = RModel.LastName
                 };
                 var result = await userManager.CreateAsync(user, RModel.Password);
                 if (result.Succeeded)
                 {
+                    // Public registration only ever creates a plain "User".
+                    // Patient and admin roles are assigned elsewhere (admission flow / seeder).
+                    if (!await roleManager.RoleExistsAsync("User"))
+                    {
+                        await roleManager.CreateAsync(new AppRole { Name = "User", IsAdmin = false });
+                    }
+                    await userManager.AddToRoleAsync(user, "User");
+
                     await signInManager.SignInAsync(user, false);
                     return RedirectToPage("Index");
                 }
