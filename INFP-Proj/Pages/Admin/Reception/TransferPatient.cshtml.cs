@@ -69,6 +69,17 @@ namespace INFP_Proj.Pages.Admin.Reception
                 latestRecord.Description += $"\n[Transferred to Bed {newBed.BedID} ({wardName}) on {DateTime.UtcNow:g}]";
             }
 
+            BraceletRelation? braceletRelation = await _context.BraceletRelations
+                .FirstOrDefaultAsync(br => br.PatientID == Input.PatientID);
+
+            if (braceletRelation != null)
+            {
+                Bracelet? assignedBracelet = await _context.Bracelets.FindAsync(braceletRelation.BraceletID);
+                if (assignedBracelet != null)
+                {
+                    assignedBracelet.Location = $"Ward {newBed.WardID}";
+                }
+            }
             await _context.SaveChangesAsync();
 
             string displayWardName = newBed.Wards?.WardName ?? $"Ward {newBed.WardID}";
