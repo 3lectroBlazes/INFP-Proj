@@ -37,6 +37,7 @@ namespace INFP_Proj.Pages
                 {
                     UserName = RModel.Email,
                     Email = RModel.Email,
+                    PhoneNumber = RModel.PhoneNumber,
                     FirstName = RModel.FirstName,
                     MiddleName = string.IsNullOrWhiteSpace(RModel.MiddleName) ? null : RModel.MiddleName.Trim(),
                     LastName = RModel.LastName

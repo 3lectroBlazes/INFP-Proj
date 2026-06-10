@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace INFP_Proj.ViewModel
 {
@@ -18,6 +18,11 @@ namespace INFP_Proj.ViewModel
         [Required]
         [DataType(DataType.EmailAddress)]
         public required string Email { get; set; }
+
+        [Required]
+        [Phone]
+        [Display(Name = "Phone number")]
+        public required string PhoneNumber { get; set; }
 
         [Required]
         [DataType(DataType.Password)]

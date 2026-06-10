@@ -19,6 +19,7 @@ html {
   font-size: 15px;
   position: relative;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 @media (min-width: 768px) {
@@ -267,7 +268,8 @@ body {
   border: 1px solid var(--app-border);
   border-radius: var(--app-radius);
   box-shadow: var(--app-shadow);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .app-table-wrapper .table {
@@ -290,6 +292,7 @@ body {
   padding: 0.9rem 1rem;
   vertical-align: middle;
   border-color: var(--app-border);
+  word-break: break-word;
 }
 
 .app-table-wrapper .table tbody tr:hover {
@@ -406,4 +409,128 @@ select#patientIds[multiple].form-select option:checked {
 .section-danger .card-header,
 .section-danger h2 {
   color: #b91c1c;
+}
+
+/* Responsive — phones */
+@media (max-width: 575.98px) {
+  .app-main {
+    padding-top: 1.25rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .page-header {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .page-actions {
+    width: 100%;
+  }
+
+  .page-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .hero-panel {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .hero-panel h1 {
+    font-size: 1.35rem;
+  }
+
+  .auth-wrapper {
+    min-height: 100vh;
+    padding: 1.25rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+
+  .auth-card {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .app-card .card-header,
+  .app-card .card-body {
+    padding: 1rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .dashboard-tile {
+    padding: 1.1rem 1.25rem;
+  }
+
+  .vitals-chart-container {
+    height: 200px;
+  }
+
+  .app-navbar .navbar-brand {
+    font-size: 1rem;
+    max-width: calc(100vw - 4.5rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-footer .container {
+    flex-direction: column !important;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+}
+
+/* Responsive — tablets */
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .hero-panel {
+    padding: 2rem 1.5rem;
+  }
+
+  /* Filter bars: avoid squashed submit columns (e.g. col-md-1) */
+  .app-card form.row.g-3 > .col-md-1.d-grid {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 6rem;
+  }
+}
+
+/* Navbar dropdowns: hover only on large screens; touch uses Bootstrap toggle */
+@media (max-width: 991.98px) {
+  .app-navbar .dropdown-menu {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding-left: 0.5rem;
+  }
+
+  .app-navbar .dropdown-item {
+    padding-left: 1rem;
+  }
+}
+
+/* Media defaults */
+img,
+canvas,
+video {
+  max-width: 100%;
+  height: auto;
 }
