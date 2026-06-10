@@ -161,7 +161,7 @@ namespace INFP_Proj.Data
             {
                 Battery = 100.0f,
                 Respiration = 16.0f,
-                Location = "Ward " + Convert.ToString(general.WardID),
+                Location = "Reception desk",
                 Movement = 0.0f,
                 BloodPressure = 110.0f,
                 HeartRate = 68.0f
@@ -171,7 +171,7 @@ namespace INFP_Proj.Data
             {
                 Battery = 100.0f,
                 Respiration = 16.0f,
-                Location = "Ward " + Convert.ToString(disease.WardID),
+                Location = "Reception desk",
                 Movement = 0.0f,
                 BloodPressure = 110.0f,
                 HeartRate = 68.0f
@@ -181,7 +181,7 @@ namespace INFP_Proj.Data
             {
                 Battery = 100.0f,
                 Respiration = 16.0f,
-                Location = "Ward " + Convert.ToString(special.WardID),
+                Location = "Reception desk",
                 Movement = 0.0f,
                 BloodPressure = 110.0f,
                 HeartRate = 68.0f

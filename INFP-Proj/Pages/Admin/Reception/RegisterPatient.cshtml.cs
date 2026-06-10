@@ -33,7 +33,7 @@ namespace INFP_Proj.Pages.Admin.Reception
         public void OnGet()
         {
             PopulateWards();
-            PopulateAllBracelets(); // Loads all available bracelets immediately
+            PopulateAllBracelets();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -88,6 +88,12 @@ namespace INFP_Proj.Pages.Admin.Reception
                     assignedWardID = selectedBed.WardID;
                 }
 
+                Bracelet? assignedBracelet = await _context.Bracelets.FindAsync(Input.BraceletID);
+                if (assignedBracelet != null && assignedWardID != 0)
+                {
+                    assignedBracelet.Location = $"Ward {assignedWardID}";
+                }
+
                 Records patrec = new Records
                 {
                     PatientID = patient.PatientID,
@@ -103,7 +109,7 @@ namespace INFP_Proj.Pages.Admin.Reception
 
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"Patient {Input.FirstName} {Input.LastName} registered successfully. Assigned to Bed #{Input.BedID} (Bracelet #{Input.BraceletID}).";
+                TempData["SuccessMessage"] = $"Patient {Input.FirstName} {Input.LastName} registered successfully. Assigned to Bed #{Input.BedID} (Bracelet #{Input.BraceletID} located in Ward {assignedWardID}).";
                 return RedirectToPage("./RegisterPatient");
             }
 
@@ -157,7 +163,6 @@ namespace INFP_Proj.Pages.Admin.Reception
                 }).ToList();
         }
 
-        // AJAX Handler: Only fetches beds now
         public JsonResult OnGetWardData(int wardId)
         {
             var beds = _context.Beds

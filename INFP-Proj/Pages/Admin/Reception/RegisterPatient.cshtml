@@ -117,16 +117,13 @@
             wardSelect.addEventListener('change', function () {
                 const wardId = this.value;
 
-                // Reset Bed Dropdown
                 bedSelect.innerHTML = '<option value="">-- Select an Available Bed --</option>';
 
-                // If no ward is selected, lock the bed choice
                 if (!wardId) {
                     bedSelect.disabled = true;
                     return;
                 }
 
-                // Fetch only beds matching the ward
                 fetch(`?handler=WardData&wardId=${wardId}`)
                     .then(response => {
                         if (!response.ok) throw new Error("Network response error");
@@ -135,7 +132,6 @@
                     .then(data => {
                         bedSelect.disabled = false;
 
-                        // Populate filtered beds
                         data.beds.forEach(item => {
                             let option = new Option(item.text, item.value);
                             bedSelect.add(option);
