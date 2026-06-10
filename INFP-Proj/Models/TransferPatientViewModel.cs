@@ -2,7 +2,7 @@
 
 namespace INFP_Proj.Models
 {
-    public class WardBedChangeViewModel
+    public class TransferPatientViewModel
     {
         [Required(ErrorMessage = "Please select a patient to transfer.")]
         [Display(Name = "Select Patient")]

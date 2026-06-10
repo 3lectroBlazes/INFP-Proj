@@ -13,7 +13,7 @@ namespace INFP_Proj.Data
         public required string Event { get; set; }
         public bool Emergency { get; set; } = false;
         public bool Resolved { get; set; } = false;
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public DateTime Timestamp { get; set; } = DateTime.Now;
 
         [ForeignKey("UserID")]
         public AppUser? User { get; set; }

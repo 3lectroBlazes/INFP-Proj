@@ -39,25 +39,29 @@ else
         <p class="text-muted mb-1">
             Showing vitals for <strong class="text-dark">@Model.ChartData.PatientName</strong>
         </p>
+
         <p class="text-muted mb-1">
             Last updated:
             <strong class="text-dark" id="latestUpdatedValue">
                 @(Model.LatestUpdatedAt.HasValue
-                            ? Model.LatestUpdatedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                            ? Model.LatestUpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")
                             : "N/A")
         </strong>
     </p>
-    
 </div>
 
     <div id="patientStatusAlert" class="alert @(Model.HasAttention ? "alert-danger" : "alert-success") mb-4">
     @if (Model.HasAttention)
         {
-            <span><strong>Attention needed:</strong> One or more latest vital readings are outside the normal range. Please monitor the patient closely.</span>
+            <span>
+                <strong>Attention needed:</strong> One or more latest vital readings are outside the normal range. Please monitor the patient closely.
+            </span>
         }
         else
         {
-            <span><strong>Patient status: Stable.</strong> Latest vital readings appear to be within the normal range.</span>
+            <span>
+                <strong>Patient status: Stable.</strong> Latest vital readings appear to be within the normal range.
+            </span>
         }
     </div>
 
@@ -67,7 +71,9 @@ else
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Heart Rate</h2>
                     <p class="h3 mb-2">
-                        <span id="heartRateValue">@(Model.LatestHeartRate.HasValue? Model.LatestHeartRate.Value.ToString("0") : "N/A")</span>
+                        <span id="heartRateValue">
+                            @(Model.LatestHeartRate.HasValue? Model.LatestHeartRate.Value.ToString("0") : "N/A")
+                        </span>
                         <span class="fs-6 text-muted">bpm</span>
                     </p>
                     <span id="heartRateStatus" class="badge @BadgeClass(Model.HeartRateStatus)">
@@ -83,7 +89,9 @@ else
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Breathing Rate</h2>
                     <p class="h3 mb-2">
-                        <span id="respirationValue">@(Model.LatestRespiration.HasValue? Model.LatestRespiration.Value.ToString("0") : "N/A")</span>
+                        <span id="respirationValue">
+                            @(Model.LatestRespiration.HasValue? Model.LatestRespiration.Value.ToString("0") : "N/A")
+                        </span>
                         <span class="fs-6 text-muted">breaths/min</span>
                     </p>
                     <span id="respirationStatus" class="badge @BadgeClass(Model.RespirationStatus)">
@@ -99,7 +107,9 @@ else
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Blood Pressure</h2>
                     <p class="h3 mb-2">
-                        <span id="bloodPressureValue">@(Model.LatestBloodPressure.HasValue? Model.LatestBloodPressure.Value.ToString("0") : "N/A")</span>
+                        <span id="bloodPressureValue">
+                            @(Model.LatestBloodPressure.HasValue? Model.LatestBloodPressure.Value.ToString("0") : "N/A")
+                        </span>
                         <span class="fs-6 text-muted">mmHg</span>
                     </p>
                     <span id="bloodPressureStatus" class="badge @BadgeClass(Model.BloodPressureStatus)">
@@ -115,7 +125,9 @@ else
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Temperature</h2>
                     <p class="h3 mb-2">
-                        <span id="temperatureValue">@(Model.LatestTemperature.HasValue? Model.LatestTemperature.Value.ToString("0.0") : "N/A")</span>
+                        <span id="temperatureValue">
+                            @(Model.LatestTemperature.HasValue? Model.LatestTemperature.Value.ToString("0.0") : "N/A")
+                        </span>
                         <span class="fs-6 text-muted">°C</span>
                     </p>
                     <span id="temperatureStatus" class="badge @BadgeClass(Model.TemperatureStatus)">
