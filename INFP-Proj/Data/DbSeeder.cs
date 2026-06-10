@@ -129,6 +129,7 @@ namespace INFP_Proj.Data
             Medications brainrot = new Medications
             {
                 MedicationName = "Brainrot",
+                Approval = true,
                 ConsumptionTime = new TimeOnly(20, 0)
             };
             context.Medications.AddRange(paracetamol, brainrot);
@@ -174,12 +175,12 @@ namespace INFP_Proj.Data
                 UserID = sadev.Id,
                 Status = "Admitted"
             };
-            Patients mikuPatient = new Patients
+            Patients tetoPatient = new Patients
             {
-                UserID = miku.Id,
+                UserID = teto.Id,
                 Status = "Admitted"
             };
-            context.Patients.AddRange(sadevPatient, mikuPatient);
+            context.Patients.AddRange(sadevPatient, tetoPatient);
             await context.SaveChangesAsync();
 
 
@@ -187,7 +188,7 @@ namespace INFP_Proj.Data
             context.AllergyLists.AddRange(
                 new AllergyList { PatientID = sadevPatient.PatientID, AllergyID = Penicillin.AllergyID },
                 new AllergyList { PatientID = sadevPatient.PatientID, AllergyID = Peanuts.AllergyID },
-                new AllergyList { PatientID = mikuPatient.PatientID, AllergyID = Grass.AllergyID }
+                new AllergyList { PatientID = tetoPatient.PatientID, AllergyID = Grass.AllergyID }
             );
 
             // MedicationList
@@ -197,13 +198,13 @@ namespace INFP_Proj.Data
                 MedicationID = paracetamol.MedicationID,
                 Dosage = "500mg"
             };
-            MedicationList mikuList = new MedicationList
+            MedicationList tetoList = new MedicationList
             {
-                PatientID = mikuPatient.PatientID,
+                PatientID = tetoPatient.PatientID,
                 MedicationID = brainrot.MedicationID,
                 Dosage = "250mg"
             };
-            context.MedicationLists.AddRange(sadevList, mikuList);
+            context.MedicationLists.AddRange(sadevList, tetoList);
             await context.SaveChangesAsync();
 
             // Beds
@@ -220,7 +221,7 @@ namespace INFP_Proj.Data
             };
             Beds mikuBed = new Beds
             {
-                PatientID = mikuPatient.PatientID,
+                PatientID = tetoPatient.PatientID,
                 WardID = general.WardID,
                 Sector = "A",
                 Floor = "1",
@@ -258,55 +259,68 @@ namespace INFP_Proj.Data
             });
             context.Records.Add(new Records
             {
-                PatientID = mikuPatient.PatientID,
+                PatientID = tetoPatient.PatientID,
                 BedID = mikuBed.BedID,
                 WardID = general.WardID,
                 HospitalID = hospital.HospitalID,
                 DiagnosisID = autism.DiagnosisID,
-                MedicationListID = mikuList.MedicationListID,
+                MedicationListID = tetoList.MedicationListID,
                 Description = "Patient is constantly singing",
                 AdmissionDateTime = DateTime.UtcNow,
                 DischargeDateTime = null
             });
 
             // Vitals
-            DateTime vitalsBaseTime = DateTime.UtcNow.AddDays(-6);
-            var vitalsReadings = new (float bp, float hr, float rr, float temp)[]
+            DateTime vitalsBaseTime = DateTime.Now.AddDays(-6);
+            var goodReadings = new (float bp, float hr, float rr, float temp)[]
             {
-                (118, 68, 16, 36.4f), (120, 70, 17, 36.5f), (122, 72, 18, 36.5f),
-                (119, 74, 17, 36.6f), (121, 71, 18, 36.4f), (123, 75, 19, 36.7f),
-                (120, 73, 18, 36.5f), (118, 69, 16, 36.3f), (122, 76, 19, 36.6f),
-                (121, 72, 18, 36.5f), (119, 70, 17, 36.4f), (124, 77, 20, 36.8f),
-                (120, 71, 18, 36.5f), (118, 68, 16, 36.4f)
+                (119, 70, 16, 36.4f), (120, 71, 17, 36.5f), (121, 70, 16, 36.4f),
+                (119, 72, 17, 36.5f), (120, 71, 16, 36.5f), (121, 70, 17, 36.4f),
+                (120, 72, 16, 36.5f), (119, 71, 17, 36.6f), (121, 70, 16, 36.5f),
+                (120, 72, 17, 36.4f), (119, 71, 16, 36.5f), (121, 70, 17, 36.5f),
+                (120, 72, 16, 36.4f), (119, 71, 17, 36.5f),
+            };
+            var badReadings = new (float bp, float hr, float rr, float temp)[]
+            {
+                (118, 72, 17, 36.6f), (116, 74, 18, 36.7f), (114, 76, 18, 36.8f),
+                (112, 78, 19, 36.9f), (110, 80, 19, 37.1f), (108, 82, 20, 37.3f),
+                (106, 84, 20, 37.5f), (104, 86, 21, 37.6f), (102, 88, 22, 37.8f),
+                (100, 90, 22, 37.9f), ( 98, 92, 23, 38.1f), ( 96, 94, 24, 38.3f),
+                ( 94, 96, 24, 38.5f), ( 92, 98, 25, 38.7f),
             };
 
-            for (var i = 0; i < vitalsReadings.Length; i++)
+            for (var i = 0; i < goodReadings.Length; i++)
             {
-                var reading = vitalsReadings[i];
-                foreach (var patient in new[] { sadevPatient, mikuPatient })
+                var sadevReading = goodReadings[i];
+                var tetoReading = badReadings[i]; 
+
+                foreach (var (patient, reading) in new[]
                     {
-                        context.Vitals.Add(new Vitals
-                        {
-                            PatientID = patient.PatientID,
-                            BloodPressure = reading.bp,
-                            HeartRate = reading.hr,
-                            RespiratoryRate = reading.rr,
-                            Temperature = reading.temp,
-                            RecordedAt = vitalsBaseTime.AddHours(i * 12)
-                        });
-                    }
-                
+                        (sadevPatient, sadevReading),
+                        (tetoPatient, tetoReading)
+                    })
+                {
+                    context.Vitals.Add(new Vitals
+                    {
+                        PatientID = patient.PatientID,
+                        BloodPressure = reading.bp,
+                        HeartRate = reading.hr,
+                        RespiratoryRate = reading.rr,
+                        Temperature = reading.temp,
+                        RecordedAt = vitalsBaseTime.AddHours(i * 12)
+                    });
+                }
             }
 
             // Relationships
             context.Relationships.AddRange(
                 new Relationships { PatientID = sadevPatient.PatientID, UserID = sasha.Id },
-                new Relationships { PatientID = mikuPatient.PatientID, UserID = teto.Id }
+                new Relationships { PatientID = tetoPatient.PatientID, UserID = teto.Id }
             );
 
             context.BraceletRelations.AddRange(
                 new BraceletRelation { BraceletID = sadevBracelet.BraceletID, PatientID = sadevPatient.PatientID },
-                new BraceletRelation { BraceletID = mikuBracelet.BraceletID, PatientID = mikuPatient.PatientID }
+                new BraceletRelation { BraceletID = mikuBracelet.BraceletID, PatientID = tetoPatient.PatientID }
             );
 
             // Logs

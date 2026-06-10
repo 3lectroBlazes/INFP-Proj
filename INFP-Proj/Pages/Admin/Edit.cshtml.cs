@@ -224,13 +224,8 @@ namespace INFP_Proj.Pages.Admin
         {
             var request = await _context.DoctorRequests.FirstOrDefaultAsync(dr => dr.PatientID == id);
 
-            if (request == null)
-            {
-                request = new DoctorRequest { PatientID = id };
-                _context.DoctorRequests.Add(request);
-            }
-
-            request.RequestMessage = Request.Form["RequestMessage"];
+            request = new DoctorRequest { PatientID = id, RequestMessage = Request.Form["RequestMessage"] };
+            _context.DoctorRequests.Add(request);
             TempData["Message"] = "Doctor request sent!";
             await _context.SaveChangesAsync();
 
