@@ -68,9 +68,12 @@ namespace INFP_Proj.Pages.User
                 .OrderByDescending(r => r.AdmissionDateTime)
                 .FirstOrDefaultAsync();
 
+            // Only show medications for the current admission (medications attached to,
+            // or added after, the latest record's medication list).
             var currentMedications = await _context.MedicationLists
                 .Include(ml => ml.Medications)
-                .Where(ml => ml.PatientID == patient.PatientID)
+                .Where(ml => ml.PatientID == patient.PatientID
+                    && (record == null || ml.MedicationListID >= record.MedicationListID))
                 .OrderBy(ml => ml.Medications != null ? ml.Medications.ConsumptionTime : TimeOnly.MinValue)
                 .Select(ml => new UserMedicationItem
                 {
