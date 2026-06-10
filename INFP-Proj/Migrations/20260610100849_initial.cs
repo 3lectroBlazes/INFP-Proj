@@ -119,6 +119,7 @@ namespace INFP_Proj.Migrations
                     MedicationID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     MedicationName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Approval = table.Column<bool>(type: "bit", nullable: false),
                     ConsumptionTime = table.Column<TimeOnly>(type: "time", nullable: false)
                 },
                 constraints: table =>
