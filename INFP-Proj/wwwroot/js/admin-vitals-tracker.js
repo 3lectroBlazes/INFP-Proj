@@ -19,6 +19,16 @@
         '#20c997'
     ];
 
+    // Per-metric colors matching the user vitals graphs.
+    const metricColors = {
+        heartRate: '#dc3545',
+        respiratoryRate: '#0d6efd',
+        bloodPressure: '#6f42c1',
+        temperature: '#fd7e14'
+    };
+
+    const singlePatient = series.length === 1;
+
     const chartDefaults = {
         type: 'line',
         options: {
@@ -30,7 +40,7 @@
             },
             plugins: {
                 legend: {
-                    display: true,
+                    display: !singlePatient,
                     position: 'bottom'
                 }
             },
@@ -44,15 +54,17 @@
 
     function buildDatasets(metricKey) {
         return series.map(function (patient, index) {
-            const color = palette[index % palette.length];
+            const color = singlePatient
+                ? (metricColors[metricKey] || palette[0])
+                : palette[index % palette.length];
             return {
                 label: patient.patientName,
                 data: patient[metricKey] || [],
                 borderColor: color,
-                backgroundColor: color + '22',
-                fill: false,
+                backgroundColor: color + '33',
+                fill: singlePatient,
                 tension: 0.3,
-                pointRadius: 3,
+                pointRadius: 4,
                 spanGaps: true
             };
         });
