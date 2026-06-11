@@ -368,7 +368,7 @@ namespace INFP_Proj.Data
             // Relationships
             context.Relationships.AddRange(
                 new Relationships { PatientID = sadevPatient.PatientID, UserID = sasha.Id },
-                new Relationships { PatientID = tetoPatient.PatientID, UserID = teto.Id }
+                new Relationships { PatientID = tetoPatient.PatientID, UserID = miku.Id }
             );
 
             context.BraceletRelations.AddRange(

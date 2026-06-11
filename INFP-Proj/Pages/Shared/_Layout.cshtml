@@ -1,6 +1,11 @@
 @using Microsoft.AspNetCore.Identity
 @using INFP_Proj.Models
 @inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var roles = await UserManager.GetRolesAsync(user);
+}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -88,7 +93,7 @@
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item d-flex align-items-center me-2">
-                                <span class="text-muted small d-none d-md-inline">Signed in</span>
+                                <span class="text-muted small d-none d-md-inline"> @user.FirstName @user.LastName: @roles.First()</span>
                             </li>
                             <li class="nav-item">
                                 <a class="btn btn-outline-secondary btn-sm" asp-area="" asp-page="/Logout">Sign out</a>
