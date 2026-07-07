@@ -67,3 +67,5 @@ nunit-*.xml
 # Local config overrides (secrets)
 appsettings.*.local.json
 secrets.json
+
+.vscode
