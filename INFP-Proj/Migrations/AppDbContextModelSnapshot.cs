@@ -409,7 +409,7 @@ namespace INFP_Proj.Migrations
                     b.Property<int>("HospitalID")
                         .HasColumnType("int");
 
-                    b.Property<int>("MedicationListID")
+                    b.Property<int?>("MedicationListID")
                         .HasColumnType("int");
 
                     b.Property<int>("PatientID")
@@ -871,8 +871,7 @@ namespace INFP_Proj.Migrations
                     b.HasOne("INFP_Proj.Data.MedicationList", "MedicationList")
                         .WithMany()
                         .HasForeignKey("MedicationListID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
                         .WithMany()

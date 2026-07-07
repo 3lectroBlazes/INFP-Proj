@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260610155214_initial")]
+    [Migration("20260611064440_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -412,7 +412,7 @@ namespace INFP_Proj.Migrations
                     b.Property<int>("HospitalID")
                         .HasColumnType("int");
 
-                    b.Property<int>("MedicationListID")
+                    b.Property<int?>("MedicationListID")
                         .HasColumnType("int");
 
                     b.Property<int>("PatientID")
@@ -874,8 +874,7 @@ namespace INFP_Proj.Migrations
                     b.HasOne("INFP_Proj.Data.MedicationList", "MedicationList")
                         .WithMany()
                         .HasForeignKey("MedicationListID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("INFP_Proj.Data.Patients", "Patients")
                         .WithMany()

@@ -93,7 +93,7 @@
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item d-flex align-items-center me-2">
-                                <span class="text-muted small d-none d-md-inline"> @user.FirstName @user.LastName: @roles.First()</span>
+                                <span class="text-muted small d-none d-md-inline"> @user.FirstName @user.LastName (@roles.First())</span>
                             </li>
                             <li class="nav-item">
                                 <a class="btn btn-outline-secondary btn-sm" asp-area="" asp-page="/Logout">Sign out</a>

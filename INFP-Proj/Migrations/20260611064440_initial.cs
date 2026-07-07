@@ -516,7 +516,7 @@ namespace INFP_Proj.Migrations
                     WardID = table.Column<int>(type: "int", nullable: false),
                     HospitalID = table.Column<int>(type: "int", nullable: false),
                     DiagnosisID = table.Column<int>(type: "int", nullable: false),
-                    MedicationListID = table.Column<int>(type: "int", nullable: false),
+                    MedicationListID = table.Column<int>(type: "int", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AdmissionDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DischargeDateTime = table.Column<DateTime>(type: "datetime2", nullable: true)

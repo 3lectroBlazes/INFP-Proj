@@ -102,7 +102,6 @@ namespace INFP_Proj.Pages.Admin.Reception
                     WardID = assignedWardID,
                     HospitalID = 1,
                     DiagnosisID = 1,
-                    MedicationListID = 1,
                     Description = Input.Description,
                     AdmissionDateTime = DateTime.UtcNow
                 };
