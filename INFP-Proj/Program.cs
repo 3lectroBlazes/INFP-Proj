@@ -44,6 +44,17 @@ builder.Services.ConfigureApplicationCookie(config =>
 
 builder.Services.AddTransient<ISmsService, MockSmsService>();
 
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 WebApplication app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -55,6 +66,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();

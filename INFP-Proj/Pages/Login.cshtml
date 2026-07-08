@@ -35,9 +35,12 @@
                     <span asp-validation-for="LModel.Password" class="text-danger small"></span>
                 </div>
 
-                <div class="mb-4 form-check">
-                    <input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
-                    <label class="form-check-label" asp-for="LModel.RememberMe">Remember me</label>
+                <div class="mb-4 form-check d-flex justify-content-between align-items-center">
+                    <span>
+                        <input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
+                        <label class="form-check-label" asp-for="LModel.RememberMe">Remember me</label>
+                    </span>
+                    <a asp-page="/ForgotPassword" class="text-primary small">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">Sign in</button>
