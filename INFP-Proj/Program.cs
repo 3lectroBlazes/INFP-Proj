@@ -15,7 +15,11 @@ builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, AdminRestricts>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnectionString")));
 
-builder.Services.AddIdentity<AppUser, AppRole>()
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
+{
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+})
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
@@ -47,6 +51,7 @@ builder.Services.AddTransient<ISmsService, MockSmsService>();
 
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddTransient<IEmailService, SmtpEmailService>();
+builder.Services.AddTransient<IOtpService, OtpService>();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

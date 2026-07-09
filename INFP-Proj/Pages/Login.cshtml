@@ -18,37 +18,61 @@
     <div class="auth-wrapper">
         <div class="auth-card">
             <h1>Sign in</h1>
-            <p class="auth-lead">Access your hospital portal account.</p>
 
-            <form method="post">
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+            @if (!Model.RequiresOtp)
+            {
+                <p class="auth-lead">Access your hospital portal account.</p>
 
-                <div class="mb-3">
-                    <label class="form-label" asp-for="LModel.Email">Email address</label>
-                    <input type="email" asp-for="LModel.Email" class="form-control" autocomplete="username" />
-                    <span asp-validation-for="LModel.Email" class="text-danger small"></span>
-                </div>
+                <form method="post" asp-page-handler="Login">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
 
-                <div class="mb-3">
-                    <label class="form-label" asp-for="LModel.Password">Password</label>
-                    <input type="password" asp-for="LModel.Password" class="form-control" autocomplete="current-password" />
-                    <span asp-validation-for="LModel.Password" class="text-danger small"></span>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="LModel.Email">Email address</label>
+                        <input type="email" asp-for="LModel.Email" class="form-control" autocomplete="username" />
+                        <span asp-validation-for="LModel.Email" class="text-danger small"></span>
+                    </div>
 
-                <div class="mb-4 form-check d-flex justify-content-between align-items-center">
-                    <span>
-                        <input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
-                        <label class="form-check-label" asp-for="LModel.RememberMe">Remember me</label>
-                    </span>
-                    <a asp-page="/ForgotPassword" class="text-primary small">Forgot password?</a>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="LModel.Password">Password</label>
+                        <input type="password" asp-for="LModel.Password" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="LModel.Password" class="text-danger small"></span>
+                    </div>
 
-                <button type="submit" class="btn btn-primary w-100">Sign in</button>
-            </form>
+                    <div class="mb-4 form-check d-flex justify-content-between align-items-center">
+                        <span>
+                            <input type="checkbox" asp-for="LModel.RememberMe" class="form-check-input" />
+                            <label class="form-check-label" asp-for="LModel.RememberMe">Remember me</label>
+                        </span>
+                        <a asp-page="/ForgotPassword" class="text-primary small">Forgot password?</a>
+                    </div>
 
-            <p class="text-center text-muted small mt-4 mb-0">
-                No account? <a asp-page="/Register" class="text-primary">Register</a>
-            </p>
+                    <button type="submit" class="btn btn-primary w-100">Sign in</button>
+                </form>
+
+                <p class="text-center text-muted small mt-4 mb-0">
+                    No account? <a asp-page="/Register" class="text-primary">Register</a>
+                </p>
+            }
+            else
+            {
+                <p class="auth-lead">Enter the verification code sent to your email.</p>
+
+                <form method="post" asp-page-handler="VerifyOtp">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                    <div class="mb-4">
+                        <label class="form-label" asp-for="OtpCode">One-time code</label>
+                        <input asp-for="OtpCode" class="form-control" inputmode="numeric" autocomplete="one-time-code" maxlength="6" />
+                        <span asp-validation-for="OtpCode" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Verify and sign in</button>
+                </form>
+
+                <p class="text-center text-muted small mt-3 mb-0">
+                    <a asp-page="/Login" asp-page-handler="Reset" class="text-primary">Back to sign in</a>
+                </p>
+            }
         </div>
     </div>
 

@@ -1,4 +1,5 @@
 using INFP_Proj.Models;
+using INFP_Proj.Services;
 using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,13 +12,15 @@ namespace INFP_Proj.Pages
     public class ResetPasswordModel : PageModel
     {
         private readonly UserManager<AppUser> userManager;
+        private readonly IOtpService otpService;
 
         [BindProperty]
         public ResetPassword RPModel { get; set; }
 
-        public ResetPasswordModel(UserManager<AppUser> userManager)
+        public ResetPasswordModel(UserManager<AppUser> userManager, IOtpService otpService)
         {
             this.userManager = userManager;
+            this.otpService = otpService;
         }
 
         public IActionResult OnGet()
@@ -41,7 +44,7 @@ namespace INFP_Proj.Pages
                 return Page();
             }
 
-            string email = HttpContext.Session.GetString(ForgotPasswordModel.OtpEmailSessionKey)!;
+            string email = otpService.GetPendingEmail(HttpContext.Session, ForgotPasswordModel.Purpose)!;
             string token = HttpContext.Session.GetString(ForgotPasswordModel.ResetTokenSessionKey)!;
 
             var user = await userManager.FindByEmailAsync(email);
@@ -67,15 +70,13 @@ namespace INFP_Proj.Pages
 
         private bool HasPendingReset()
         {
-            return !string.IsNullOrEmpty(HttpContext.Session.GetString(ForgotPasswordModel.OtpEmailSessionKey)) &&
+            return !string.IsNullOrEmpty(otpService.GetPendingEmail(HttpContext.Session, ForgotPasswordModel.Purpose)) &&
                    !string.IsNullOrEmpty(HttpContext.Session.GetString(ForgotPasswordModel.ResetTokenSessionKey));
         }
 
         private void ClearSession()
         {
-            HttpContext.Session.Remove(ForgotPasswordModel.OtpSessionKey);
-            HttpContext.Session.Remove(ForgotPasswordModel.OtpEmailSessionKey);
-            HttpContext.Session.Remove(ForgotPasswordModel.OtpExpirySessionKey);
+            otpService.Clear(HttpContext.Session, ForgotPasswordModel.Purpose);
             HttpContext.Session.Remove(ForgotPasswordModel.ResetTokenSessionKey);
         }
     }

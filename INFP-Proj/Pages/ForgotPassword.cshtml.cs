@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Security.Cryptography;
 using INFP_Proj.Models;
 using INFP_Proj.Services;
 using INFP_Proj.ViewModel;
@@ -14,12 +12,13 @@ namespace INFP_Proj.Pages
     public class ForgotPasswordModel : PageModel
     {
         private readonly UserManager<AppUser> userManager;
-        private readonly IEmailService emailService;
+        private readonly IOtpService otpService;
 
-        public const string OtpSessionKey = "PasswordReset_Otp";
-        public const string OtpEmailSessionKey = "PasswordReset_Email";
-        public const string OtpExpirySessionKey = "PasswordReset_Expiry";
+        public const string Purpose = "PasswordReset";
         public const string ResetTokenSessionKey = "PasswordReset_Token";
+
+        private const string EmailSubject = "Your Hospital Portal password reset code";
+        private const string BodyTemplate = "Your one-time password reset code is: {0}\n\nThis code will expire in 10 minutes. If you did not request a password reset, you can ignore this email.";
 
         [BindProperty]
         public ForgotPassword FPModel { get; set; }
@@ -30,21 +29,21 @@ namespace INFP_Proj.Pages
         public bool OtpSent { get; set; }
         public string? SentToEmail { get; set; }
 
-        public ForgotPasswordModel(UserManager<AppUser> userManager, IEmailService emailService)
+        public ForgotPasswordModel(UserManager<AppUser> userManager, IOtpService otpService)
         {
             this.userManager = userManager;
-            this.emailService = emailService;
+            this.otpService = otpService;
         }
 
         public void OnGet()
         {
-            SentToEmail = HttpContext.Session.GetString(OtpEmailSessionKey);
-            OtpSent = !string.IsNullOrEmpty(SentToEmail) && !string.IsNullOrEmpty(HttpContext.Session.GetString(OtpSessionKey));
+            SentToEmail = otpService.GetPendingEmail(HttpContext.Session, Purpose);
+            OtpSent = !string.IsNullOrEmpty(SentToEmail);
         }
 
         public IActionResult OnGetReset()
         {
-            ClearOtpSession();
+            ClearAll();
             return RedirectToPage();
         }
 
@@ -63,20 +62,11 @@ namespace INFP_Proj.Pages
                 return Page();
             }
 
-            string otp = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-
-            HttpContext.Session.SetString(OtpSessionKey, otp);
-            HttpContext.Session.SetString(OtpEmailSessionKey, FPModel.Email);
-            HttpContext.Session.SetString(OtpExpirySessionKey, DateTime.UtcNow.AddMinutes(10).ToString("O"));
-
-            bool sent = await emailService.SendEmailAsync(
-                FPModel.Email,
-                "Your Hospital Portal password reset code",
-                $"Your one-time password is: {otp}\n\nThis code will expire in 10 minutes. If you did not request a password reset, you can ignore this email.");
+            bool sent = await otpService.GenerateAndSendAsync(HttpContext.Session, Purpose, FPModel.Email, EmailSubject, BodyTemplate);
 
             if (!sent)
             {
-                ClearOtpSession();
+                otpService.Clear(HttpContext.Session, Purpose);
                 ModelState.AddModelError("", "We couldn't send the reset code right now. Please try again later.");
                 return Page();
             }
@@ -88,11 +78,11 @@ namespace INFP_Proj.Pages
 
         public async Task<IActionResult> OnPostResendAsync()
         {
-            string? pendingEmail = HttpContext.Session.GetString(OtpEmailSessionKey);
+            string? pendingEmail = otpService.GetPendingEmail(HttpContext.Session, Purpose);
 
             if (string.IsNullOrEmpty(pendingEmail))
             {
-                ClearOtpSession();
+                ClearAll();
                 OtpSent = false;
                 ModelState.AddModelError("", "Your session has expired. Please enter your email again.");
                 return Page();
@@ -101,18 +91,13 @@ namespace INFP_Proj.Pages
             var user = await userManager.FindByEmailAsync(pendingEmail);
             if (user == null)
             {
-                ClearOtpSession();
+                ClearAll();
                 OtpSent = false;
                 ModelState.AddModelError("", "No account was found with that email address.");
                 return Page();
             }
 
-            string otp = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-
-            bool sent = await emailService.SendEmailAsync(
-                pendingEmail,
-                "Your Hospital Portal password reset code",
-                $"Your one-time password is: {otp}\n\nThis code will expire in 10 minutes. If you did not request a password reset, you can ignore this email.");
+            bool sent = await otpService.GenerateAndSendAsync(HttpContext.Session, Purpose, pendingEmail, EmailSubject, BodyTemplate);
 
             OtpSent = true;
             SentToEmail = pendingEmail;
@@ -123,40 +108,32 @@ namespace INFP_Proj.Pages
                 return Page();
             }
 
-            // Only overwrite the previous code once the new one is confirmed sent,
-            // otherwise a failed resend would silently invalidate a still-valid pending code.
-            HttpContext.Session.SetString(OtpSessionKey, otp);
-            HttpContext.Session.SetString(OtpExpirySessionKey, DateTime.UtcNow.AddMinutes(10).ToString("O"));
-
             return Page();
         }
 
         public async Task<IActionResult> OnPostVerifyAsync()
         {
-            string? pendingEmail = HttpContext.Session.GetString(OtpEmailSessionKey);
-            string? pendingOtp = HttpContext.Session.GetString(OtpSessionKey);
-            string? expiryRaw = HttpContext.Session.GetString(OtpExpirySessionKey);
-
+            string? pendingEmail = otpService.GetPendingEmail(HttpContext.Session, Purpose);
             OtpSent = !string.IsNullOrEmpty(pendingEmail);
             SentToEmail = pendingEmail;
 
-            if (string.IsNullOrEmpty(pendingEmail) || string.IsNullOrEmpty(pendingOtp) || string.IsNullOrEmpty(expiryRaw))
+            if (string.IsNullOrEmpty(pendingEmail))
             {
-                ClearOtpSession();
+                ClearAll();
                 OtpSent = false;
                 ModelState.AddModelError("", "Your reset code has expired. Please request a new one.");
                 return Page();
             }
 
-            if (DateTime.UtcNow > DateTime.Parse(expiryRaw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind))
+            var verifyResult = otpService.Verify(HttpContext.Session, Purpose, pendingEmail, OtpCode ?? string.Empty);
+            if (verifyResult == OtpVerifyResult.Expired)
             {
-                ClearOtpSession();
+                ClearAll();
                 OtpSent = false;
                 ModelState.AddModelError("", "Your reset code has expired. Please request a new one.");
                 return Page();
             }
-
-            if (string.IsNullOrWhiteSpace(OtpCode) || !string.Equals(OtpCode.Trim(), pendingOtp, StringComparison.Ordinal))
+            if (verifyResult == OtpVerifyResult.Mismatch)
             {
                 ModelState.AddModelError("", "That code doesn't match. Please try again.");
                 return Page();
@@ -165,7 +142,7 @@ namespace INFP_Proj.Pages
             var user = await userManager.FindByEmailAsync(pendingEmail);
             if (user == null)
             {
-                ClearOtpSession();
+                ClearAll();
                 OtpSent = false;
                 ModelState.AddModelError("", "No account was found with that email address.");
                 return Page();
@@ -173,17 +150,16 @@ namespace INFP_Proj.Pages
 
             string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
             HttpContext.Session.SetString(ResetTokenSessionKey, resetToken);
-            HttpContext.Session.Remove(OtpSessionKey);
-            HttpContext.Session.Remove(OtpExpirySessionKey);
+
+            // Only clear the code itself; the email is still needed by the reset-password step.
+            otpService.ClearCode(HttpContext.Session, Purpose);
 
             return RedirectToPage("/ResetPassword");
         }
 
-        private void ClearOtpSession()
+        private void ClearAll()
         {
-            HttpContext.Session.Remove(OtpSessionKey);
-            HttpContext.Session.Remove(OtpEmailSessionKey);
-            HttpContext.Session.Remove(OtpExpirySessionKey);
+            otpService.Clear(HttpContext.Session, Purpose);
             HttpContext.Session.Remove(ResetTokenSessionKey);
         }
     }
