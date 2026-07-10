@@ -476,19 +476,28 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThresholdID"));
 
-                    b.Property<float?>("DiastolicBloodPressureThreshold")
+                    b.Property<float?>("DBPLowerThreshold")
                         .HasColumnType("real");
 
-                    b.Property<float?>("HeartRatePercentageThreshold")
+                    b.Property<float?>("DBPUpperThreshold")
                         .HasColumnType("real");
 
-                    b.Property<float?>("RespiratoryRatePercentageThreshold")
+                    b.Property<float?>("HeartRateLowerPercentageThreshold")
                         .HasColumnType("real");
 
-                    b.Property<float?>("SystolicBloodPressureThreshold")
+                    b.Property<float?>("HeartRateUpperPercentageThreshold")
                         .HasColumnType("real");
 
-                    b.Property<float?>("TemperatureThreshold")
+                    b.Property<float?>("RespiratoryRateLowerThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("RespiratoryRateUpperPercentageThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("SBPLowerThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("SBPUpperThreshold")
                         .HasColumnType("real");
 
                     b.HasKey("ThresholdID");
@@ -520,9 +529,6 @@ namespace INFP_Proj.Migrations
                         .HasColumnType("real");
 
                     b.Property<float?>("SystolicBloodPressure")
-                        .HasColumnType("real");
-
-                    b.Property<float?>("Temperature")
                         .HasColumnType("real");
 
                     b.HasKey("VitalsID");

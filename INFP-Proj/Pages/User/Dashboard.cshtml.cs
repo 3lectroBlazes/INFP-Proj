@@ -131,7 +131,6 @@ namespace INFP_Proj.Pages.User
                 SystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.SystolicBloodPressure,
                 DiastolicBloodPressure = bracelet?.DiastolicBloodPressure ?? latestVitals?.DiastolicBloodPressure,
                 RespiratoryRate = bracelet?.RespiratoryRate ?? latestVitals?.RespiratoryRate,
-                Temperature = latestVitals?.Temperature,
                 LatestVitalsRecordedAt = latestVitals?.RecordedAt,
 
                 BraceletBattery = bracelet?.Battery,
@@ -232,11 +231,6 @@ namespace INFP_Proj.Pages.User
                 return "Bracelet battery is low. Please inform hospital staff.";
             }
 
-            if (latestVitals?.Temperature != null && latestVitals.Temperature >= 38)
-            {
-                return "Latest temperature is above the normal range.";
-            }
-
             if (latestVitals?.HeartRate != null && (latestVitals.HeartRate < 60 || latestVitals.HeartRate > 100))
             {
                 return "Latest heart rate is outside the normal range.";
@@ -309,7 +303,6 @@ namespace INFP_Proj.Pages.User
                 SystolicBloodPressure = SystolicBloodPressure,
                 DiastolicBloodPressure = DiastolicBloodPressure,
                 RespiratoryRate = respiration,
-                Temperature = temperature,
                 RecordedAt = DateTime.UtcNow
             };
 

@@ -135,11 +135,14 @@ namespace INFP_Proj.Migrations
                 {
                     ThresholdID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SystolicBloodPressureThreshold = table.Column<float>(type: "real", nullable: true),
-                    DiastolicBloodPressureThreshold = table.Column<float>(type: "real", nullable: true),
-                    HeartRatePercentageThreshold = table.Column<float>(type: "real", nullable: true),
-                    RespiratoryRatePercentageThreshold = table.Column<float>(type: "real", nullable: true),
-                    TemperatureThreshold = table.Column<float>(type: "real", nullable: true)
+                    SBPUpperThreshold = table.Column<float>(type: "real", nullable: true),
+                    SBPLowerThreshold = table.Column<float>(type: "real", nullable: true),
+                    DBPUpperThreshold = table.Column<float>(type: "real", nullable: true),
+                    DBPLowerThreshold = table.Column<float>(type: "real", nullable: true),
+                    HeartRateUpperPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    HeartRateLowerPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    RespiratoryRateUpperPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    RespiratoryRateLowerThreshold = table.Column<float>(type: "real", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -478,7 +481,6 @@ namespace INFP_Proj.Migrations
                     DiastolicBloodPressure = table.Column<float>(type: "real", nullable: true),
                     HeartRate = table.Column<float>(type: "real", nullable: true),
                     RespiratoryRate = table.Column<float>(type: "real", nullable: true),
-                    Temperature = table.Column<float>(type: "real", nullable: true),
                     RecordedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>

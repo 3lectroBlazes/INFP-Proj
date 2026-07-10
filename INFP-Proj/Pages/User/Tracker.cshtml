@@ -66,7 +66,7 @@ else
     </div>
 
     <div class="row g-4 mb-4">
-        <div class="col-md-3 col-xl-3">
+        <div class="col-md-6 col-xl-3">
             <div class="app-card card h-100">
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Heart Rate</h2>
@@ -84,7 +84,7 @@ else
             </div>
         </div>
 
-        <div class="col-md-3 col-xl-3">
+        <div class="col-md-6 col-xl-3">
             <div class="app-card card h-100">
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Breathing Rate</h2>
@@ -102,7 +102,7 @@ else
             </div>
         </div>
 
-        <div class="col-md-3 col-xl-3">
+        <div class="col-md-6 col-xl-3">
             <div class="app-card card h-100">
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Blood Pressure</h2>
@@ -120,7 +120,7 @@ else
             </div>
         </div>
 
-        <div class="col-md-3 col-xl-3">
+        <div class="col-md-6 col-xl-3">
             <div class="app-card card h-100">
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Blood Pressure</h2>
@@ -134,24 +134,6 @@ else
                         @Model.DiastolicStatus
                     </span>
                     <p class="text-muted small mt-3 mb-0">Reference range: 90–140 mmHg</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 col-xl-3">
-            <div class="app-card card h-100">
-                <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Temperature</h2>
-                    <p class="h3 mb-2">
-                        <span id="temperatureValue">
-                            @(Model.LatestTemperature.HasValue? Model.LatestTemperature.Value.ToString("0.0") : "N/A")
-                        </span>
-                        <span class="fs-6 text-muted">°C</span>
-                    </p>
-                    <span id="temperatureStatus" class="badge @BadgeClass(Model.TemperatureStatus)">
-                        @Model.TemperatureStatus
-                    </span>
-                    <p class="text-muted small mt-3 mb-0">Normal range: 36.0–37.9°C</p>
                 </div>
             </div>
         </div>

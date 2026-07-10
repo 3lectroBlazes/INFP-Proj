@@ -13,7 +13,6 @@ namespace INFP_Proj.Data
         public float? DiastolicBloodPressure { get; set; }
         public float? HeartRate { get; set; }
         public float? RespiratoryRate { get; set; }
-        public float? Temperature { get; set; }
         public DateTime RecordedAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("PatientID")]

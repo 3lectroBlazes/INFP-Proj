@@ -28,14 +28,12 @@ namespace INFP_Proj.Pages.User
         public float? LatestSystolicBloodPressure { get; set; }
         public float? LatestDiastolicBloodPressure { get; set; }
         public float? LatestRespiration { get; set; }
-        public float? LatestTemperature { get; set; }
         public DateTime? LatestUpdatedAt { get; set; }
 
         public string HeartRateStatus { get; set; } = "No data";
         public string SystolicStatus { get; set; } = "No data";
         public string DiastolicStatus { get; set; } = "No data";
         public string RespirationStatus { get; set; } = "No data";
-        public string TemperatureStatus { get; set; } = "No data";
         public bool HasAttention { get; set; }
 
         public async Task OnGetAsync()
@@ -125,7 +123,6 @@ namespace INFP_Proj.Pages.User
                 SystolicBloodPressure = SystolicBloodPressure,
                 DiastolicBloodPressure = DiastolicBloodPressure,
                 RespiratoryRate = respiration,
-                Temperature = temperature,
 
                 // Store in database as UTC
                 RecordedAt = DateTime.UtcNow
@@ -185,7 +182,6 @@ namespace INFP_Proj.Pages.User
             LatestSystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.SystolicBloodPressure;
             LatestDiastolicBloodPressure = bracelet?.DiastolicBloodPressure ?? latestVitals?.DiastolicBloodPressure;
             LatestSystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.RespiratoryRate;
-            LatestTemperature = latestVitals?.Temperature;
 
             // Convert UTC database time to Singapore time ONCE here
             LatestUpdatedAt = latestVitals == null
@@ -196,14 +192,12 @@ namespace INFP_Proj.Pages.User
             SystolicStatus = GetBloodPressureStatus(LatestSystolicBloodPressure);
             DiastolicStatus = GetBloodPressureStatus(LatestDiastolicBloodPressure);
             RespirationStatus = GetRespirationStatus(LatestRespiration);
-            TemperatureStatus = GetTemperatureStatus(LatestTemperature);
 
             HasAttention =
                 HeartRateStatus == "Attention" ||
                 SystolicStatus == "Attention" ||
                 DiastolicStatus == "Attention" ||
-                RespirationStatus == "Attention" ||
-                TemperatureStatus == "Attention";
+                RespirationStatus == "Attention";
         }
 
         private async Task LoadHourlyAverageChartAsync(Patients patient)
@@ -222,8 +216,7 @@ namespace INFP_Proj.Pages.User
                     HeartRate = Average(g.Select(v => v.HeartRate)),
                     RespiratoryRate = Average(g.Select(v => v.RespiratoryRate)),
                     SystolicBloodPressure = Average(g.Select(v => v.SystolicBloodPressure)),
-                    DiastolicBloodPressure = Average(g.Select(v => v.DiastolicBloodPressure)),
-                    Temperature = Average(g.Select(v => v.Temperature))
+                    DiastolicBloodPressure = Average(g.Select(v => v.DiastolicBloodPressure))
                 })
                 .ToList();
 
@@ -251,9 +244,6 @@ namespace INFP_Proj.Pages.User
                     .ToList(),
                 DiastolicBloodPressure = hourlyVitals
                     .Select(v => v.DiastolicBloodPressure)
-                    .ToList(),
-                Temperature = hourlyVitals
-                    .Select(v => v.Temperature)
                     .ToList()
             };
         }

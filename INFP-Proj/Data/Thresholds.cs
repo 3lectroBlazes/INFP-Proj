@@ -8,10 +8,13 @@ namespace INFP_Proj.Data
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ThresholdID { get; set; }
-        public float? SystolicBloodPressureThreshold { get; set; }
-        public float? DiastolicBloodPressureThreshold { get; set; }
-        public float? HeartRatePercentageThreshold { get; set; }
-        public float? RespiratoryRatePercentageThreshold { get; set; }
-        public float? TemperatureThreshold { get; set; }
+        public float? SBPUpperThreshold { get; set; }
+        public float? SBPLowerThreshold { get; set; }
+        public float? DBPUpperThreshold { get; set; }
+        public float? DBPLowerThreshold { get; set; }
+        public float? HeartRateUpperPercentageThreshold { get; set; }
+        public float? HeartRateLowerPercentageThreshold { get; set; }
+        public float? RespiratoryRateUpperPercentageThreshold { get; set; }
+        public float? RespiratoryRateLowerThreshold { get; set; }
     }
 }

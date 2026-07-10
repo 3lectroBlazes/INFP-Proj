@@ -24,7 +24,6 @@
         public float? SystolicBloodPressure { get; set; }
         public float? DiastolicBloodPressure { get; set; }
         public float? RespiratoryRate { get; set; }
-        public float? Temperature { get; set; }
         public DateTime? LatestVitalsRecordedAt { get; set; }
 
         public float? BraceletBattery { get; set; }

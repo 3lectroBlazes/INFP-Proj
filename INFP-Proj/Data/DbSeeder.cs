@@ -359,7 +359,6 @@ namespace INFP_Proj.Data
                         DiastolicBloodPressure = reading.diastolic,
                         HeartRate = reading.hr,
                         RespiratoryRate = reading.rr,
-                        Temperature = reading.temp,
                         RecordedAt = vitalsBaseTime.AddHours(i * 12)
                     });
                 }
