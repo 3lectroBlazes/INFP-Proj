@@ -47,6 +47,50 @@
     </p>
 }
 
+@if (Model.SelectedPatientIds.Count == 1)
+{
+    <form id="vitals-simulator-antiforgery">@Html.AntiForgeryToken()</form>
+    <div class="app-card card mb-4" id="vitals-simulator" data-patient-id="@Model.SelectedPatientIds[0]" data-simulate-url="@Url.Page("/Admin/Tracker", "SimulateStep")">
+        <div class="card-body">
+            <h2 class="h6 text-primary mb-1">Simulate vitals</h2>
+            <p class="text-muted small mb-3">
+                Sends live spike/dip readings to the vitals table for 60 seconds, then stops automatically.
+            </p>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="fw-semibold mb-2">Heart rate</div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill sim-btn" data-vital="HeartRate" data-direction="Spike" data-label="heart rate spike">Spike</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm flex-fill sim-btn" data-vital="HeartRate" data-direction="Dip" data-label="heart rate dip">Dip</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fw-semibold mb-2">Breathing rate</div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill sim-btn" data-vital="RespiratoryRate" data-direction="Spike" data-label="breathing rate spike">Spike</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm flex-fill sim-btn" data-vital="RespiratoryRate" data-direction="Dip" data-label="breathing rate dip">Dip</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fw-semibold mb-2">Blood pressure</div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill sim-btn" data-vital="BloodPressure" data-direction="Spike" data-label="blood pressure spike">Spike</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm flex-fill sim-btn" data-vital="BloodPressure" data-direction="Dip" data-label="blood pressure dip">Dip</button>
+                    </div>
+                </div>
+            </div>
+            <div id="simulation-status" class="small text-muted mt-3" hidden>
+                <span id="simulation-status-text"></span>
+                <button type="button" id="simulation-stop" class="btn btn-link btn-sm p-0 ms-2">Stop</button>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.Patients.Count > 0)
+{
+    <div class="alert alert-secondary mb-4">Select exactly one patient above to simulate vitals.</div>
+}
+
 @if (Model.Series.Count == 0 || Model.Labels.Count == 0)
 {
     <div class="alert alert-info">No vitals recorded for the selected patient(s) yet.</div>
