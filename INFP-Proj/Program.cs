@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<VitalsChartService>();
+builder.Services.AddScoped<VitalsSimulationService>();
 builder.Services.AddScoped<AdminLogService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, AdminRestricts>();
