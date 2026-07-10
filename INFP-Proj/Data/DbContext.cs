@@ -30,6 +30,7 @@ namespace INFP_Proj.Data
         public DbSet<Log> Logs { get; set; }
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<Thresholds> Thresholds { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -63,13 +63,18 @@ else
                     </p>
 
                     <p class="mb-2">
-                        <strong>Blood Pressure:</strong>
-                        <span id="bloodPressureValue">@(data.BloodPressure.HasValue? data.BloodPressure.Value.ToString("0") : "N/A")</span> mmHg
+                        <strong>Systolic Blood Pressure:</strong>
+                        <span id="SystolicbloodPressureValue">@(data.SystolicBloodPressure.HasValue? data.SystolicBloodPressure.Value.ToString("0") : "N/A")</span> mmHg
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Diastolic Blood Pressure:</strong>
+                        <span id="DiastolicbloodPressureValue">@(data.DiastolicBloodPressure.HasValue? data.DiastolicBloodPressure.Value.ToString("0") : "N/A")</span> mmHg
                     </p>
 
                     <p class="mb-2">
                         <strong>Respiration:</strong>
-                        <span id="respirationValue">@(data.Respiration.HasValue? data.Respiration.Value.ToString("0") : "N/A")</span> breaths/min
+                        <span id="respirationValue">@(data.RespiratoryRate.HasValue? data.RespiratoryRate.Value.ToString("0") : "N/A")</span> breaths/min
                     </p>
 
                     <p class="mb-0">

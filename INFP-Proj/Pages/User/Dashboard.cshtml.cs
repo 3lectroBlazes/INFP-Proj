@@ -128,8 +128,9 @@ namespace INFP_Proj.Pages.User
                 Weight = bed?.Weight ?? record?.Beds?.Weight,
 
                 HeartRate = bracelet?.HeartRate ?? latestVitals?.HeartRate,
-                BloodPressure = bracelet?.BloodPressure ?? latestVitals?.BloodPressure,
-                Respiration = bracelet?.Respiration ?? latestVitals?.RespiratoryRate,
+                SystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.SystolicBloodPressure,
+                DiastolicBloodPressure = bracelet?.DiastolicBloodPressure ?? latestVitals?.DiastolicBloodPressure,
+                RespiratoryRate = bracelet?.RespiratoryRate ?? latestVitals?.RespiratoryRate,
                 Temperature = latestVitals?.Temperature,
                 LatestVitalsRecordedAt = latestVitals?.RecordedAt,
 
@@ -285,7 +286,8 @@ namespace INFP_Proj.Pages.User
             var random = new Random();
 
             float heartRate = random.Next(65, 101);
-            float bloodPressure = random.Next(110, 141);
+            float SystolicBloodPressure = random.Next(110, 141);
+            float DiastolicBloodPressure = random.Next(60, 81);
             float respiration = random.Next(14, 25);
             float temperature = (float)Math.Round(36.1 + random.NextDouble() * 1.7, 1);
             float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
@@ -294,8 +296,9 @@ namespace INFP_Proj.Pages.User
             battery = Math.Max(0, battery - 0.1f);
 
             bracelet.HeartRate = heartRate;
-            bracelet.BloodPressure = bloodPressure;
-            bracelet.Respiration = respiration;
+            bracelet.SystolicBloodPressure = SystolicBloodPressure;
+            bracelet.DiastolicBloodPressure = DiastolicBloodPressure;
+            bracelet.RespiratoryRate = respiration;
             bracelet.Movement = movement;
             bracelet.Battery = battery;
 
@@ -303,7 +306,8 @@ namespace INFP_Proj.Pages.User
             {
                 PatientID = patient.PatientID,
                 HeartRate = heartRate,
-                BloodPressure = bloodPressure,
+                SystolicBloodPressure = SystolicBloodPressure,
+                DiastolicBloodPressure = DiastolicBloodPressure,
                 RespiratoryRate = respiration,
                 Temperature = temperature,
                 RecordedAt = DateTime.UtcNow
@@ -324,7 +328,8 @@ namespace INFP_Proj.Pages.User
             {
                 success = true,
                 heartRate,
-                bloodPressure,
+                SystolicBloodPressure,
+                DiastolicBloodPressure,
                 respiration,
                 temperature,
                 movement,

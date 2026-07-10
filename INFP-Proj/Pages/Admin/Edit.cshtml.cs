@@ -94,44 +94,48 @@ namespace INFP_Proj.Pages.Admin
             }
 
             Medications medication = await _context.Medications.FindAsync(Patient.NewMedicationID.Value);
-
             if (medication == null || string.IsNullOrWhiteSpace(Patient.NewDosage))
             {
                 TempData["Error"] = "Select a medication and enter a dosage to add.";
                 return RedirectToPage(new { id });
             }
+
+            var alreadyExists = await _context.MedicationLists
+                .AnyAsync(m => m.PatientID == id && m.MedicationID == Patient.NewMedicationID.Value);
+            if (alreadyExists)
+            {
+                TempData["Error"] = "This medication is already assigned to this patient.";
+                return RedirectToPage(new { id });
+            }
+
+            var newMedicationList = new MedicationList
+            {
+                PatientID = id,
+                MedicationID = Patient.NewMedicationID.Value,
+                Dosage = Patient.NewDosage.Trim(),
+                Approved = !medication.Approval
+            };
+            _context.MedicationLists.Add(newMedicationList);
+            await _context.SaveChangesAsync();
+
+            if (!medication.Approval)
+            {
+                await _adminLogService.AddLogAsync(
+                    $"Medication requested for patient #{id}",
+                    true,
+                    null,
+                    id,
+                    newMedicationList.MedicationListID);
+                TempData["Message"] = "Medication Requested.";
+            }
             else
             {
-                var alreadyExists = await _context.MedicationLists
-                .AnyAsync(m => m.PatientID == id && m.MedicationID == Patient.NewMedicationID.Value);
-                if (alreadyExists)
-                {
-                    TempData["Error"] = "This medication is already assigned to this patient.";
-                    return RedirectToPage(new { id });
-                }
-
-                if (medication.Approval)
-                {
-                    await _adminLogService.AddLogAsync($"Medication requested for patient #{id}", true, null, id, medication.MedicationID, Patient.NewDosage.Trim());
-                    TempData["Message"] = "Medication Requested.";
-                    return RedirectToPage(new { id });
-                }
-                else
-                {
-                    _context.MedicationLists.Add(new MedicationList
-                    {
-                        PatientID = id,
-                        MedicationID = Patient.NewMedicationID.Value,
-                        Dosage = Patient.NewDosage.Trim()
-                    });
-
-                    await _context.SaveChangesAsync();
-                    await _adminLogService.AddLogAsync($"Medication added for patient #{id}");
-                    await AddPatientLogIfLinkedAsync(id, "A new medication was added to your schedule");
-                    TempData["Message"] = "Medication added.";
-                    return RedirectToPage(new { id });
-                }
+                await _adminLogService.AddLogAsync($"Medication added for patient #{id}");
+                await AddPatientLogIfLinkedAsync(id, "A new medication was added to your schedule");
+                TempData["Message"] = "Medication added.";
             }
+
+            return RedirectToPage(new { id });
         }
         public async Task<IActionResult> OnPostRemoveMedicationAsync(int id, int medicationListId)
         {

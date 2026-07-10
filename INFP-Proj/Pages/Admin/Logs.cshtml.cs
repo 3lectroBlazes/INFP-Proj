@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using System.ComponentModel.DataAnnotations;
 
 namespace INFP_Proj.Pages.Admin
@@ -94,27 +95,29 @@ namespace INFP_Proj.Pages.Admin
             if (log != null && log.Emergency && !log.Resolved)
             {
                 log.Resolved = true;
-                await _context.SaveChangesAsync();
-                if (log.MedicationID.HasValue)
+
+                if (log.MedicationListID.HasValue)
                 {
-                    _context.MedicationLists.Add(new MedicationList
+                    var medicationList = await _context.MedicationLists
+                        .FirstOrDefaultAsync(m => m.MedicationListID == log.MedicationListID.Value);
+
+                    if (medicationList != null)
                     {
-                        PatientID = log.PatientID.Value,
-                        MedicationID = log.MedicationID.Value,
-                        Dosage = log.Dosage.Trim()
-                    });
+                        medicationList.Approved = true;
+                    }
 
                     log.Event = $"Medication added for patient #{log.PatientID.Value}";
                     await _context.SaveChangesAsync();
+
                     await AddPatientLogIfLinkedAsync(log.PatientID.Value, "A new medication was added to your schedule");
                     TempData["Message"] = "Medication added.";
                 }
                 else
                 {
+                    await _context.SaveChangesAsync();
                     TempData["Message"] = "Emergency marked as resolved.";
                 }
             }
-
             return RedirectToPage(new { FromDate, ToDate, UserId, EmergencyFilter });
         }
         private async Task AddPatientLogIfLinkedAsync(int patientId, string message)

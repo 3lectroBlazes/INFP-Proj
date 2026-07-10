@@ -16,7 +16,7 @@ namespace INFP_Proj.Services
             _userManager = userManager;
         }
 
-        public async Task AddLogAsync(string eventDescription, bool emergency = false, string? userId = null, int patientUser = 0, int medication = 0, string? dosage = null)
+        public async Task AddLogAsync(string eventDescription, bool emergency = false, string? userId = null, int patientUser = 0, int medicationList = 0)
         {
             if (string.IsNullOrEmpty(userId))
             {
@@ -42,15 +42,14 @@ namespace INFP_Proj.Services
                 return;
             }
 
-            if (medication != 0 && patientUser != 0)
+            if (medicationList != 0 && patientUser != 0)
             {
                 _context.Logs.Add(new Log
                 {
                     UserID = userId,
                     PatientID = patientUser,
                     Event = eventDescription,
-                    MedicationID = medication,
-                    Dosage = dosage,
+                    MedicationListID = medicationList,
                     Emergency = emergency,
                     Timestamp = DateTime.UtcNow
                 });

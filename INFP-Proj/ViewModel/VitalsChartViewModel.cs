@@ -5,7 +5,8 @@ namespace INFP_Proj.ViewModel
         public List<string> Labels { get; set; } = new();
         public List<float?> HeartRate { get; set; } = new();
         public List<float?> RespiratoryRate { get; set; } = new();
-        public List<float?> BloodPressure { get; set; } = new();
+        public List<float?> SystolicBloodPressure { get; set; } = new();
+        public List<float?> DiastolicBloodPressure { get; set; } = new();
         public List<float?> Temperature { get; set; } = new();
         public int PatientId { get; set; }
         public string PatientName { get; set; } = string.Empty;
@@ -26,7 +27,8 @@ namespace INFP_Proj.ViewModel
         public string PatientName { get; set; } = string.Empty;
         public List<float?> HeartRate { get; set; } = new();
         public List<float?> RespiratoryRate { get; set; } = new();
-        public List<float?> BloodPressure { get; set; } = new();
+        public List<float?> SystolicBloodPressure { get; set; } = new();
+        public List<float?> DiastolicBloodPressure { get; set; } = new();
         public List<float?> Temperature { get; set; } = new();
     }
 

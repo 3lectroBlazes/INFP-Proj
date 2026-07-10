@@ -21,8 +21,9 @@
         public float? Weight { get; set; }
 
         public float? HeartRate { get; set; }
-        public float? BloodPressure { get; set; }
-        public float? Respiration { get; set; }
+        public float? SystolicBloodPressure { get; set; }
+        public float? DiastolicBloodPressure { get; set; }
+        public float? RespiratoryRate { get; set; }
         public float? Temperature { get; set; }
         public DateTime? LatestVitalsRecordedAt { get; set; }
 

@@ -141,50 +141,51 @@ namespace INFP_Proj.Data
             Bracelet sadevBracelet = new Bracelet
             {
                 Battery = 85.5f,
-                Respiration = 18.0f,
-                Location = "Ward " + Convert.ToString(general.WardID),
-                Movement = 0.5f,
-                BloodPressure = 120.0f,
-                HeartRate = 72.0f
+                SystolicBloodPressure = 120.0f,
+                DiastolicBloodPressure = 80.0f, // TODO: no source value existed before, using a typical default
+                HeartRate = 72.0f,
+                RespiratoryRate = 18.0f,
+                Temperature = 36.6f // TODO: new field, no equivalent existed before
             };
+
             Bracelet mikuBracelet = new Bracelet
             {
                 Battery = 90.0f,
-                Respiration = 16.0f,
-                Location = "Ward " + Convert.ToString(general.WardID),
-                Movement = 0.3f,
-                BloodPressure = 110.0f,
-                HeartRate = 68.0f
+                SystolicBloodPressure = 110.0f,
+                DiastolicBloodPressure = 70.0f, // TODO
+                HeartRate = 68.0f,
+                RespiratoryRate = 16.0f,
+                Temperature = 36.5f // TODO
             };
 
             Bracelet emptyBracelet1 = new Bracelet
             {
                 Battery = 100.0f,
-                Respiration = 16.0f,
-                Location = "Reception desk",
-                Movement = 0.0f,
-                BloodPressure = 110.0f,
-                HeartRate = 68.0f
+                SystolicBloodPressure = 110.0f,
+                DiastolicBloodPressure = 70.0f, // TODO
+                HeartRate = 68.0f,
+                RespiratoryRate = 16.0f,
+                Temperature = 36.5f // TODO
             };
 
             Bracelet emptyBracelet2 = new Bracelet
             {
                 Battery = 100.0f,
-                Respiration = 16.0f,
-                Location = "Reception desk",
-                Movement = 0.0f,
-                BloodPressure = 110.0f,
-                HeartRate = 68.0f
+                SystolicBloodPressure = 110.0f,
+                DiastolicBloodPressure = 70.0f,
+                HeartRate = 68.0f,
+                RespiratoryRate = 16.0f,
+                Temperature = 36.5f
             };
 
             Bracelet emptyBracelet3 = new Bracelet
             {
                 Battery = 100.0f,
-                Respiration = 16.0f,
-                Location = "Reception desk",
-                Movement = 0.0f,
-                BloodPressure = 110.0f,
-                HeartRate = 68.0f
+                SystolicBloodPressure = 110.0f,
+                DiastolicBloodPressure = 70.0f,
+                HeartRate = 68.0f,
+                RespiratoryRate = 16.0f,
+                Temperature = 36.5f
             };
 
             context.Bracelets.AddRange(
@@ -325,28 +326,26 @@ namespace INFP_Proj.Data
 
             // Vitals
             DateTime vitalsBaseTime = DateTime.Now.AddDays(-7);
-            var goodReadings = new (float bp, float hr, float rr, float temp)[]
+            var goodReadings = new (float systolic, float diastolic, float hr, float rr, float temp)[]
             {
-                (119, 70, 16, 36.4f), (120, 71, 17, 36.5f), (121, 70, 16, 36.4f),
-                (119, 72, 17, 36.5f), (120, 71, 16, 36.5f), (121, 70, 17, 36.4f),
-                (120, 72, 16, 36.5f), (119, 71, 17, 36.6f), (121, 70, 16, 36.5f),
-                (120, 72, 17, 36.4f), (119, 71, 16, 36.5f), (121, 70, 17, 36.5f),
-                (120, 72, 16, 36.4f), (119, 71, 17, 36.5f),
+                (119, 79, 70, 16, 36.4f), (120, 80, 71, 17, 36.5f), (121, 81, 70, 16, 36.4f),
+                (119, 79, 72, 17, 36.5f), (120, 80, 71, 16, 36.5f), (121, 81, 70, 17, 36.4f),
+                (120, 80, 72, 16, 36.5f), (119, 79, 71, 17, 36.6f), (121, 81, 70, 16, 36.5f),
+                (120, 80, 72, 17, 36.4f), (119, 79, 71, 16, 36.5f), (121, 81, 70, 17, 36.5f),
+                (120, 80, 72, 16, 36.4f), (119, 79, 71, 17, 36.5f),
             };
-            var badReadings = new (float bp, float hr, float rr, float temp)[]
+            var badReadings = new (float systolic, float diastolic, float hr, float rr, float temp)[]
             {
-                (118, 72, 17, 36.6f), (116, 74, 18, 36.7f), (114, 76, 18, 36.8f),
-                (112, 78, 19, 36.9f), (110, 80, 19, 37.1f), (108, 82, 20, 37.3f),
-                (106, 84, 20, 37.5f), (104, 86, 21, 37.6f), (102, 88, 22, 37.8f),
-                (100, 90, 22, 37.9f), ( 98, 92, 23, 38.1f), ( 96, 94, 24, 38.3f),
-                ( 94, 96, 24, 38.5f), ( 92, 98, 25, 38.7f),
+                (118, 78, 72, 17, 36.6f), (116, 76, 74, 18, 36.7f), (114, 75, 76, 18, 36.8f),
+                (112, 74, 78, 19, 36.9f), (110, 73, 80, 19, 37.1f), (108, 72, 82, 20, 37.3f),
+                (106, 70, 84, 20, 37.5f), (104, 69, 86, 21, 37.6f), (102, 68, 88, 22, 37.8f),
+                (100, 67, 90, 22, 37.9f), ( 98, 66, 92, 23, 38.1f), ( 96, 64, 94, 24, 38.3f),
+                ( 94, 63, 96, 24, 38.5f), ( 92, 62, 98, 25, 38.7f),
             };
-
             for (var i = 0; i < goodReadings.Length; i++)
             {
                 var sadevReading = goodReadings[i];
-                var tetoReading = badReadings[i]; 
-
+                var tetoReading = badReadings[i];
                 foreach (var (patient, reading) in new[]
                     {
                         (sadevPatient, sadevReading),
@@ -356,7 +355,8 @@ namespace INFP_Proj.Data
                     context.Vitals.Add(new Vitals
                     {
                         PatientID = patient.PatientID,
-                        BloodPressure = reading.bp,
+                        SystolicBloodPressure = reading.systolic,
+                        DiastolicBloodPressure = reading.diastolic,
                         HeartRate = reading.hr,
                         RespiratoryRate = reading.rr,
                         Temperature = reading.temp,
