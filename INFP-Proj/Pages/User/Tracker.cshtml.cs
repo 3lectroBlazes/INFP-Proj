@@ -99,9 +99,9 @@ namespace INFP_Proj.Pages.User
             var bracelet = braceletRelation.Bracelet;
             var random = new Random();
 
-            float heartRate = random.Next(65, 101);
-            float bloodPressure = random.Next(110, 141);
-            float respiration = random.Next(14, 25);
+            float heartRate = random.Next(65, 100);
+            float bloodPressure = random.Next(110, 140);
+            float respiration = random.Next(14, 20);
             float temperature = (float)Math.Round(36.1 + random.NextDouble() * 1.7, 1);
             float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
 
