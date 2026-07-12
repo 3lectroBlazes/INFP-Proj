@@ -144,8 +144,7 @@ namespace INFP_Proj.Data
                 SystolicBloodPressure = 120.0f,
                 DiastolicBloodPressure = 80.0f, // TODO: no source value existed before, using a typical default
                 HeartRate = 72.0f,
-                RespiratoryRate = 18.0f,
-                Temperature = 36.6f // TODO: new field, no equivalent existed before
+                RespiratoryRate = 18.0f
             };
 
             Bracelet mikuBracelet = new Bracelet
@@ -154,8 +153,7 @@ namespace INFP_Proj.Data
                 SystolicBloodPressure = 110.0f,
                 DiastolicBloodPressure = 70.0f, // TODO
                 HeartRate = 68.0f,
-                RespiratoryRate = 16.0f,
-                Temperature = 36.5f // TODO
+                RespiratoryRate = 16.0f
             };
 
             Bracelet emptyBracelet1 = new Bracelet
@@ -164,8 +162,7 @@ namespace INFP_Proj.Data
                 SystolicBloodPressure = 110.0f,
                 DiastolicBloodPressure = 70.0f, // TODO
                 HeartRate = 68.0f,
-                RespiratoryRate = 16.0f,
-                Temperature = 36.5f // TODO
+                RespiratoryRate = 16.0f
             };
 
             Bracelet emptyBracelet2 = new Bracelet
@@ -174,8 +171,7 @@ namespace INFP_Proj.Data
                 SystolicBloodPressure = 110.0f,
                 DiastolicBloodPressure = 70.0f,
                 HeartRate = 68.0f,
-                RespiratoryRate = 16.0f,
-                Temperature = 36.5f
+                RespiratoryRate = 16.0f
             };
 
             Bracelet emptyBracelet3 = new Bracelet
@@ -184,8 +180,7 @@ namespace INFP_Proj.Data
                 SystolicBloodPressure = 110.0f,
                 DiastolicBloodPressure = 70.0f,
                 HeartRate = 68.0f,
-                RespiratoryRate = 16.0f,
-                Temperature = 36.5f
+                RespiratoryRate = 16.0f
             };
 
             context.Bracelets.AddRange(
@@ -243,7 +238,6 @@ namespace INFP_Proj.Data
                 Sector = "A",
                 Floor = "1",
                 Room = "101",
-                Temperature = 36.5f,
                 Weight = 70.0f,
                 Location = "Near Window"
             };
@@ -254,7 +248,6 @@ namespace INFP_Proj.Data
                 Sector = "A",
                 Floor = "1",
                 Room = "102",
-                Temperature = 36.6f,
                 Weight = 60.0f,
                 Location = "Near Door"
             };
@@ -264,7 +257,6 @@ namespace INFP_Proj.Data
                 Sector = "A",
                 Floor = "1",
                 Room = "103",
-                Temperature = 36.6f,
                 Weight = 60.0f,
                 Location = "Middle"
             };
@@ -274,7 +266,6 @@ namespace INFP_Proj.Data
                 Sector = "A",
                 Floor = "1",
                 Room = "103",
-                Temperature = 36.6f,
                 Weight = 60.0f,
                 Location = "Near Window"
             };
@@ -284,7 +275,6 @@ namespace INFP_Proj.Data
                 Sector = "A",
                 Floor = "1",
                 Room = "103",
-                Temperature = 36.6f,
                 Weight = 60.0f,
                 Location = "Near Door"
             };

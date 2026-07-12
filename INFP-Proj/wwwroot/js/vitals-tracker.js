@@ -49,6 +49,6 @@
 
     createChart('heartRateChart', 'Heart Rate', chartData.heartRate, '#dc3545');
     createChart('breathingRateChart', 'Breathing Rate', chartData.respiratoryRate, '#0d6efd');
-    createChart('bloodPressureChart', 'Blood Pressure', chartData.bloodPressure, '#6f42c1');
-    createChart('temperatureChart', 'Temperature', chartData.temperature, '#fd7e14');
+    createChart('systolicBloodPressureChart', 'Systolic Blood Pressure', chartData.systolicBloodPressure, '#6f42c1');
+    createChart('diastolicBloodPressureChart', 'Diastolic Blood Pressure', chartData.diastolicBloodPressure, '#fd7e14');
 })();

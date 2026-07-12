@@ -78,7 +78,6 @@ namespace INFP_Proj.Migrations
                     DiastolicBloodPressure = table.Column<float>(type: "real", nullable: true),
                     HeartRate = table.Column<float>(type: "real", nullable: true),
                     RespiratoryRate = table.Column<float>(type: "real", nullable: true),
-                    Temperature = table.Column<float>(type: "real", nullable: true),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Movement = table.Column<float>(type: "real", nullable: true)
                 },
@@ -355,7 +354,6 @@ namespace INFP_Proj.Migrations
                     Sector = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Floor = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Room = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Temperature = table.Column<float>(type: "real", nullable: false),
                     Weight = table.Column<float>(type: "real", nullable: false),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },

@@ -7,7 +7,6 @@ namespace INFP_Proj.ViewModel
         public List<float?> RespiratoryRate { get; set; } = new();
         public List<float?> SystolicBloodPressure { get; set; } = new();
         public List<float?> DiastolicBloodPressure { get; set; } = new();
-        public List<float?> Temperature { get; set; } = new();
         public int PatientId { get; set; }
         public string PatientName { get; set; } = string.Empty;
         public List<PatientSelectItem> Patients { get; set; } = new();
@@ -29,7 +28,6 @@ namespace INFP_Proj.ViewModel
         public List<float?> RespiratoryRate { get; set; } = new();
         public List<float?> SystolicBloodPressure { get; set; } = new();
         public List<float?> DiastolicBloodPressure { get; set; } = new();
-        public List<float?> Temperature { get; set; } = new();
     }
 
     public class AdminVitalsChartViewModel

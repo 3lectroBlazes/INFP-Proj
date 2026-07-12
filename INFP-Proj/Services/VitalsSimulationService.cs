@@ -5,7 +5,7 @@ namespace INFP_Proj.Services
 {
     public class VitalsSimulationService
     {
-        public static readonly string[] AllowedVitals = { "HeartRate", "RespiratoryRate", "BloodPressure" };
+        public static readonly string[] AllowedVitals = { "HeartRate", "RespiratoryRate", "SystolicBloodPressure", "DiastolicBloodPressure" };
         public static readonly string[] AllowedDirections = { "Spike", "Dip" };
 
         private readonly AppDbContext _context;
@@ -35,9 +35,8 @@ namespace INFP_Proj.Services
 
             float baselineHeartRate = last?.HeartRate ?? 72f;
             float baselineRespiratoryRate = last?.RespiratoryRate ?? 16f;
-            float baselineBloodPressure = last?.BloodPressure ?? 120f;
-            float baselineTemperature = last?.Temperature ?? 36.5f;
-
+            float baselineSystolicBloodPressure = last?.SystolicBloodPressure ?? 120f;
+            float baselineDiastolicBloodPressure = last?.DiastolicBloodPressure ?? 80f;
             bool spike = direction == "Spike";
 
             var reading = new Vitals
@@ -45,8 +44,8 @@ namespace INFP_Proj.Services
                 PatientID = patientId,
                 HeartRate = Jitter(baselineHeartRate, 2f),
                 RespiratoryRate = Jitter(baselineRespiratoryRate, 1f),
-                BloodPressure = Jitter(baselineBloodPressure, 2f),
-                Temperature = Jitter(baselineTemperature, 0.1f),
+                SystolicBloodPressure = Jitter(baselineSystolicBloodPressure, 3f),
+                DiastolicBloodPressure = Jitter(baselineDiastolicBloodPressure, 2f),
                 RecordedAt = DateTime.UtcNow
             };
 
@@ -62,17 +61,23 @@ namespace INFP_Proj.Services
                         ? baselineRespiratoryRate + 12f + (float)Random.Shared.NextDouble() * 6f
                         : baselineRespiratoryRate - 8f - (float)Random.Shared.NextDouble() * 4f;
                     break;
-                case "BloodPressure":
-                    reading.BloodPressure = spike
-                        ? baselineBloodPressure + 35f + (float)Random.Shared.NextDouble() * 15f
-                        : baselineBloodPressure - 30f - (float)Random.Shared.NextDouble() * 10f;
+                case "SystolicBloodPressure":
+                    reading.SystolicBloodPressure = spike
+                        ? baselineSystolicBloodPressure + 35f + (float)Random.Shared.NextDouble() * 15f
+                        : baselineSystolicBloodPressure - 30f - (float)Random.Shared.NextDouble() * 10f;
+                    break;
+                case "DiastolicBloodPressure":
+                    reading.DiastolicBloodPressure = spike
+                        ? baselineDiastolicBloodPressure + 20f + (float)Random.Shared.NextDouble() * 10f
+                        : baselineDiastolicBloodPressure - 15f - (float)Random.Shared.NextDouble() * 5f;
                     break;
             }
 
             // Clamp so dips can't go negative/implausible.
             reading.HeartRate = Math.Max(20f, reading.HeartRate.Value);
             reading.RespiratoryRate = Math.Max(4f, reading.RespiratoryRate.Value);
-            reading.BloodPressure = Math.Max(40f, reading.BloodPressure.Value);
+            reading.SystolicBloodPressure = Math.Max(70f, reading.SystolicBloodPressure.Value);
+            reading.DiastolicBloodPressure = Math.Max(40f, reading.DiastolicBloodPressure.Value);
 
             _context.Vitals.Add(reading);
             await _context.SaveChangesAsync();

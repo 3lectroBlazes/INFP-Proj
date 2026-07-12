@@ -17,7 +17,6 @@
         public string Floor { get; set; } = "Not assigned";
         public string Sector { get; set; } = "Not assigned";
         public string BedLocation { get; set; } = "Not assigned";
-        public float? BedTemperature { get; set; }
         public float? Weight { get; set; }
 
         public float? HeartRate { get; set; }

@@ -134,9 +134,6 @@ namespace INFP_Proj.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<float>("Temperature")
-                        .HasColumnType("real");
-
                     b.Property<int>("WardID")
                         .HasColumnType("int");
 
@@ -179,9 +176,6 @@ namespace INFP_Proj.Migrations
                         .HasColumnType("real");
 
                     b.Property<float?>("SystolicBloodPressure")
-                        .HasColumnType("real");
-
-                    b.Property<float?>("Temperature")
                         .HasColumnType("real");
 
                     b.HasKey("BraceletID");

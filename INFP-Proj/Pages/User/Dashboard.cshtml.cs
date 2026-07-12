@@ -124,7 +124,6 @@ namespace INFP_Proj.Pages.User
                 Floor = bed?.Floor ?? record?.Beds?.Floor ?? "Not assigned",
                 Sector = bed?.Sector ?? record?.Beds?.Sector ?? "Not assigned",
                 BedLocation = bed?.Location ?? record?.Beds?.Location ?? "Not assigned",
-                BedTemperature = bed?.Temperature ?? record?.Beds?.Temperature,
                 Weight = bed?.Weight ?? record?.Beds?.Weight,
 
                 HeartRate = bracelet?.HeartRate ?? latestVitals?.HeartRate,
@@ -283,7 +282,6 @@ namespace INFP_Proj.Pages.User
             float SystolicBloodPressure = random.Next(110, 141);
             float DiastolicBloodPressure = random.Next(60, 81);
             float respiration = random.Next(14, 25);
-            float temperature = (float)Math.Round(36.1 + random.NextDouble() * 1.7, 1);
             float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
 
             float battery = bracelet.Battery ?? 100;
@@ -324,7 +322,6 @@ namespace INFP_Proj.Pages.User
                 SystolicBloodPressure,
                 DiastolicBloodPressure,
                 respiration,
-                temperature,
                 movement,
                 battery = Math.Round(battery, 1),
                 updatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),

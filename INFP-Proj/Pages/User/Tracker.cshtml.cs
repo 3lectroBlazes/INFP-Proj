@@ -103,7 +103,6 @@ namespace INFP_Proj.Pages.User
             float SystolicBloodPressure = random.Next(110, 141);
             float DiastolicBloodPressure = random.Next(60, 81);
             float respiration = random.Next(14, 25);
-            float temperature = (float)Math.Round(36.1 + random.NextDouble() * 1.7, 1);
             float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
 
             float battery = bracelet.Battery ?? 100;
@@ -132,17 +131,15 @@ namespace INFP_Proj.Pages.User
             await _context.SaveChangesAsync();
 
             string heartRateStatus = GetHeartRateStatus(heartRate);
-            string SystolicStatus = GetBloodPressureStatus(SystolicBloodPressure);
-            string DiastolicStatus = GetBloodPressureStatus(DiastolicBloodPressure);
+            string SystolicStatus = GetSystolicBloodPressureStatus(SystolicBloodPressure);
+            string DiastolicStatus = GetDiastolicBloodPressureStatus(DiastolicBloodPressure);
             string respirationStatus = GetRespirationStatus(respiration);
-            string temperatureStatus = GetTemperatureStatus(temperature);
 
             bool hasAttention =
                 heartRateStatus == "Attention" ||
                 SystolicStatus == "Attention" ||
                 DiastolicStatus == "Attention" ||
-                respirationStatus == "Attention" ||
-                temperatureStatus == "Attention";
+                respirationStatus == "Attention";
 
             return new JsonResult(new
             {
@@ -151,7 +148,6 @@ namespace INFP_Proj.Pages.User
                 SystolicBloodPressure = SystolicBloodPressure.ToString("0"),
                 DiastolicBloodPressure = DiastolicBloodPressure.ToString("0"),
                 respiration = respiration.ToString("0"),
-                temperature = temperature.ToString("0.0"),
 
                 // Convert to Singapore time before sending to browser
                 updatedAt = ToSingaporeTime(newVitals.RecordedAt).ToString("yyyy-MM-dd HH:mm:ss"),
@@ -160,7 +156,6 @@ namespace INFP_Proj.Pages.User
                 SystolicStatus,
                 DiastolicStatus,
                 respirationStatus,
-                temperatureStatus,
                 hasAttention
             });
         }
@@ -189,8 +184,8 @@ namespace INFP_Proj.Pages.User
                 : ToSingaporeTime(latestVitals.RecordedAt);
 
             HeartRateStatus = GetHeartRateStatus(LatestHeartRate);
-            SystolicStatus = GetBloodPressureStatus(LatestSystolicBloodPressure);
-            DiastolicStatus = GetBloodPressureStatus(LatestDiastolicBloodPressure);
+            SystolicStatus = GetSystolicBloodPressureStatus(LatestSystolicBloodPressure);
+            DiastolicStatus = GetDiastolicBloodPressureStatus(LatestDiastolicBloodPressure);
             RespirationStatus = GetRespirationStatus(LatestRespiration);
 
             HasAttention =
@@ -346,19 +341,18 @@ namespace INFP_Proj.Pages.User
             return "Normal";
         }
 
-        private static string GetBloodPressureStatus(float? value)
+        private static string GetSystolicBloodPressureStatus(float? value)
         {
             if (!value.HasValue) return "No data";
             if (value < 90 || value > 140) return "Attention";
             return "Normal";
         }
-
-        private static string GetTemperatureStatus(float? value)
+        private static string GetDiastolicBloodPressureStatus(float? value)
         {
             if (!value.HasValue) return "No data";
-            if (value >= 38) return "Attention";
-            if (value < 36) return "Warning";
+            if (value < 60 || value > 90) return "Attention";
             return "Normal";
         }
+
     }
 }

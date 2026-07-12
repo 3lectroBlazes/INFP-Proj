@@ -23,8 +23,8 @@
     const metricColors = {
         heartRate: '#dc3545',
         respiratoryRate: '#0d6efd',
-        bloodPressure: '#6f42c1',
-        temperature: '#fd7e14'
+        systolicBloodPressure: '#fd7e14',
+        diastolicBloodPressure: '#0d6efd'
     };
 
     const singlePatient = series.length === 1;
@@ -92,6 +92,6 @@
 
     createChart('heartRateChart', 'heartRate');
     createChart('breathingRateChart', 'respiratoryRate');
-    createChart('bloodPressureChart', 'bloodPressure');
-    createChart('temperatureChart', 'temperature');
+    createChart('systolicBloodPressureChart', 'systolicBloodPressure');
+    createChart('diastolicBloodPressureChart', 'diastolicBloodPressure');
 })();
