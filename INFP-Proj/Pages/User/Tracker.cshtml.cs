@@ -25,15 +25,15 @@ namespace INFP_Proj.Pages.User
         public bool HasPatientRecord { get; set; }
 
         public float? LatestHeartRate { get; set; }
-        public float? LatestBloodPressure { get; set; }
+        public float? LatestSystolicBloodPressure { get; set; }
+        public float? LatestDiastolicBloodPressure { get; set; }
         public float? LatestRespiration { get; set; }
-        public float? LatestTemperature { get; set; }
         public DateTime? LatestUpdatedAt { get; set; }
 
         public string HeartRateStatus { get; set; } = "No data";
-        public string BloodPressureStatus { get; set; } = "No data";
+        public string SystolicStatus { get; set; } = "No data";
+        public string DiastolicStatus { get; set; } = "No data";
         public string RespirationStatus { get; set; } = "No data";
-        public string TemperatureStatus { get; set; } = "No data";
         public bool HasAttention { get; set; }
 
         public async Task OnGetAsync()
@@ -99,18 +99,26 @@ namespace INFP_Proj.Pages.User
             var bracelet = braceletRelation.Bracelet;
             var random = new Random();
 
+<<<<<<< HEAD
             float heartRate = random.Next(65, 100);
             float bloodPressure = random.Next(110, 140);
             float respiration = random.Next(14, 20);
             float temperature = (float)Math.Round(36.1 + random.NextDouble() * 1.7, 1);
+=======
+            float heartRate = random.Next(65, 101);
+            float SystolicBloodPressure = random.Next(110, 141);
+            float DiastolicBloodPressure = random.Next(60, 81);
+            float respiration = random.Next(14, 25);
+>>>>>>> de92f5c14e0b8284e5bda7b1bf59d0048df96e72
             float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
 
             float battery = bracelet.Battery ?? 100;
             battery = Math.Max(0, battery - 0.1f);
 
             bracelet.HeartRate = heartRate;
-            bracelet.BloodPressure = bloodPressure;
-            bracelet.Respiration = respiration;
+            bracelet.SystolicBloodPressure = SystolicBloodPressure;
+            bracelet.DiastolicBloodPressure = DiastolicBloodPressure;
+            bracelet.RespiratoryRate = respiration;
             bracelet.Movement = movement;
             bracelet.Battery = battery;
 
@@ -118,9 +126,9 @@ namespace INFP_Proj.Pages.User
             {
                 PatientID = patient.PatientID,
                 HeartRate = heartRate,
-                BloodPressure = bloodPressure,
+                SystolicBloodPressure = SystolicBloodPressure,
+                DiastolicBloodPressure = DiastolicBloodPressure,
                 RespiratoryRate = respiration,
-                Temperature = temperature,
 
                 // Store in database as UTC
                 RecordedAt = DateTime.UtcNow
@@ -130,31 +138,31 @@ namespace INFP_Proj.Pages.User
             await _context.SaveChangesAsync();
 
             string heartRateStatus = GetHeartRateStatus(heartRate);
-            string bloodPressureStatus = GetBloodPressureStatus(bloodPressure);
+            string SystolicStatus = GetSystolicBloodPressureStatus(SystolicBloodPressure);
+            string DiastolicStatus = GetDiastolicBloodPressureStatus(DiastolicBloodPressure);
             string respirationStatus = GetRespirationStatus(respiration);
-            string temperatureStatus = GetTemperatureStatus(temperature);
 
             bool hasAttention =
                 heartRateStatus == "Attention" ||
-                bloodPressureStatus == "Attention" ||
-                respirationStatus == "Attention" ||
-                temperatureStatus == "Attention";
+                SystolicStatus == "Attention" ||
+                DiastolicStatus == "Attention" ||
+                respirationStatus == "Attention";
 
             return new JsonResult(new
             {
                 success = true,
                 heartRate = heartRate.ToString("0"),
-                bloodPressure = bloodPressure.ToString("0"),
+                SystolicBloodPressure = SystolicBloodPressure.ToString("0"),
+                DiastolicBloodPressure = DiastolicBloodPressure.ToString("0"),
                 respiration = respiration.ToString("0"),
-                temperature = temperature.ToString("0.0"),
 
                 // Convert to Singapore time before sending to browser
                 updatedAt = ToSingaporeTime(newVitals.RecordedAt).ToString("yyyy-MM-dd HH:mm:ss"),
 
                 heartRateStatus,
-                bloodPressureStatus,
+                SystolicStatus,
+                DiastolicStatus,
                 respirationStatus,
-                temperatureStatus,
                 hasAttention
             });
         }
@@ -173,9 +181,9 @@ namespace INFP_Proj.Pages.User
             var bracelet = braceletRelation?.Bracelet;
 
             LatestHeartRate = bracelet?.HeartRate ?? latestVitals?.HeartRate;
-            LatestBloodPressure = bracelet?.BloodPressure ?? latestVitals?.BloodPressure;
-            LatestRespiration = bracelet?.Respiration ?? latestVitals?.RespiratoryRate;
-            LatestTemperature = latestVitals?.Temperature;
+            LatestSystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.SystolicBloodPressure;
+            LatestDiastolicBloodPressure = bracelet?.DiastolicBloodPressure ?? latestVitals?.DiastolicBloodPressure;
+            LatestSystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.RespiratoryRate;
 
             // Convert UTC database time to Singapore time ONCE here
             LatestUpdatedAt = latestVitals == null
@@ -183,15 +191,15 @@ namespace INFP_Proj.Pages.User
                 : ToSingaporeTime(latestVitals.RecordedAt);
 
             HeartRateStatus = GetHeartRateStatus(LatestHeartRate);
-            BloodPressureStatus = GetBloodPressureStatus(LatestBloodPressure);
+            SystolicStatus = GetSystolicBloodPressureStatus(LatestSystolicBloodPressure);
+            DiastolicStatus = GetDiastolicBloodPressureStatus(LatestDiastolicBloodPressure);
             RespirationStatus = GetRespirationStatus(LatestRespiration);
-            TemperatureStatus = GetTemperatureStatus(LatestTemperature);
 
             HasAttention =
                 HeartRateStatus == "Attention" ||
-                BloodPressureStatus == "Attention" ||
-                RespirationStatus == "Attention" ||
-                TemperatureStatus == "Attention";
+                SystolicStatus == "Attention" ||
+                DiastolicStatus == "Attention" ||
+                RespirationStatus == "Attention";
         }
 
         private async Task LoadHourlyAverageChartAsync(Patients patient)
@@ -209,8 +217,8 @@ namespace INFP_Proj.Pages.User
                     HourUtc = g.Key,
                     HeartRate = Average(g.Select(v => v.HeartRate)),
                     RespiratoryRate = Average(g.Select(v => v.RespiratoryRate)),
-                    BloodPressure = Average(g.Select(v => v.BloodPressure)),
-                    Temperature = Average(g.Select(v => v.Temperature))
+                    SystolicBloodPressure = Average(g.Select(v => v.SystolicBloodPressure)),
+                    DiastolicBloodPressure = Average(g.Select(v => v.DiastolicBloodPressure))
                 })
                 .ToList();
 
@@ -233,12 +241,11 @@ namespace INFP_Proj.Pages.User
                     .Select(v => v.RespiratoryRate)
                     .ToList(),
 
-                BloodPressure = hourlyVitals
-                    .Select(v => v.BloodPressure)
+                SystolicBloodPressure = hourlyVitals
+                    .Select(v => v.SystolicBloodPressure)
                     .ToList(),
-
-                Temperature = hourlyVitals
-                    .Select(v => v.Temperature)
+                DiastolicBloodPressure = hourlyVitals
+                    .Select(v => v.DiastolicBloodPressure)
                     .ToList()
             };
         }
@@ -341,19 +348,18 @@ namespace INFP_Proj.Pages.User
             return "Normal";
         }
 
-        private static string GetBloodPressureStatus(float? value)
+        private static string GetSystolicBloodPressureStatus(float? value)
         {
             if (!value.HasValue) return "No data";
             if (value < 90 || value > 140) return "Attention";
             return "Normal";
         }
-
-        private static string GetTemperatureStatus(float? value)
+        private static string GetDiastolicBloodPressureStatus(float? value)
         {
             if (!value.HasValue) return "No data";
-            if (value >= 38) return "Attention";
-            if (value < 36) return "Warning";
+            if (value < 60 || value > 90) return "Attention";
             return "Normal";
         }
+
     }
 }

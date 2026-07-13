@@ -17,13 +17,12 @@
         public string Floor { get; set; } = "Not assigned";
         public string Sector { get; set; } = "Not assigned";
         public string BedLocation { get; set; } = "Not assigned";
-        public float? BedTemperature { get; set; }
         public float? Weight { get; set; }
 
         public float? HeartRate { get; set; }
-        public float? BloodPressure { get; set; }
-        public float? Respiration { get; set; }
-        public float? Temperature { get; set; }
+        public float? SystolicBloodPressure { get; set; }
+        public float? DiastolicBloodPressure { get; set; }
+        public float? RespiratoryRate { get; set; }
         public DateTime? LatestVitalsRecordedAt { get; set; }
 
         public float? BraceletBattery { get; set; }

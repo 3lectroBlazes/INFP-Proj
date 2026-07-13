@@ -11,6 +11,7 @@ namespace INFP_Proj.Data
         public int PatientID { get; set; }
         public int MedicationID { get; set; }
         public required string Dosage { get; set; }
+        public bool Approved { get; set; } = true;
 
         [ForeignKey("PatientID")]
         public Patients? Patients { get; set; }

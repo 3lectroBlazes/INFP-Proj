@@ -36,8 +36,8 @@ namespace INFP_Proj.Services
                 Labels = vitals.Select(v => v.RecordedAt.ToLocalTime().ToString("MMM d, HH:mm")).ToList(),
                 HeartRate = vitals.Select(v => v.HeartRate).ToList(),
                 RespiratoryRate = vitals.Select(v => v.RespiratoryRate).ToList(),
-                BloodPressure = vitals.Select(v => v.BloodPressure).ToList(),
-                Temperature = vitals.Select(v => v.Temperature).ToList()
+                SystolicBloodPressure = vitals.Select(v => v.SystolicBloodPressure).ToList(),
+                DiastolicBloodPressure = vitals.Select(v => v.DiastolicBloodPressure).ToList()
             };
 
             if (showPatientSelector)
@@ -122,8 +122,8 @@ namespace INFP_Proj.Services
                     PatientName = patientInfo.DisplayName,
                     HeartRate = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.HeartRate : null).ToList(),
                     RespiratoryRate = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.RespiratoryRate : null).ToList(),
-                    BloodPressure = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.BloodPressure : null).ToList(),
-                    Temperature = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.Temperature : null).ToList()
+                    SystolicBloodPressure = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.SystolicBloodPressure : null).ToList(),
+                    DiastolicBloodPressure = timeline.Select(t => byTime.TryGetValue(t, out var v) ? v.DiastolicBloodPressure : null).ToList()
                 });
             }
 

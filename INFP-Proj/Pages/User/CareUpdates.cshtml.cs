@@ -155,7 +155,7 @@ namespace INFP_Proj.Pages.User
             var appointmentRequest = new Appointment
             {
                 PatientID = patient.PatientID,
-                PreferredDateTime = NewAppointmentRequest.PreferredDateTime,
+                DateTime = NewAppointmentRequest.PreferredDateTime,
                 Reason = NewAppointmentRequest.Reason.Trim(),
                 Urgency = NewAppointmentRequest.Urgency,
                 Status = "Pending",

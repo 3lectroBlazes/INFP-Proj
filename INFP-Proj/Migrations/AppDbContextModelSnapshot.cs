@@ -70,14 +70,20 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentRequestID"));
 
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("DocAcknowledged")
+                        .HasColumnType("bit");
+
                     b.Property<string>("DoctorResponse")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("PatientAcknowledged")
+                        .HasColumnType("bit");
+
                     b.Property<int>("PatientID")
                         .HasColumnType("int");
-
-                    b.Property<DateTime>("PreferredDateTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -128,9 +134,6 @@ namespace INFP_Proj.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<float>("Temperature")
-                        .HasColumnType("real");
-
                     b.Property<int>("WardID")
                         .HasColumnType("int");
 
@@ -157,7 +160,7 @@ namespace INFP_Proj.Migrations
                     b.Property<float?>("Battery")
                         .HasColumnType("real");
 
-                    b.Property<float?>("BloodPressure")
+                    b.Property<float?>("DiastolicBloodPressure")
                         .HasColumnType("real");
 
                     b.Property<float?>("HeartRate")
@@ -169,7 +172,10 @@ namespace INFP_Proj.Migrations
                     b.Property<float?>("Movement")
                         .HasColumnType("real");
 
-                    b.Property<float?>("Respiration")
+                    b.Property<float?>("RespiratoryRate")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("SystolicBloodPressure")
                         .HasColumnType("real");
 
                     b.HasKey("BraceletID");
@@ -269,9 +275,6 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogID"));
 
-                    b.Property<string>("Dosage")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("Emergency")
                         .HasColumnType("bit");
 
@@ -279,7 +282,7 @@ namespace INFP_Proj.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("MedicationID")
+                    b.Property<int?>("MedicationListID")
                         .HasColumnType("int");
 
                     b.Property<int?>("PatientID")
@@ -295,9 +298,15 @@ namespace INFP_Proj.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("relativeAcknowledged")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("selfAcknowledged")
+                        .HasColumnType("bit");
+
                     b.HasKey("LogID");
 
-                    b.HasIndex("MedicationID");
+                    b.HasIndex("MedicationListID");
 
                     b.HasIndex("PatientID");
 
@@ -313,6 +322,9 @@ namespace INFP_Proj.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MedicationListID"));
+
+                    b.Property<bool>("Approved")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Dosage")
                         .IsRequired()
@@ -450,6 +462,43 @@ namespace INFP_Proj.Migrations
                     b.ToTable("Relationships");
                 });
 
+            modelBuilder.Entity("INFP_Proj.Data.Thresholds", b =>
+                {
+                    b.Property<int>("ThresholdID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThresholdID"));
+
+                    b.Property<float?>("DBPLowerThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("DBPUpperThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("HeartRateLowerPercentageThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("HeartRateUpperPercentageThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("RespiratoryRateLowerThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("RespiratoryRateUpperPercentageThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("SBPLowerThreshold")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("SBPUpperThreshold")
+                        .HasColumnType("real");
+
+                    b.HasKey("ThresholdID");
+
+                    b.ToTable("Thresholds");
+                });
+
             modelBuilder.Entity("INFP_Proj.Data.Vitals", b =>
                 {
                     b.Property<int>("VitalsID")
@@ -458,7 +507,7 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VitalsID"));
 
-                    b.Property<float?>("BloodPressure")
+                    b.Property<float?>("DiastolicBloodPressure")
                         .HasColumnType("real");
 
                     b.Property<float?>("HeartRate")
@@ -473,7 +522,7 @@ namespace INFP_Proj.Migrations
                     b.Property<float?>("RespiratoryRate")
                         .HasColumnType("real");
 
-                    b.Property<float?>("Temperature")
+                    b.Property<float?>("SystolicBloodPressure")
                         .HasColumnType("real");
 
                     b.HasKey("VitalsID");
@@ -797,9 +846,9 @@ namespace INFP_Proj.Migrations
 
             modelBuilder.Entity("INFP_Proj.Data.Log", b =>
                 {
-                    b.HasOne("INFP_Proj.Data.Medications", "Medication")
+                    b.HasOne("INFP_Proj.Data.MedicationList", "MedicationList")
                         .WithMany()
-                        .HasForeignKey("MedicationID");
+                        .HasForeignKey("MedicationListID");
 
                     b.HasOne("INFP_Proj.Data.Patients", "Patient")
                         .WithMany()
@@ -811,7 +860,7 @@ namespace INFP_Proj.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Medication");
+                    b.Navigation("MedicationList");
 
                     b.Navigation("Patient");
 

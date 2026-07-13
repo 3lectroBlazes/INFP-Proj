@@ -107,13 +107,13 @@ else
                 <div class="card-body">
                     <h2 class="h6 text-primary mb-3">Blood Pressure</h2>
                     <p class="h3 mb-2">
-                        <span id="bloodPressureValue">
-                            @(Model.LatestBloodPressure.HasValue? Model.LatestBloodPressure.Value.ToString("0") : "N/A")
+                        <span id="SystolicbloodPressureValue">
+                            @(Model.LatestSystolicBloodPressure.HasValue? Model.LatestSystolicBloodPressure.Value.ToString("0") : "N/A")
                         </span>
                         <span class="fs-6 text-muted">mmHg</span>
                     </p>
-                    <span id="bloodPressureStatus" class="badge @BadgeClass(Model.BloodPressureStatus)">
-                        @Model.BloodPressureStatus
+                    <span id="SystolicbloodPressureStatus" class="badge @BadgeClass(Model.SystolicStatus)">
+                        @Model.SystolicStatus
                     </span>
                     <p class="text-muted small mt-3 mb-0">Reference range: 90–140 mmHg</p>
                 </div>
@@ -123,17 +123,17 @@ else
         <div class="col-md-6 col-xl-3">
             <div class="app-card card h-100">
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Temperature</h2>
+                    <h2 class="h6 text-primary mb-3">Blood Pressure</h2>
                     <p class="h3 mb-2">
-                        <span id="temperatureValue">
-                            @(Model.LatestTemperature.HasValue? Model.LatestTemperature.Value.ToString("0.0") : "N/A")
+                        <span id="DiastolicbloodPressureValue">
+                            @(Model.LatestDiastolicBloodPressure.HasValue? Model.LatestDiastolicBloodPressure.Value.ToString("0") : "N/A")
                         </span>
-                        <span class="fs-6 text-muted">°C</span>
+                        <span class="fs-6 text-muted">mmHg</span>
                     </p>
-                    <span id="temperatureStatus" class="badge @BadgeClass(Model.TemperatureStatus)">
-                        @Model.TemperatureStatus
+                    <span id="DiastolicbloodPressureStatus" class="badge @BadgeClass(Model.DiastolicStatus)">
+                        @Model.DiastolicStatus
                     </span>
-                    <p class="text-muted small mt-3 mb-0">Normal range: 36.0–37.9°C</p>
+                    <p class="text-muted small mt-3 mb-0">Reference range: 90–140 mmHg</p>
                 </div>
             </div>
         </div>
@@ -191,15 +191,15 @@ else
                 }
 
                 document.getElementById('heartRateValue').textContent = data.heartRate;
-                document.getElementById('bloodPressureValue').textContent = data.bloodPressure;
+                document.getElementById('SystolicbloodPressureValue').textContent = data.systolicBloodPressure;
+                document.getElementById('DiastolicbloodPressureValue').textContent = data.diastolicBloodPressure;
                 document.getElementById('respirationValue').textContent = data.respiration;
-                document.getElementById('temperatureValue').textContent = data.temperature;
                 document.getElementById('latestUpdatedValue').textContent = data.updatedAt;
 
                 updateBadge('heartRateStatus', data.heartRateStatus);
-                updateBadge('bloodPressureStatus', data.bloodPressureStatus);
+                updateBadge('SystolicbloodPressureStatus', data.systolicBloodPressureStatus);
+                updateBadge('DiastolicbloodPressureStatus', data.diastolicBloodPressureStatus);
                 updateBadge('respirationStatus', data.respirationStatus);
-                updateBadge('temperatureStatus', data.temperatureStatus);
                 updatePatientAlert(data.hasAttention);
 
             } catch (error) {

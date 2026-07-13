@@ -124,13 +124,12 @@ namespace INFP_Proj.Pages.User
                 Floor = bed?.Floor ?? record?.Beds?.Floor ?? "Not assigned",
                 Sector = bed?.Sector ?? record?.Beds?.Sector ?? "Not assigned",
                 BedLocation = bed?.Location ?? record?.Beds?.Location ?? "Not assigned",
-                BedTemperature = bed?.Temperature ?? record?.Beds?.Temperature,
                 Weight = bed?.Weight ?? record?.Beds?.Weight,
 
                 HeartRate = bracelet?.HeartRate ?? latestVitals?.HeartRate,
-                BloodPressure = bracelet?.BloodPressure ?? latestVitals?.BloodPressure,
-                Respiration = bracelet?.Respiration ?? latestVitals?.RespiratoryRate,
-                Temperature = latestVitals?.Temperature,
+                SystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.SystolicBloodPressure,
+                DiastolicBloodPressure = bracelet?.DiastolicBloodPressure ?? latestVitals?.DiastolicBloodPressure,
+                RespiratoryRate = bracelet?.RespiratoryRate ?? latestVitals?.RespiratoryRate,
                 LatestVitalsRecordedAt = latestVitals?.RecordedAt,
 
                 BraceletBattery = bracelet?.Battery,
@@ -231,11 +230,6 @@ namespace INFP_Proj.Pages.User
                 return "Bracelet battery is low. Please inform hospital staff.";
             }
 
-            if (latestVitals?.Temperature != null && latestVitals.Temperature >= 38)
-            {
-                return "Latest temperature is above the normal range.";
-            }
-
             if (latestVitals?.HeartRate != null && (latestVitals.HeartRate < 60 || latestVitals.HeartRate > 100))
             {
                 return "Latest heart rate is outside the normal range.";
@@ -285,17 +279,18 @@ namespace INFP_Proj.Pages.User
             var random = new Random();
 
             float heartRate = random.Next(65, 101);
-            float bloodPressure = random.Next(110, 141);
+            float SystolicBloodPressure = random.Next(110, 141);
+            float DiastolicBloodPressure = random.Next(60, 81);
             float respiration = random.Next(14, 25);
-            float temperature = (float)Math.Round(36.1 + random.NextDouble() * 1.7, 1);
             float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
 
             float battery = bracelet.Battery ?? 100;
             battery = Math.Max(0, battery - 0.1f);
 
             bracelet.HeartRate = heartRate;
-            bracelet.BloodPressure = bloodPressure;
-            bracelet.Respiration = respiration;
+            bracelet.SystolicBloodPressure = SystolicBloodPressure;
+            bracelet.DiastolicBloodPressure = DiastolicBloodPressure;
+            bracelet.RespiratoryRate = respiration;
             bracelet.Movement = movement;
             bracelet.Battery = battery;
 
@@ -303,9 +298,9 @@ namespace INFP_Proj.Pages.User
             {
                 PatientID = patient.PatientID,
                 HeartRate = heartRate,
-                BloodPressure = bloodPressure,
+                SystolicBloodPressure = SystolicBloodPressure,
+                DiastolicBloodPressure = DiastolicBloodPressure,
                 RespiratoryRate = respiration,
-                Temperature = temperature,
                 RecordedAt = DateTime.UtcNow
             };
 
@@ -324,9 +319,9 @@ namespace INFP_Proj.Pages.User
             {
                 success = true,
                 heartRate,
-                bloodPressure,
+                SystolicBloodPressure,
+                DiastolicBloodPressure,
                 respiration,
-                temperature,
                 movement,
                 battery = Math.Round(battery, 1),
                 updatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),

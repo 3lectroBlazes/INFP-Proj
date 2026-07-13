@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace INFP_Proj.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class inital : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -74,11 +74,12 @@ namespace INFP_Proj.Migrations
                     BraceletID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Battery = table.Column<float>(type: "real", nullable: true),
-                    Respiration = table.Column<float>(type: "real", nullable: true),
+                    SystolicBloodPressure = table.Column<float>(type: "real", nullable: true),
+                    DiastolicBloodPressure = table.Column<float>(type: "real", nullable: true),
+                    HeartRate = table.Column<float>(type: "real", nullable: true),
+                    RespiratoryRate = table.Column<float>(type: "real", nullable: true),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Movement = table.Column<float>(type: "real", nullable: true),
-                    BloodPressure = table.Column<float>(type: "real", nullable: true),
-                    HeartRate = table.Column<float>(type: "real", nullable: true)
+                    Movement = table.Column<float>(type: "real", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -125,6 +126,26 @@ namespace INFP_Proj.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Medications", x => x.MedicationID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Thresholds",
+                columns: table => new
+                {
+                    ThresholdID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SBPUpperThreshold = table.Column<float>(type: "real", nullable: true),
+                    SBPLowerThreshold = table.Column<float>(type: "real", nullable: true),
+                    DBPUpperThreshold = table.Column<float>(type: "real", nullable: true),
+                    DBPLowerThreshold = table.Column<float>(type: "real", nullable: true),
+                    HeartRateUpperPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    HeartRateLowerPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    RespiratoryRateUpperPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    RespiratoryRateLowerThreshold = table.Column<float>(type: "real", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Thresholds", x => x.ThresholdID);
                 });
 
             migrationBuilder.CreateTable(
@@ -302,11 +323,13 @@ namespace INFP_Proj.Migrations
                     AppointmentRequestID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PatientID = table.Column<int>(type: "int", nullable: false),
-                    PreferredDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Urgency = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DoctorResponse = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DocAcknowledged = table.Column<bool>(type: "bit", nullable: false),
+                    PatientAcknowledged = table.Column<bool>(type: "bit", nullable: false),
+                    DateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -331,7 +354,6 @@ namespace INFP_Proj.Migrations
                     Sector = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Floor = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Room = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Temperature = table.Column<float>(type: "real", nullable: false),
                     Weight = table.Column<float>(type: "real", nullable: false),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -397,42 +419,6 @@ namespace INFP_Proj.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Logs",
-                columns: table => new
-                {
-                    LogID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    PatientID = table.Column<int>(type: "int", nullable: true),
-                    Event = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MedicationID = table.Column<int>(type: "int", nullable: true),
-                    Dosage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Emergency = table.Column<bool>(type: "bit", nullable: false),
-                    Resolved = table.Column<bool>(type: "bit", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Logs", x => x.LogID);
-                    table.ForeignKey(
-                        name: "FK_Logs_AspNetUsers_UserID",
-                        column: x => x.UserID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Logs_Medications_MedicationID",
-                        column: x => x.MedicationID,
-                        principalTable: "Medications",
-                        principalColumn: "MedicationID");
-                    table.ForeignKey(
-                        name: "FK_Logs_Patients_PatientID",
-                        column: x => x.PatientID,
-                        principalTable: "Patients",
-                        principalColumn: "PatientID");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "MedicationLists",
                 columns: table => new
                 {
@@ -440,7 +426,8 @@ namespace INFP_Proj.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PatientID = table.Column<int>(type: "int", nullable: false),
                     MedicationID = table.Column<int>(type: "int", nullable: false),
-                    Dosage = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Dosage = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Approved = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -488,10 +475,10 @@ namespace INFP_Proj.Migrations
                     VitalsID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PatientID = table.Column<int>(type: "int", nullable: false),
-                    BloodPressure = table.Column<float>(type: "real", nullable: true),
+                    SystolicBloodPressure = table.Column<float>(type: "real", nullable: true),
+                    DiastolicBloodPressure = table.Column<float>(type: "real", nullable: true),
                     HeartRate = table.Column<float>(type: "real", nullable: true),
                     RespiratoryRate = table.Column<float>(type: "real", nullable: true),
-                    Temperature = table.Column<float>(type: "real", nullable: true),
                     RecordedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -503,6 +490,43 @@ namespace INFP_Proj.Migrations
                         principalTable: "Patients",
                         principalColumn: "PatientID",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Logs",
+                columns: table => new
+                {
+                    LogID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    PatientID = table.Column<int>(type: "int", nullable: true),
+                    Event = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MedicationListID = table.Column<int>(type: "int", nullable: true),
+                    Emergency = table.Column<bool>(type: "bit", nullable: false),
+                    Resolved = table.Column<bool>(type: "bit", nullable: false),
+                    selfAcknowledged = table.Column<bool>(type: "bit", nullable: false),
+                    relativeAcknowledged = table.Column<bool>(type: "bit", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Logs", x => x.LogID);
+                    table.ForeignKey(
+                        name: "FK_Logs_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Logs_MedicationLists_MedicationListID",
+                        column: x => x.MedicationListID,
+                        principalTable: "MedicationLists",
+                        principalColumn: "MedicationListID");
+                    table.ForeignKey(
+                        name: "FK_Logs_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID");
                 });
 
             migrationBuilder.CreateTable(
@@ -637,9 +661,9 @@ namespace INFP_Proj.Migrations
                 column: "PatientID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Logs_MedicationID",
+                name: "IX_Logs_MedicationListID",
                 table: "Logs",
-                column: "MedicationID");
+                column: "MedicationListID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Logs_PatientID",
@@ -745,6 +769,9 @@ namespace INFP_Proj.Migrations
 
             migrationBuilder.DropTable(
                 name: "Relationships");
+
+            migrationBuilder.DropTable(
+                name: "Thresholds");
 
             migrationBuilder.DropTable(
                 name: "Vitals");
