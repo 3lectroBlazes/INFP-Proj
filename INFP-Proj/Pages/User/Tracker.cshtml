@@ -79,7 +79,7 @@ else
                     <span id="heartRateStatus" class="badge @BadgeClass(Model.HeartRateStatus)">
                         @Model.HeartRateStatus
                     </span>
-                    <p class="text-muted small mt-3 mb-0">Normal range: 60–100 bpm</p>
+                    <p class="text-muted small mt-3 mb-0">Normal range: 60ï¿½100 bpm</p>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@ else
                     <span id="respirationStatus" class="badge @BadgeClass(Model.RespirationStatus)">
                         @Model.RespirationStatus
                     </span>
-                    <p class="text-muted small mt-3 mb-0">Normal range: 12–20 breaths/min</p>
+                    <p class="text-muted small mt-3 mb-0">Normal range: 12ï¿½20 breaths/min</p>
                 </div>
             </div>
         </div>
@@ -115,7 +115,7 @@ else
                     <span id="SystolicbloodPressureStatus" class="badge @BadgeClass(Model.SystolicStatus)">
                         @Model.SystolicStatus
                     </span>
-                    <p class="text-muted small mt-3 mb-0">Reference range: 90–140 mmHg</p>
+                    <p class="text-muted small mt-3 mb-0">Reference range: 90ï¿½140 mmHg</p>
                 </div>
             </div>
         </div>
@@ -133,7 +133,7 @@ else
                     <span id="DiastolicbloodPressureStatus" class="badge @BadgeClass(Model.DiastolicStatus)">
                         @Model.DiastolicStatus
                     </span>
-                    <p class="text-muted small mt-3 mb-0">Reference range: 90–140 mmHg</p>
+                    <p class="text-muted small mt-3 mb-0">Reference range: 90ï¿½140 mmHg</p>
                 </div>
             </div>
         </div>
@@ -197,8 +197,8 @@ else
                 document.getElementById('latestUpdatedValue').textContent = data.updatedAt;
 
                 updateBadge('heartRateStatus', data.heartRateStatus);
-                updateBadge('SystolicbloodPressureStatus', data.systolicBloodPressureStatus);
-                updateBadge('DiastolicbloodPressureStatus', data.diastolicBloodPressureStatus);
+                updateBadge('SystolicbloodPressureStatus', data.systolicStatus);
+                updateBadge('DiastolicbloodPressureStatus', data.diastolicStatus);
                 updateBadge('respirationStatus', data.respirationStatus);
                 updatePatientAlert(data.hasAttention);
 
