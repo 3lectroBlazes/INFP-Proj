@@ -102,7 +102,8 @@ namespace INFP_Proj.Pages.User
             float heartRate = random.Next(65, 101);
             float SystolicBloodPressure = random.Next(110, 141);
             float DiastolicBloodPressure = random.Next(60, 81);
-            float respiration = random.Next(14, 21);
+            float respiration = random.Next(14, 25);
+
             float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
 
             float battery = bracelet.Battery ?? 100;
