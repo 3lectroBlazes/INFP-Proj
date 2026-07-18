@@ -44,6 +44,8 @@ namespace INFP_Proj.Pages.Admin
 
             var query = _context.Logs
                 .Include(l => l.User)
+                .Include(l => l.Patient)
+                    .ThenInclude(p => p!.User)
                 .AsQueryable();
 
             if (FromDate.HasValue)
@@ -84,7 +86,13 @@ namespace INFP_Proj.Pages.Admin
                     Event = l.Event,
                     Emergency = l.Emergency,
                     Resolved = l.Resolved,
-                    Timestamp = l.Timestamp
+                    Timestamp = l.Timestamp,
+                    IsMedicationRequest = l.MedicationListID.HasValue,
+                    SelfAcknowledged = l.selfAcknowledged,
+                    RelativeAcknowledged = l.relativeAcknowledged,
+                    PatientName = l.Patient != null && l.Patient.User != null
+                        ? $"{l.Patient.User.FirstName} {l.Patient.User.LastName}"
+                        : null
                 })
                 .ToListAsync();
         }
@@ -94,10 +102,10 @@ namespace INFP_Proj.Pages.Admin
             var log = await _context.Logs.FirstOrDefaultAsync(l => l.LogID == id);
             if (log != null && log.Emergency && !log.Resolved)
             {
-                log.Resolved = true;
-
                 if (log.MedicationListID.HasValue)
                 {
+                    log.Resolved = true;
+
                     var medicationList = await _context.MedicationLists
                         .FirstOrDefaultAsync(m => m.MedicationListID == log.MedicationListID.Value);
 
@@ -112,11 +120,33 @@ namespace INFP_Proj.Pages.Admin
                     await AddPatientLogIfLinkedAsync(log.PatientID.Value, "A new medication was added to your schedule");
                     TempData["Message"] = "Medication added.";
                 }
-                else
+                else if (log.selfAcknowledged || log.relativeAcknowledged)
                 {
+                    log.Resolved = true;
                     await _context.SaveChangesAsync();
                     TempData["Message"] = "Emergency marked as resolved.";
                 }
+                else
+                {
+                    TempData["Message"] = "This emergency can't be resolved yet — it needs to be acknowledged by the patient or a relative first.";
+                }
+            }
+            return RedirectToPage(new { FromDate, ToDate, UserId, EmergencyFilter });
+        }
+
+        public async Task<IActionResult> OnPostSelfAcknowledgeAsync(int id)
+        {
+            if (!User.IsInRole("Doctor") && !User.IsInRole("Nurse"))
+            {
+                return Forbid();
+            }
+
+            var log = await _context.Logs.FirstOrDefaultAsync(l => l.LogID == id);
+            if (log != null && log.Emergency && !log.MedicationListID.HasValue && !log.Resolved && !log.selfAcknowledged)
+            {
+                log.selfAcknowledged = true;
+                await _context.SaveChangesAsync();
+                TempData["Message"] = "Marked as acknowledged on behalf of the patient.";
             }
             return RedirectToPage(new { FromDate, ToDate, UserId, EmergencyFilter });
         }
