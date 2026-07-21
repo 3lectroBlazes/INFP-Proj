@@ -1,93 +1,525 @@
 @page
 @model INFP_Proj.Pages.User.LogsModel
+
 @{
     ViewData["Title"] = "My Activity Log";
 }
 
+<style>
+    .log-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        .log-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.2rem;
+        }
+
+    .log-table {
+        margin-bottom: 0;
+    }
+
+        .log-table thead th {
+            background: #f1f8f7;
+            border-bottom: 1px solid #d8e7e4;
+            color: #47615d;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.035em;
+            padding: 0.9rem 1rem;
+            text-transform: uppercase;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .log-table tbody td {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #263b38;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .log-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .log-table tbody tr:hover td {
+            background: #f9fbfb;
+        }
+
+        .log-table tbody tr.active-emergency td:first-child {
+            border-left: 4px solid #dc3545;
+        }
+
+        .log-table tbody tr.resolved-emergency td:first-child {
+            border-left: 4px solid #198754;
+        }
+
+        .log-table tbody tr.standard-log td:first-child {
+            border-left: 4px solid transparent;
+        }
+
+    .timestamp-value {
+        color: #425652;
+        font-size: 0.88rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .event-title {
+        color: #173f3b;
+        font-weight: 600;
+        line-height: 1.55;
+    }
+
+    .event-type-label {
+        color: #7b8987;
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.035em;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+    }
+
+    .acknowledgement-panel {
+        min-width: 225px;
+    }
+
+    .acknowledgement-status {
+        margin-bottom: 0.65rem;
+    }
+
+    .acknowledgement-detail {
+        color: #6c7c79;
+        font-size: 0.8rem;
+        line-height: 1.6;
+    }
+
+        .acknowledgement-detail strong {
+            color: #314743;
+            font-weight: 700;
+        }
+
+    .acknowledgement-note {
+        color: #73827f;
+        font-size: 0.76rem;
+        line-height: 1.45;
+        margin-top: 0.6rem;
+        max-width: 240px;
+    }
+
+    .empty-log-state {
+        background: #f8faf9;
+        border: 1px dashed #cbd9d6;
+        border-radius: 12px;
+        padding: 2.25rem 1.25rem;
+        text-align: center;
+    }
+
+    .empty-log-icon {
+        align-items: center;
+        background: #e9f4f2;
+        border-radius: 50%;
+        color: #087f73;
+        display: inline-flex;
+        font-size: 1.25rem;
+        height: 48px;
+        justify-content: center;
+        margin-bottom: 0.9rem;
+        width: 48px;
+    }
+
+    .summary-strip {
+        background: #f6faf9;
+        border: 1px solid #dfebe9;
+        border-radius: 12px;
+        margin-bottom: 1.25rem;
+        padding: 0.9rem 1rem;
+    }
+
+        .summary-strip strong {
+            color: #173f3b;
+        }
+
+    @@media (max-width: 767.98px) {
+        .log-table thead {
+            display: none;
+        }
+
+        .log-table,
+        .log-table tbody,
+        .log-table tr,
+        .log-table td {
+            display: block;
+            width: 100%;
+        }
+
+            .log-table tbody tr {
+                border-bottom: 1px solid #dfe9e7;
+                padding: 0.45rem 0;
+            }
+
+                .log-table tbody tr:last-child {
+                    border-bottom: 0;
+                }
+
+            .log-table tbody td {
+                border-bottom: 0;
+                padding: 0.55rem 1rem;
+            }
+
+                .log-table tbody td::before {
+                    color: #72817e;
+                    content: attr(data-label);
+                    display: block;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    letter-spacing: 0.035em;
+                    margin-bottom: 0.2rem;
+                    text-transform: uppercase;
+                }
+
+            .log-table tbody tr.active-emergency td:first-child,
+            .log-table tbody tr.resolved-emergency td:first-child,
+            .log-table tbody tr.standard-log td:first-child {
+                border-left-width: 4px;
+            }
+
+        .acknowledgement-panel {
+            min-width: 0;
+        }
+    }
+</style>
+
 <div class="page-header">
     <div>
-        <h1 class="page-title">My activity log</h1>
-        <p class="page-subtitle text-muted">Personal history for <strong>@Model.CurrentUserName</strong> (newest first).</p>
+        <h1 class="page-title">
+            My activity log
+        </h1>
+
+        <p class="page-subtitle text-muted">
+            View account activity and emergency alerts for
+            <strong>@Model.CurrentUserName</strong>.
+        </p>
     </div>
+
     <div class="page-actions">
-        <a class="btn btn-outline-secondary btn-sm" asp-page="/User/Dashboard">Dashboard</a>
+        <a asp-page="/User/Dashboard"
+           class="btn btn-outline-secondary btn-sm">
+            Back to dashboard
+        </a>
     </div>
 </div>
 
 @if (TempData["Message"] != null)
 {
-    <div class="alert alert-success" role="alert">@TempData["Message"]</div>
+    <div class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        @TempData["Message"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        @TempData["ErrorMessage"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
+    </div>
 }
 
 @if (Model.Logs.Count == 0)
 {
-    <div class="empty-state">
-        <p class="text-muted mb-0">No log entries for your account yet.</p>
+    <div class="empty-log-state">
+        <div class="empty-log-icon">
+            <span aria-hidden="true">?</span>
+        </div>
+
+        <h2 class="h6 mb-2">
+            No activity recorded
+        </h2>
+
+        <p class="text-muted mb-0">
+            Account activity and emergency notifications will appear here.
+        </p>
     </div>
 }
 else
 {
-    <div class="app-table-wrapper table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>Event</th>
-                    <th>Emergency</th>
-                    <th>Acknowledgement</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var entry in Model.Logs)
-                {
-                    string rowClass = entry.Emergency
-                        ? (entry.Resolved ? "table-success" : "table-danger")
-                        : "";
+    int activeEmergencyCount =
+        Model.Logs.Count(entry =>
+            entry.Emergency &&
+            !entry.Resolved);
 
-                    <tr class="@rowClass">
-                        <td class="text-nowrap">
-                            <time datetime="@entry.Timestamp.ToString("o")">
-                                @entry.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
-                            </time>
-                        </td>
-                        <td>@entry.Event</td>
-                        <td>
-                            @if (entry.Emergency)
-                            {
-                                <span class="badge bg-danger">Yes</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">No</span>
-                            }
-                        </td>
-                        <td>
-                            @if (!entry.Emergency)
-                            {
-                                <span class="text-muted">&mdash;</span>
-                            }
-                            else if (entry.Resolved)
-                            {
-                                <span class="badge bg-success">Resolved</span>
-                            }
-                            else if (entry.CurrentUserAcknowledged)
-                            {
-                                <span class="badge bg-success">You acknowledged this</span>
-                            }
-                            else if (entry.CanAcknowledge)
-                            {
-                                <form method="post" asp-page-handler="Acknowledge" asp-route-id="@entry.LogId" class="m-0">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Acknowledge</button>
-                                </form>
-                            }
-                            else
-                            {
-                                <span class="text-muted">Pending</span>
-                            }
-                        </td>
+    <div class="summary-strip d-flex flex-column flex-md-row
+                    justify-content-between align-items-md-center gap-2">
+
+        <div>
+            <strong>@Model.Logs.Count</strong>
+            log entries shown
+        </div>
+
+        @if (activeEmergencyCount > 0)
+        {
+            <div>
+                <span class="badge bg-danger rounded-pill">
+                    @activeEmergencyCount active
+                    @(activeEmergencyCount == 1
+                                ? "emergency"
+                                : "emergencies")
+        </span>
+    </div>
+        }
+        else
+        {
+            <div>
+                <span class="badge bg-success rounded-pill">
+                    No active emergencies
+                </span>
+            </div>
+        }
+    </div>
+
+    <div class="log-card app-card card">
+        <div class="card-header d-flex
+                        justify-content-between align-items-center gap-2">
+
+            <span>Activity history</span>
+
+            <span class="small text-muted fw-normal">
+                Newest first
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table log-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Event</th>
+                        <th>Status</th>
+                        <th>Acknowledgement</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+
+                <tbody>
+                    @foreach (var entry in Model.Logs)
+                    {
+                        string rowClass;
+
+                        if (!entry.Emergency)
+                        {
+                            rowClass = "standard-log";
+                        }
+                        else if (entry.Resolved)
+                        {
+                            rowClass = "resolved-emergency";
+                        }
+                        else
+                        {
+                            rowClass = "active-emergency";
+                        }
+
+                        <tr class="@rowClass">
+                            <td data-label="Timestamp">
+                            <time class="timestamp-value"
+                                  datetime="@entry.Timestamp.ToString("o")">
+                                @(entry.Timestamp
+                                     .ToLocalTime()
+                                    .ToString("dd/MM/yyyy hh:mm:ss tt"))
+                             </time>
+                    </td>
+
+                    <td data-label="Event">
+                        <span class="event-type-label">
+                            @(entry.Emergency
+                                                        ? "Vital alert"
+                                                        : "Activity")
+                        </span>
+
+                                <div class="event-title">
+                                    @entry.Event
+                                </div>
+                            </td>
+
+                            <td data-label="Status">
+                        @if (!entry.Emergency)
+                                {
+                                    <span class="badge bg-secondary">
+                                        Standard activity
+                                    </span>
+                                }
+                                else if (entry.Resolved)
+                                {
+                                    <span class="badge bg-success">
+                                        Resolved
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                        Active emergency
+                                    </span>
+                                }
+                            </td>
+
+                            <td data-label="Acknowledgement"
+                                class="acknowledgement-panel">
+
+                                @if (!entry.Emergency)
+                                {
+                                    <span class="text-muted">
+                                        Not required
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="acknowledgement-status">
+                                        @if (entry.Resolved)
+                                        {
+                                            <span class="badge bg-success">
+                                                Emergency resolved
+                                            </span>
+                                        }
+                                        else if (Model.IsPatient)
+                                        {
+                                            @if (entry.SelfAcknowledged)
+                                            {
+                                                <span class="badge bg-success">
+                                                    You acknowledged this
+                                                </span>
+                                            }
+                                            else if (entry.CanAcknowledge)
+                                            {
+                                                <form method="post"
+                                                      asp-page-handler="Acknowledge"
+                                                      asp-route-id="@entry.LogId"
+                                                      class="m-0">
+
+                                                    <button type="submit"
+                                                            class="btn btn-primary btn-sm">
+                                                        Acknowledge alert
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge
+                                                                                 bg-warning text-dark">
+                                                    Acknowledgement pending
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @if (entry.CurrentRelativeAcknowledged)
+                                            {
+                                                <span class="badge bg-success">
+                                                    You acknowledged this
+                                                </span>
+                                            }
+                                            else if (entry.CanAcknowledge)
+                                            {
+                                                <form method="post"
+                                                      asp-page-handler="Acknowledge"
+                                                      asp-route-id="@entry.LogId"
+                                                      class="m-0">
+
+                                                    <button type="submit"
+                                                            class="btn btn-primary btn-sm">
+                                                        Acknowledge alert
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge
+                                                                                 bg-warning text-dark">
+                                                    Acknowledgement pending
+                                                </span>
+                                            }
+                                        }
+                                    </div>
+
+                                    <div class="acknowledgement-detail">
+                                        <div>
+                                            Patient:
+
+                                            @if (entry.SelfAcknowledged)
+                                            {
+                                                <strong class="text-success">
+                                                    Acknowledged
+                                                </strong>
+                                            }
+                                            else
+                                            {
+                                                <strong class="text-warning">
+                                                    Pending
+                                                </strong>
+                                            }
+                                        </div>
+
+                                        @if (entry.TotalRelativeCount > 0)
+                                        {
+                                            <div>
+                                                Relatives:
+
+                                                <strong>
+                                                    @entry.RelativeAcknowledgementCount
+                                                    of
+                                                    @entry.TotalRelativeCount
+                                                    acknowledged
+                                                </strong>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                Relatives:
+
+                                                <strong>
+                                                    None linked
+                                                </strong>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (!entry.Resolved &&
+                                                            entry.CanAcknowledge &&
+                                                            !entry.CurrentUserAcknowledged)
+                                    {
+                                        <div class="acknowledgement-note">
+                                            Acknowledging confirms that you
+                                            have seen the alert. It does not
+                                            mark the emergency as resolved.
+                                        </div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 }
