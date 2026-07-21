@@ -62,7 +62,8 @@ namespace INFP_Proj.Data
                     UserName = email,
                     Email = email,
                     PhoneNumber = phoneNumber,
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    TwoFactorEnabled = true,
                 };
                 await userManager.CreateAsync(user, "Password@123");
                 await context.SaveChangesAsync();
@@ -70,13 +71,13 @@ namespace INFP_Proj.Data
                 return user;
             }
 
-            AppUser kailuo = await CreateUser("Kai", null, "Luo", "kai.luo@hospital.com", "12345678", "Nurse");
-            AppUser xavier = await CreateUser("Xavier", null, "Wee", "xavier.wee@hospital.com", "12345678", "Doctor");
+            AppUser kailuo = await CreateUser("Kai", null, "Luo", "bainu0344@gmail.com", "12345678", "Nurse");
+            AppUser xavier = await CreateUser("Xavier", null, "Wee", "xavierwee3@gmail.com", "12345678", "Doctor");
             AppUser evan = await CreateUser("Evan", null, "IDK", "evan.idk@hospital.com", "12345678", "Reception");
             AppUser sadev = await CreateUser("Sadev", null, "Mawadavilage", "sadev.mawadavilage@hospital.com", "12345678", "User");
-            AppUser miku = await CreateUser("Hatsune", null, "Miku", "hatsune.miku@hospital.com", "12345678", "User");
+            AppUser miku = await CreateUser("Hatsune", null, "Miku", "dontscammepls0@gmail.com", "12345678", "User");
             AppUser sasha = await CreateUser("Sasha", null, "Sasthi", "sasha.sasthi@hospital.com", "12345678", "User");
-            AppUser teto = await CreateUser("Kasane", null, "Teto", "kasane.teto@hospital.com", "12345678", "User");
+            AppUser teto = await CreateUser("Kasane", null, "Teto", "scamvictimsad@gmail.com", "12345678", "User");
 
             // Hospitals
             Hospitals hospital = new Hospitals
