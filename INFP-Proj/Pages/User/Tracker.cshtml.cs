@@ -177,7 +177,7 @@ namespace INFP_Proj.Pages.User
             LatestHeartRate = bracelet?.HeartRate ?? latestVitals?.HeartRate;
             LatestSystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.SystolicBloodPressure;
             LatestDiastolicBloodPressure = bracelet?.DiastolicBloodPressure ?? latestVitals?.DiastolicBloodPressure;
-            LatestSystolicBloodPressure = bracelet?.SystolicBloodPressure ?? latestVitals?.RespiratoryRate;
+            LatestRespiration = bracelet?.RespiratoryRate ?? latestVitals?.RespiratoryRate;
 
             // Convert UTC database time to Singapore time ONCE here
             LatestUpdatedAt = latestVitals == null

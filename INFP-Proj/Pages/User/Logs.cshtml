@@ -14,6 +14,11 @@
     </div>
 </div>
 
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success" role="alert">@TempData["Message"]</div>
+}
+
 @if (Model.Logs.Count == 0)
 {
     <div class="empty-state">
@@ -29,12 +34,17 @@ else
                     <th>Timestamp</th>
                     <th>Event</th>
                     <th>Emergency</th>
+                    <th>Acknowledgement</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var entry in Model.Logs)
                 {
-                    <tr class="@(entry.Emergency ? "table-danger" : "")">
+                    string rowClass = entry.Emergency
+                        ? (entry.Resolved ? "table-success" : "table-danger")
+                        : "";
+
+                    <tr class="@rowClass">
                         <td class="text-nowrap">
                             <time datetime="@entry.Timestamp.ToString("o")">
                                 @entry.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
@@ -49,6 +59,30 @@ else
                             else
                             {
                                 <span class="text-muted">No</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!entry.Emergency)
+                            {
+                                <span class="text-muted">&mdash;</span>
+                            }
+                            else if (entry.Resolved)
+                            {
+                                <span class="badge bg-success">Resolved</span>
+                            }
+                            else if (entry.CurrentUserAcknowledged)
+                            {
+                                <span class="badge bg-success">You acknowledged this</span>
+                            }
+                            else if (entry.CanAcknowledge)
+                            {
+                                <form method="post" asp-page-handler="Acknowledge" asp-route-id="@entry.LogId" class="m-0">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Acknowledge</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Pending</span>
                             }
                         </td>
                     </tr>

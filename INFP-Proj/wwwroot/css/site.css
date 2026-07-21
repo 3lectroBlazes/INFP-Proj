@@ -131,7 +131,7 @@ body {
 }
 
 /* Open the grouped menus on hover on desktop; click still works on mobile */
-@media (min-width: 992px) {
+@media (min-width: 1200px) {
   .app-navbar .nav-item.dropdown:hover > .dropdown-menu {
     display: block;
   }
@@ -514,7 +514,7 @@ select#patientIds[multiple].form-select option:checked {
 }
 
 /* Navbar dropdowns: hover only on large screens; touch uses Bootstrap toggle */
-@media (max-width: 991.98px) {
+@media (max-width: 1199.98px) {
   .app-navbar .dropdown-menu {
     border: none;
     box-shadow: none;
