@@ -15,13 +15,13 @@ namespace INFP_Proj.Pages.Admin.Reception
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly AppDbContext _context;
-        private readonly ISmsService _smsService;
+        private readonly IEmailService _emailService; // Changed from ISmsService
 
-        public ManageNotificationsModel(UserManager<AppUser> userManager, AppDbContext context, ISmsService smsService)
+        public ManageNotificationsModel(UserManager<AppUser> userManager, AppDbContext context, IEmailService emailService)
         {
             _userManager = userManager;
             _context = context;
-            _smsService = smsService;
+            _emailService = emailService;
         }
 
         public List<SelectListItem> PatientList { get; set; } = new List<SelectListItem>();
@@ -37,19 +37,23 @@ namespace INFP_Proj.Pages.Admin.Reception
         public async Task<IActionResult> OnPostPatientAlertAsync(string targetUserId, string messageType, string customMessage)
         {
             var user = await _userManager.FindByIdAsync(targetUserId);
-            if (user != null && !string.IsNullOrEmpty(user.PhoneNumber))
+
+            // Check for valid email instead of phone number
+            if (user != null && !string.IsNullOrEmpty(user.Email))
             {
-                string finalMessage = $"HOSPITAL ALERT ({messageType}): {customMessage}";
-                await _smsService.SendSmsAsync(user.PhoneNumber, finalMessage);
+                string subject = $"HOSPITAL ALERT: {messageType}";
+                string finalMessage = customMessage;
+
+                await _emailService.SendEmailAsync(user.Email, subject, finalMessage);
 
                 // Green Box Text
-                TempData["SuccessMessage"] = $"SMS sent to patient {user.FirstName} {user.LastName}.";
+                TempData["SuccessMessage"] = $"Email sent to patient {user.FirstName} {user.LastName}.";
                 // JS Popup Text
-                TempData["AlertMessage"] = $"[SMS to {user.FirstName}]: {finalMessage}";
+                TempData["AlertMessage"] = $"[Email to {user.FirstName}]: {finalMessage}";
             }
             else
             {
-                TempData["ErrorMessage"] = "Failed to send: User has no valid phone number registered.";
+                TempData["ErrorMessage"] = "Failed to send: User has no valid email registered.";
             }
 
             return RedirectToPage();
@@ -59,24 +63,29 @@ namespace INFP_Proj.Pages.Admin.Reception
         public async Task<IActionResult> OnPostHardwareAlertAsync(string targetNurseId, int braceletId, string issueDescription)
         {
             var nurse = await _userManager.FindByIdAsync(targetNurseId);
-            if (nurse != null && !string.IsNullOrEmpty(nurse.PhoneNumber))
+
+            // Check for valid email instead of phone number
+            if (nurse != null && !string.IsNullOrEmpty(nurse.Email))
             {
-                string finalMessage = $"HARDWARE ALERT: Bracelet #{braceletId} has reported a failure. Details: {issueDescription}. Please check immediately.";
-                await _smsService.SendSmsAsync(nurse.PhoneNumber, finalMessage);
+                string subject = "HARDWARE ALERT";
+                string finalMessage = $"Bracelet #{braceletId} has reported a failure. Details: {issueDescription}. Please check immediately.";
+
+                await _emailService.SendEmailAsync(nurse.Email, subject, finalMessage);
 
                 // Green Box Text
-                TempData["SuccessMessage"] = $"Hardware alert SMS sent to Nurse {nurse.FirstName}.";
+                TempData["SuccessMessage"] = $"Hardware alert email sent to Nurse {nurse.FirstName}.";
                 // JS Popup Text
-                TempData["AlertMessage"] = $"[SMS to Nurse {nurse.FirstName}]: {finalMessage}";
+                TempData["AlertMessage"] = $"[Email to Nurse {nurse.FirstName}]: {finalMessage}";
             }
             else
             {
-                TempData["ErrorMessage"] = "Failed to send: Nurse has no valid phone number registered.";
+                TempData["ErrorMessage"] = "Failed to send: Nurse has no valid email registered.";
             }
 
             return RedirectToPage();
         }
 
+        // --- HANDLER 3: EMERGENCY ALERT ---
         public async Task<IActionResult> OnPostEmergencyAlertAsync(string targetGroup, string emergencyType, string locationDetails)
         {
             IList<AppUser> usersToNotify = new List<AppUser>();
@@ -93,19 +102,21 @@ namespace INFP_Proj.Pages.Admin.Reception
             }
 
             int successCount = 0;
-            string finalMessage = $"EMERGENCY - {emergencyType.ToUpper()}! Location: {locationDetails}. Immediate assistance required.";
+            string subject = $"EMERGENCY - {emergencyType.ToUpper()}!";
+            string finalMessage = $"Location: {locationDetails}. Immediate assistance required.";
 
             foreach (var staff in usersToNotify)
             {
-                if (!string.IsNullOrEmpty(staff.PhoneNumber))
+                // Check for valid email instead of phone number
+                if (!string.IsNullOrEmpty(staff.Email))
                 {
-                    await _smsService.SendSmsAsync(staff.PhoneNumber, finalMessage);
+                    await _emailService.SendEmailAsync(staff.Email, subject, finalMessage);
                     successCount++;
                 }
             }
 
-            TempData["SuccessMessage"] = $"Emergency SMS broadcasted to {successCount} staff members.";
-            TempData["AlertMessage"] = $"[BROADCAST SMS]: {finalMessage}";
+            TempData["SuccessMessage"] = $"Emergency Email broadcasted to {successCount} staff members.";
+            TempData["AlertMessage"] = $"[BROADCAST EMAIL]: {finalMessage}";
             return RedirectToPage();
         }
 
@@ -115,7 +126,8 @@ namespace INFP_Proj.Pages.Admin.Reception
             PatientList = patients.Select(p => new SelectListItem
             {
                 Value = p.Id,
-                Text = $"{p.FirstName} {p.LastName} ({p.PhoneNumber ?? "No Phone"})"
+                // Display Email instead of Phone Number in UI
+                Text = $"{p.FirstName} {p.LastName} ({p.Email ?? "No Email"})"
             }).ToList();
 
             var nurses = await _userManager.GetUsersInRoleAsync("Nurse");

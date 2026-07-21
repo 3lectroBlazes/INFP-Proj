@@ -8,5 +8,13 @@ namespace INFP_Proj.ViewModel
         public bool Emergency { get; set; }
         public bool Resolved { get; set; }
         public DateTime Timestamp { get; set; }
+        public bool IsMedicationRequest { get; set; }
+        public bool SelfAcknowledged { get; set; }
+        public bool RelativeAcknowledged { get; set; }
+        public string? PatientName { get; set; }
+        public bool CurrentUserAcknowledged { get; set; }
+        public bool CanAcknowledge { get; set; }
+
+        public bool CanResolve => SelfAcknowledged || RelativeAcknowledged;
     }
 }

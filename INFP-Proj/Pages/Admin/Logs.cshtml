@@ -76,7 +76,13 @@ else
             <tbody>
                 @foreach (var entry in Model.Logs)
                 {
-                    <tr class="@(entry.Emergency ? "table-danger" : "")">
+                    bool isTrueEmergency = entry.Emergency && !entry.IsMedicationRequest;
+                    string rowClass = entry.Emergency
+                        ? (entry.Resolved ? "table-success" : "table-danger")
+                        : "";
+                    string detailsId = $"emergencyDetails-{entry.LogId}";
+
+                    <tr class="@rowClass">
                         <td class="text-nowrap">
                             <time datetime="@entry.Timestamp.ToString("o")">
                                 @entry.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
@@ -103,7 +109,7 @@ else
                             {
                                 <span class="badge bg-success">Resolved</span>
                             }
-                            else
+                            else if (entry.IsMedicationRequest)
                             {
                                 <form method="post" asp-page-handler="Resolve" asp-route-id="@entry.LogId" class="m-0">
                                     <input type="hidden" name="FromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" />
@@ -113,8 +119,83 @@ else
                                     <button type="submit" class="btn btn-sm btn-outline-success">Mark resolved</button>
                                 </form>
                             }
+                            else
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId">
+                                    Details
+                                </button>
+                            }
                         </td>
                     </tr>
+                    @if (isTrueEmergency && !entry.Resolved)
+                    {
+                        <tr class="collapse" id="@detailsId">
+                            <td colspan="5" class="bg-light">
+                                <div class="p-3">
+                                    @if (!string.IsNullOrEmpty(entry.PatientName))
+                                    {
+                                        <p class="mb-2"><strong>Patient:</strong> @entry.PatientName</p>
+                                    }
+                                    <div class="d-flex flex-wrap gap-3 mb-3">
+                                        <div>
+                                            <span class="text-muted small d-block">Patient acknowledgement</span>
+                                            @if (entry.SelfAcknowledged)
+                                            {
+                                                <span class="badge bg-success">Acknowledged</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Not yet</span>
+                                            }
+                                        </div>
+                                        <div>
+                                            <span class="text-muted small d-block">Relative acknowledgement</span>
+                                            @if (entry.RelativeAcknowledged)
+                                            {
+                                                <span class="badge bg-success">Acknowledged</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Not yet</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @if (!entry.SelfAcknowledged && (User.IsInRole("Doctor") || User.IsInRole("Nurse")))
+                                        {
+                                            <form method="post" asp-page-handler="SelfAcknowledge" asp-route-id="@entry.LogId" class="m-0">
+                                                <input type="hidden" name="FromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" />
+                                                <input type="hidden" name="ToDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" />
+                                                <input type="hidden" name="UserId" value="@Model.UserId" />
+                                                <input type="hidden" name="EmergencyFilter" value="@Model.EmergencyFilter" />
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    Mark patient acknowledged (on their behalf)
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @if (entry.CanResolve)
+                                        {
+                                            <form method="post" asp-page-handler="Resolve" asp-route-id="@entry.LogId" class="m-0">
+                                                <input type="hidden" name="FromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" />
+                                                <input type="hidden" name="ToDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" />
+                                                <input type="hidden" name="UserId" value="@Model.UserId" />
+                                                <input type="hidden" name="EmergencyFilter" value="@Model.EmergencyFilter" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success">Mark resolved</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small align-self-center">
+                                                Waiting on acknowledgement from the patient or a relative before this can be resolved.
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>

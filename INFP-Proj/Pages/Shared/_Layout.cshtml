@@ -19,7 +19,7 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg app-navbar">
+        <nav class="navbar navbar-light navbar-expand-xl app-navbar">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-page="/Index">Hospital Portal</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
@@ -50,6 +50,7 @@
                                         @if (User.IsInRole("Reception"))
                                         {
                                             <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/RegisterPatient">Register Patients</a></li>
+                                            <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/Calendar">Calendar</a></li>
                                         }
                                     </ul>
                                 </li>
@@ -69,6 +70,9 @@
                                 {
                                     <li class="nav-item">
                                         <a class="nav-link" asp-area="" asp-page="/Admin/Reception/Notifications">Send Notifications</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-page="/Admin/Reception/AdminManagement">Admin Management</a>
                                     </li>
                                 }
                             }

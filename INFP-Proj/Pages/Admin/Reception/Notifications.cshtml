@@ -1,7 +1,7 @@
 ﻿@page
 @model INFP_Proj.Pages.Admin.Reception.ManageNotificationsModel
 @{
-    ViewData["Title"] = "SMS Notifications Dashboard";
+    ViewData["Title"] = "Email Notifications Dashboard";
 }
 
 <div class="container mt-4 mb-5">
@@ -47,9 +47,9 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Custom Message</label>
-                            <textarea name="customMessage" class="form-control" rows="3" required placeholder="Enter SMS text..."></textarea>
+                            <textarea name="customMessage" class="form-control" rows="3" required placeholder="Enter email text..."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Send Patient SMS</button>
+                        <button type="submit" class="btn btn-primary w-100">Send Patient Email</button>
                     </form>
                 </div>
             </div>
@@ -78,7 +78,7 @@
                             <label class="form-label small fw-bold">Issue Description</label>
                             <textarea name="issueDescription" class="form-control" rows="3" required placeholder="e.g., Low battery, sensor offline, strap broken..."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-warning text-dark fw-bold w-100">Notify Nurse</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold w-100">Notify Nurse via Email</button>
                     </form>
                 </div>
             </div>
@@ -112,7 +112,7 @@
                             <label class="form-label small fw-bold">Location / Details</label>
                             <textarea name="locationDetails" class="form-control" rows="3" required placeholder="e.g., Ward 2, Bed 12. Patient unresponsive."></textarea>
                         </div>
-                        <button type="submit" class="btn btn-danger w-100 fw-bold">BROADCAST EMERGENCY</button>
+                        <button type="submit" class="btn btn-danger w-100 fw-bold">BROADCAST EMERGENCY EMAIL</button>
                     </form>
                 </div>
             </div>
