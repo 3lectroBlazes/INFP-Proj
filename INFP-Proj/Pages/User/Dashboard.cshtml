@@ -31,7 +31,7 @@ else
                     <p class="mb-2"><strong>Name:</strong> @data.PatientName</p>
                     <p class="mb-2">
                         <strong>Status:</strong>
-                        <span class="badge bg-success">@data.PatientStatus</span>
+                        <span class="badge @(data.IsDischarged ? "bg-secondary" : "bg-success")">@data.PatientStatus</span>
                     </p>
                     <p class="mb-2"><strong>Patient ID:</strong> @data.PatientId</p>
                     <p class="mb-0 text-muted">@data.PatientNotes</p>
