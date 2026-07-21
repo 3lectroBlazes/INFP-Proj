@@ -23,7 +23,6 @@ namespace INFP_Proj.Data
             //  E.G Allergies Penicillin = new Allergies { Allergy = "Penicillin" };
 
 
-
             // ^^ Extra seeds above. Please delete after use. ^^ 
 
             if (userManager.Users.Any()) return;
@@ -152,6 +151,21 @@ namespace INFP_Proj.Data
             };
             context.Medications.AddRange(paracetamol, brainrot);
 
+            Thresholds defaultThresholds = new Thresholds
+            {
+                // Standard Adult Baseline Configuration (Fixed mmHg / Breaths)
+                SBPUpperThreshold = 120,
+                SBPLowerThreshold = 90,
+                DBPUpperThreshold = 80,
+                DBPLowerThreshold = 60,
+                RespiratoryRateLowerThreshold = 12,
+
+                // Percentage Variance Relative to Baseline
+                HeartRateUpperPercentageThreshold = 20,
+                HeartRateLowerPercentageThreshold = 20,
+                RespiratoryRateUpperPercentageThreshold = 25,
+            };
+            context.Thresholds.Add(defaultThresholds);
             // Save so IDs are generated before we reference them
             await context.SaveChangesAsync();
 
@@ -160,7 +174,7 @@ namespace INFP_Proj.Data
             {
                 Battery = 85.5f,
                 SystolicBloodPressure = 120.0f,
-                DiastolicBloodPressure = 80.0f, // TODO: no source value existed before, using a typical default
+                DiastolicBloodPressure = 80.0f,
                 HeartRate = 72.0f,
                 RespiratoryRate = 18.0f
             };
@@ -169,7 +183,7 @@ namespace INFP_Proj.Data
             {
                 Battery = 90.0f,
                 SystolicBloodPressure = 110.0f,
-                DiastolicBloodPressure = 70.0f, // TODO
+                DiastolicBloodPressure = 70.0f, 
                 HeartRate = 68.0f,
                 RespiratoryRate = 16.0f
             };
