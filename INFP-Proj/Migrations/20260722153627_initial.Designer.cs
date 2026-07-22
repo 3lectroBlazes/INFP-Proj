@@ -670,58 +670,7 @@ namespace INFP_Proj.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("INFP_Proj.Models.AppointmentChangeRequest", b =>
-                {
-                    b.Property<int>("AppointmentChangeRequestID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentChangeRequestID"));
-
-                    b.Property<int>("AppointmentRequestID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PatientID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Reason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("RequestedDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ReviewMessage")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ReviewedByUserID")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.HasKey("AppointmentChangeRequestID");
-
-                    b.HasIndex("AppointmentRequestID")
-                        .IsUnique()
-                        .HasDatabaseName("UX_AppointmentChangeRequests_OnePending")
-                        .HasFilter("[Status] = 'Pending'");
-
-                    b.HasIndex("PatientID")
-                        .HasDatabaseName("IX_AppointmentChangeRequests_PatientID");
-
-                    b.ToTable("AppointmentChangeRequests", (string)null);
-                });
+            
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
@@ -1037,25 +986,7 @@ namespace INFP_Proj.Migrations
                     b.Navigation("Patients");
                 });
 
-            modelBuilder.Entity("INFP_Proj.Models.AppointmentChangeRequest", b =>
-                {
-                    b.HasOne("INFP_Proj.Data.Appointment", "Appointment")
-                        .WithMany()
-                        .HasForeignKey("AppointmentRequestID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
-                        .WithMany()
-                        .HasForeignKey("PatientID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Appointment");
-
-                    b.Navigation("Patient");
-                });
-
+            
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("INFP_Proj.Models.AppRole", null)

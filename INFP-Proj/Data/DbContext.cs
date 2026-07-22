@@ -31,65 +31,26 @@ namespace INFP_Proj.Data
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
 
-        public DbSet<AppointmentChangeRequest>
-            AppointmentChangeRequests
-        { get; set; }
-
         public DbSet<Thresholds> Thresholds { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<AppointmentChangeRequest>(entity =>
+            modelBuilder.Entity<Appointment>(entity =>
             {
-                entity.ToTable("AppointmentChangeRequests");
+                entity.ToTable("Appointments");
 
-                entity.HasKey(request =>
-                    request.AppointmentChangeRequestID);
+                entity.HasKey(a => a.AppointmentRequestID);
 
-                entity.Property(request =>
-                        request.Status)
-                    .HasMaxLength(30)
+                entity.Property(a => a.Reason)
+                    .HasMaxLength(500)
                     .IsRequired();
 
-                entity.Property(request =>
-                        request.Reason)
-                    .HasMaxLength(500);
-
-                entity.Property(request =>
-                        request.ReviewMessage)
-                    .HasMaxLength(500);
-
-                entity.Property(request =>
-                        request.ReviewedByUserID)
-                    .HasMaxLength(450);
-
-                entity.HasOne(request =>
-                        request.Appointment)
+                entity.HasOne(a => a.Patient)
                     .WithMany()
-                    .HasForeignKey(request =>
-                        request.AppointmentRequestID)
+                    .HasForeignKey(a => a.PatientID)
                     .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(request =>
-                        request.Patient)
-                    .WithMany()
-                    .HasForeignKey(request =>
-                        request.PatientID)
-                    .OnDelete(DeleteBehavior.NoAction);
-
-                entity.HasIndex(request =>
-                        request.AppointmentRequestID)
-                    .HasDatabaseName(
-                        "UX_AppointmentChangeRequests_OnePending")
-                    .IsUnique()
-                    .HasFilter("[Status] = 'Pending'");
-
-                entity.HasIndex(request =>
-                        request.PatientID)
-                    .HasDatabaseName(
-                        "IX_AppointmentChangeRequests_PatientID");
             });
 
             modelBuilder.Entity<Records>()
