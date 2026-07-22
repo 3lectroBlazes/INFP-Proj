@@ -94,6 +94,7 @@ namespace INFP_Proj.Data
             AppUser miku = await CreateUser("Hatsune", null, "Miku", "hatsune.miku@hospital.com", "12345678", "User");
             AppUser sasha = await CreateUser("Sasha", null, "Sasthi", "sasha.sasthi@hospital.com", "12345678", "User");
             AppUser teto = await CreateUser("Kasane", null, "Teto", "kasane.teto@hospital.com", "12345678", "User");
+            AppUser reception = await CreateUser("Ava", null, "Bolfi", "kek@kek.com", "12345678", "Reception");
 
             // Hospitals
             Hospitals hospital = new Hospitals

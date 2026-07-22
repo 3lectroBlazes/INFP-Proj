@@ -54,7 +54,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 {
                     id = a.AppointmentRequestID,
                     title = a.Reason,
-                    start = a.DateTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    start = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                     extendedProps = new
                     {
                         patientId = a.PatientID,
@@ -77,7 +77,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             }
 
             bool isDoubleBooked = await _context.Appointments
-                .AnyAsync(a => a.DateTime == dto.DateTime);
+                .AnyAsync(a => a.AppointmentDate == dto.DateTime);
 
             if (isDoubleBooked)
             {
@@ -90,7 +90,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 Reason = dto.Reason,
                 Urgency = dto.Urgency ?? "Normal",
                 Status = "Pending",
-                DateTime = dto.DateTime,
+                AppointmentDate = dto.DateTime,
                 RequestedAt = DateTime.Now
             };
 
@@ -110,7 +110,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             }
 
             bool isDoubleBooked = await _context.Appointments
-                .AnyAsync(a => a.DateTime == dto.DateTime && a.AppointmentRequestID != dto.AppointmentRequestID);
+                .AnyAsync(a => a.AppointmentDate == dto.DateTime && a.AppointmentRequestID != dto.AppointmentRequestID);
 
             if (isDoubleBooked)
             {
@@ -123,7 +123,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             appt.PatientID = dto.PatientID;
             appt.Reason = dto.Reason;
             appt.Urgency = dto.Urgency ?? "Normal";
-            appt.DateTime = dto.DateTime;
+            appt.AppointmentDate = dto.DateTime;
 
             await _context.SaveChangesAsync();
             return new JsonResult(new { success = true });

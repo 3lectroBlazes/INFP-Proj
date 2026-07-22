@@ -70,7 +70,7 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentRequestID"));
 
-                    b.Property<DateTime>("DateTime")
+                    b.Property<DateTime>("AppointmentDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("DocAcknowledged")
@@ -275,6 +275,9 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogID"));
 
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("Emergency")
                         .HasColumnType("bit");
 
@@ -417,6 +420,9 @@ namespace INFP_Proj.Migrations
 
                     b.Property<DateTime?>("DischargeDateTime")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("DischargeReason")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("HospitalID")
                         .HasColumnType("int");
@@ -712,36 +718,6 @@ namespace INFP_Proj.Migrations
                         .HasDatabaseName("IX_AppointmentChangeRequests_PatientID");
 
                     b.ToTable("AppointmentChangeRequests", (string)null);
-                });
-
-            modelBuilder.Entity("INFP_Proj.Models.LogAcknowledgement", b =>
-                {
-                    b.Property<int>("LogAcknowledgementID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogAcknowledgementID"));
-
-                    b.Property<DateTime>("AcknowledgedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("LogID")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserID")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("LogAcknowledgementID");
-
-                    b.HasIndex("UserID");
-
-                    b.HasIndex("LogID", "UserID")
-                        .IsUnique()
-                        .HasDatabaseName("UX_LogAcknowledgements_LogID_UserID");
-
-                    b.ToTable("LogAcknowledgements", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1075,21 +1051,6 @@ namespace INFP_Proj.Migrations
                     b.Navigation("Appointment");
 
                     b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("INFP_Proj.Models.LogAcknowledgement", b =>
-                {
-                    b.HasOne("INFP_Proj.Data.Log", null)
-                        .WithMany()
-                        .HasForeignKey("LogID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("INFP_Proj.Models.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
