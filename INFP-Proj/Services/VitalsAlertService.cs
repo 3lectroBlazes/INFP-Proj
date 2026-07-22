@@ -50,14 +50,14 @@ namespace INFP_Proj.Services
 
             if (previousVitals != null)
             {
-                if (currentVitals.HeartRate.HasValue && previousVitals.HeartRate.HasValue && previousVitals.HeartRate > 0)
+               if (currentVitals.HeartRate.HasValue && previousVitals.HeartRate.HasValue && previousVitals.HeartRate > 0)
                 {
                     float hrChangePercent = ((currentVitals.HeartRate.Value - previousVitals.HeartRate.Value) / previousVitals.HeartRate.Value) * 100;
 
-                    if (thresholds.HeartRateUpperPercentageThreshold.HasValue && hrChangePercent >= thresholds.HeartRateUpperPercentageThreshold)
+                    if (hrChangePercent >= thresholds.HeartRateUpperPercentageThreshold)
                         alerts.Add($"Heart Rate spiked by {hrChangePercent:F1}% to {currentVitals.HeartRate} bpm.");
 
-                    if (thresholds.HeartRateLowerPercentageThreshold.HasValue && hrChangePercent <= -thresholds.HeartRateLowerPercentageThreshold)
+                    if (hrChangePercent <= -thresholds.HeartRateLowerPercentageThreshold)
                         alerts.Add($"Heart Rate dropped by {Math.Abs(hrChangePercent):F1}% to {currentVitals.HeartRate} bpm.");
                 }
 
@@ -65,7 +65,7 @@ namespace INFP_Proj.Services
                 {
                     float rrChangePercent = ((currentVitals.RespiratoryRate.Value - previousVitals.RespiratoryRate.Value) / previousVitals.RespiratoryRate.Value) * 100;
 
-                    if (thresholds.RespiratoryRateUpperPercentageThreshold.HasValue && rrChangePercent >= thresholds.RespiratoryRateUpperPercentageThreshold)
+                    if (rrChangePercent >= thresholds.RespiratoryRateUpperPercentageThreshold)
                         alerts.Add($"Respiratory Rate spiked by {rrChangePercent:F1}% to {currentVitals.RespiratoryRate} breaths/min.");
                 }
             }

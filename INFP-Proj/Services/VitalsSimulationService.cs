@@ -76,7 +76,6 @@ namespace INFP_Proj.Services
                     break;
             }
 
-            // Clamp so dips can't go negative/implausible.
             reading.HeartRate = Math.Max(20f, reading.HeartRate.Value);
             reading.RespiratoryRate = Math.Max(4f, reading.RespiratoryRate.Value);
             reading.SystolicBloodPressure = Math.Max(70f, reading.SystolicBloodPressure.Value);
