@@ -1,259 +1,960 @@
 @page
 @model INFP_Proj.Pages.User.DashboardModel
+
 @{
-    ViewData["Title"] = "My Dashboard";
+    ViewData["Title"] = "Patient Dashboard";
     var data = Model.DashboardData;
 }
 
-@if (!data.HasPatientRecord)
-{
-    <div class="hero-panel mb-4">
-        <h1 class="mb-3">Welcome to Your Dashboard</h1>
-        <p>Monitor your care summary, vitals, and personal activity in one place.</p>
+<style>
+    .dashboard-hero {
+        background: linear-gradient(135deg, #087f73, #0a9b8c);
+        color: white;
+        border-radius: 18px;
+        padding: 1.75rem;
+    }
+
+        .dashboard-hero p {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+    .dashboard-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 14px;
+        overflow: hidden;
+        height: 100%;
+    }
+
+        .dashboard-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.15rem;
+        }
+
+        .dashboard-card .card-body {
+            padding: 1.15rem;
+        }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid #edf2f1;
+    }
+
+        .detail-row:last-child {
+            border-bottom: 0;
+        }
+
+    .detail-label {
+        color: #6c757d;
+        font-size: 0.82rem;
+    }
+
+    .detail-value {
+        text-align: right;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #263b38;
+    }
+
+    .vital-box {
+        background: #f5f8f7;
+        border-radius: 12px;
+        padding: 0.9rem;
+        height: 100%;
+    }
+
+    .vital-label {
+        color: #6c757d;
+        font-size: 0.75rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .vital-value {
+        color: #173f3b;
+        font-size: 1.45rem;
+        font-weight: 700;
+    }
+
+    .vital-unit {
+        color: #6c757d;
+        font-size: 0.75rem;
+        font-weight: 400;
+    }
+
+    .section-heading {
+        margin-bottom: 1rem;
+    }
+
+        .section-heading h2 {
+            color: #173f3b;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+    .quick-action {
+        display: block;
+        height: 100%;
+        border: 1px solid #dfe9e7;
+        border-radius: 14px;
+        padding: 1.15rem;
+        text-decoration: none;
+        background: white;
+        color: inherit;
+        transition: 0.15s ease;
+    }
+
+        .quick-action:hover {
+            transform: translateY(-2px);
+            border-color: #8cc6bf;
+            box-shadow: 0 0.5rem 1rem rgba(25, 75, 68, 0.08);
+            color: inherit;
+        }
+
+    .quick-action-title {
+        color: #006a72;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+    }
+
+    .medication-card {
+        background: #f8faf9;
+        border: 1px solid #e2ebe9;
+        border-radius: 12px;
+        padding: 1rem;
+        height: 100%;
+    }
+
+    .doctor-message {
+        background: #f6f9ff;
+        border-left: 4px solid #0d6efd;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .dashboard-status {
+        border-radius: 12px;
+    }
+
+    @@media (max-width: 767.98px) {
+        .dashboard-hero {
+            padding: 1.25rem;
+        }
+
+        .detail-row {
+            display: block;
+        }
+
+        .detail-value {
+            text-align: left;
+            margin-top: 0.2rem;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Patient Dashboard</h1>
+
+        <p class="page-subtitle text-muted">
+            Review your patient information, current vitals and care updates.
+        </p>
     </div>
 
+    <div class="page-actions">
+        <a asp-page="/User/Tracker"
+           class="btn btn-outline-primary btn-sm">
+            View Vitals
+        </a>
+    </div>
+</div>
+
+@if (!data.HasPatientRecord)
+{
     <div class="alert alert-info">
-        You do not have an active patient record linked to your account yet.
+        No patient record is linked to this account.
     </div>
 }
 else
 {
-    <div class="hero-panel mb-4">
-        <h1 class="mb-3">Welcome back, @data.PatientName</h1>
-        <p>Monitor your care summary, vitals, and personal activity in one place.</p>
+    <section class="dashboard-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row
+                        justify-content-between align-items-lg-center gap-3">
+
+            <div>
+                <div class="small text-uppercase fw-semibold mb-2">
+                    Patient portal
+                </div>
+
+                <h1 class="h3 mb-2">
+                    Welcome, @data.PatientName
+                </h1>
+
+                <p class="mb-0">
+                    Patient ID: @data.PatientId ·
+                    @data.HospitalName
+                </p>
+            </div>
+
+            <span id="overallStatusBadge"
+                  class="badge rounded-pill px-3 py-2
+                             @(data.HasUnresolvedEmergency
+                                               ? "bg-danger"
+                                               : "bg-light text-success")">
+
+                @(data.HasUnresolvedEmergency
+                            ? "Attention required"
+                            : "No urgent alerts")
+                                             </span>
+                                         </div>
+                                     </section>
+
+    <div id="dashboardAlert"
+         class="alert dashboard-status
+                    @(data.HasUnresolvedEmergency
+                             ? "alert-danger"
+                             : "alert-success")">
+
+    @if (data.HasUnresolvedEmergency)
+        {
+            <strong>Attention required.</strong>
+        }
+        else
+        {
+            <strong>Current status:</strong>
+        }
+
+        <span id="alertMessageValue">
+            @data.AlertMessage
+        </span>
+
+        @if (data.HasUnresolvedEmergency)
+        {
+            <a asp-page="/User/Logs"
+               class="btn btn-danger btn-sm ms-lg-3 mt-2 mt-lg-0">
+                Review alert
+            </a>
+        }
+</div>
+
+<!-- Main overview -->
+<section class="mb-5">
+    <div class="section-heading">
+        <h2>Patient overview</h2>
+
+        <p class="text-muted mb-0">
+            Current patient, ward and bracelet information.
+        </p>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-md-6 col-xl-3">
-            <div class="app-card card h-100">
+    <div class="row g-4">
+
+        <!-- Patient details -->
+        <div class="col-lg-4">
+            <div class="dashboard-card app-card card">
+                <div class="card-header">
+                    Patient details
+                </div>
+
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Patient Overview</h2>
-                    <p class="mb-2"><strong>Name:</strong> @data.PatientName</p>
-                    <p class="mb-2">
-                        <strong>Status:</strong>
-                        <span class="badge bg-success">@data.PatientStatus</span>
-                    </p>
-                    <p class="mb-2"><strong>Patient ID:</strong> @data.PatientId</p>
-                    <p class="mb-0 text-muted">@data.PatientNotes</p>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Full name
+                        </span>
+
+                        <span class="detail-value">
+                            @data.PatientName
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Patient ID
+                        </span>
+
+                        <span class="detail-value">
+                            @data.PatientId
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Patient status
+                        </span>
+
+                        <span class="detail-value">
+                            <span class="badge
+                                    @(data.DischargeDateTime.HasValue
+                                                                          ? "bg-secondary"
+                                                                          : "bg-success")">
+
+                                @data.PatientStatus
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Recorded weight
+                        </span>
+
+                        <span class="detail-value">
+                            @(data.Weight.HasValue
+                                                        ? $"{data.Weight.Value:0.#} kg"
+                                                        : "Not recorded")
+                                                                     </span>
+                                                                 </div>
+
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-3">
-            <div class="app-card card h-100">
+        <!-- Ward details -->
+        <div class="col-lg-4">
+            <div class="dashboard-card app-card card">
+                <div class="card-header">
+                    Ward and bed
+                </div>
+
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Bed / Ward</h2>
-                    <p class="mb-2"><strong>Ward:</strong> @data.WardName</p>
-                    <p class="mb-2"><strong>Room:</strong> @data.Room</p>
-                    <p class="mb-2"><strong>Floor:</strong> @data.Floor</p>
-                    <p class="mb-2"><strong>Sector:</strong> @data.Sector</p>
-                    <p class="mb-0"><strong>Location:</strong> @data.BedLocation</p>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Ward
+                        </span>
+
+                        <span class="detail-value">
+                            @data.WardName
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Room
+                        </span>
+
+                        <span class="detail-value">
+                            @data.Room
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Floor
+                        </span>
+
+                        <span class="detail-value">
+                            @data.Floor
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Sector
+                        </span>
+
+                        <span class="detail-value">
+                            @data.Sector
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Bed location
+                        </span>
+
+                        <span class="detail-value">
+                            @data.BedLocation
+                        </span>
+                    </div>
+
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-3">
-            <div class="app-card card h-100">
-                <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Current Vitals</h2>
-
-                    <p class="mb-2">
-                        <strong>Heart Rate:</strong>
-                        <span id="heartRateValue">@(data.HeartRate.HasValue? data.HeartRate.Value.ToString("0") : "N/A")</span> bpm
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Systolic Blood Pressure:</strong>
-                        <span id="SystolicbloodPressureValue">@(data.SystolicBloodPressure.HasValue? data.SystolicBloodPressure.Value.ToString("0") : "N/A")</span> mmHg
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Diastolic Blood Pressure:</strong>
-                        <span id="DiastolicbloodPressureValue">@(data.DiastolicBloodPressure.HasValue? data.DiastolicBloodPressure.Value.ToString("0") : "N/A")</span> mmHg
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Respiration:</strong>
-                        <span id="respirationValue">@(data.RespiratoryRate.HasValue? data.RespiratoryRate.Value.ToString("0") : "N/A")</span> breaths/min
-                    </p>
+        <!-- Bracelet -->
+        <div class="col-lg-4">
+            <div class="dashboard-card app-card card">
+                <div class="card-header">
+                    Bracelet status
                 </div>
-            </div>
-        </div>
 
-        <div class="col-md-6 col-xl-3">
-            <div class="app-card card h-100">
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Device Status</h2>
 
-                    <p class="mb-2">
-                        <strong>Battery:</strong>
-                        <span id="batteryValue">@(data.BraceletBattery.HasValue? data.BraceletBattery.Value.ToString("0.0") : "N/A")</span>%
-                    </p>
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Battery
+                        </span>
 
-                    <p class="mb-2">
-                        <strong>Movement:</strong>
-                        <span id="movementValue">@(data.Movement.HasValue? data.Movement.Value.ToString("0.0") : "N/A")</span>
-                    </p>
+                        <span class="detail-value">
+                            <span id="batteryValue">
+                                @(data.BraceletBattery.HasValue
+                                                                ? data.BraceletBattery.Value
+                                                                .ToString("0.0")
+                                                                : "N/A")
+                                                                    </span>%
+                                                                </span>
+                                                            </div>
 
-                    <p class="mb-2"><strong>Bracelet Location:</strong> @data.BraceletLocation</p>
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Movement
+                        </span>
 
-                    <p class="mb-0 text-muted">
-                        Updated:
-                        <span id="lastUpdatedValue">
+                        <span class="detail-value"
+                              id="movementValue">
+                            @(data.Movement.HasValue
+                                                        ? data.Movement.Value.ToString("0.0")
+                                                        : "N/A")
+                                                            </span>
+                                                        </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Bracelet location
+                        </span>
+
+                        <span class="detail-value">
+                            @data.BraceletLocation
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Last vital reading
+                        </span>
+
+                        <span class="detail-value"
+                              id="lastUpdatedValue">
+
                             @(data.LatestVitalsRecordedAt.HasValue
-                                                    ? data.LatestVitalsRecordedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                                                    : "N/A")
-                                                        </span>
-                                                    </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                                        ? data.LatestVitalsRecordedAt.Value
+                                                        .ToLocalTime()
+                                                        .ToString(
+                                                        "dd MMM yyyy, hh:mm tt")
+                                                        : "No reading")
+                                                                   </span>
+                                                               </div>
 
-    <div class="app-card card h-100">
-        <div class="card-header">
-            Care Summary
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Vitals -->
+<section class="mb-5">
+    <div class="section-heading d-flex flex-column flex-md-row
+                    justify-content-between align-items-md-end gap-2">
+
+        <div>
+            <h2>Latest vitals</h2>
+
+            <p class="text-muted mb-0">
+                Most recent readings recorded for the patient.
+            </p>
         </div>
 
+        <a asp-page="/User/Tracker"
+           class="btn btn-outline-primary btn-sm">
+            Open full tracker
+        </a>
+    </div>
+
+    <div class="dashboard-card app-card card">
         <div class="card-body">
+
             <div class="row g-3">
-                <div class="col-md-6">
-                    <p class="mb-2"><strong>Hospital:</strong> @data.HospitalName</p>
-                    <p class="mb-2"><strong>Address:</strong> @data.HospitalAddress</p>
-                    <p class="mb-2"><strong>Diagnosis:</strong> @data.Diagnosis</p>
-                    <p class="mb-2"><strong>Record:</strong> @data.RecordDescription</p>
 
-                    <p class="mb-2">
-                        <strong>Admitted:</strong>
-                        @(data.AdmissionDateTime.HasValue
-                                            ? data.AdmissionDateTime.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                                            : "N/A")
-                </p>
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Heart rate
+                        </div>
 
-                    <p class="mb-0">
-                        <strong>Status:</strong>
-                    @if (data.DischargeDateTime.HasValue)
-                        {
-                            <span>Discharged</span>
-                        }
-                        else
-                        {
-                            <span>Admitted</span>
-                        }
-                    </p>
+                        <div class="vital-value">
+                            <span id="heartRateValue">
+                                @(data.HeartRate.HasValue
+                                                                ? data.HeartRate.Value.ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                bpm
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="mb-2">
-                        <strong>Medication:</strong>
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Breathing rate
+                        </div>
 
-                        @if (data.CurrentMedications.Count == 0)
-                        {
-                            <p class="text-muted mb-0 mt-1">No active medication assigned.</p>
-                        }
-                        else
-                        {
-                            <div class="mt-2">
-                                @foreach (var medication in data.CurrentMedications)
-                                {
-                                    <div class="border rounded p-2 mb-2 bg-light">
-                                        <div class="fw-semibold">@medication.MedicationName</div>
-                                        <div class="small text-muted">
-                                            Dosage: @medication.Dosage
-                                        </div>
-                                        <div class="small text-muted">
-                                            Time:
-                                            @(medication.ConsumptionTime.HasValue
-                                                                            ? medication.ConsumptionTime.Value.ToString("HH:mm")
-                                                                            : "N/A")
+                        <div class="vital-value">
+                            <span id="respirationValue">
+                                @(data.RespiratoryRate.HasValue
+                                                                ? data.RespiratoryRate.Value
+                                                                .ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                breaths/min
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Systolic pressure
+                        </div>
+
+                        <div class="vital-value">
+                            <span id="systolicValue">
+                                @(data.SystolicBloodPressure.HasValue
+                                                                ? data.SystolicBloodPressure.Value
+                                                                .ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                mmHg
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Diastolic pressure
+                        </div>
+
+                        <div class="vital-value">
+                            <span id="diastolicValue">
+                                @(data.DiastolicBloodPressure.HasValue
+                                                                ? data.DiastolicBloodPressure.Value
+                                                                .ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                mmHg
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Care information -->
+<section class="mb-5">
+    <div class="section-heading">
+        <h2>Care information</h2>
+
+        <p class="text-muted mb-0">
+            Hospital, admission and clinical information.
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-6">
+            <div class="dashboard-card app-card card">
+                <div class="card-header">
+                    Hospital and admission
+                </div>
+
+                <div class="card-body">
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Hospital
+                        </span>
+
+                        <span class="detail-value">
+                            @data.HospitalName
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Hospital address
+                        </span>
+
+                        <span class="detail-value">
+                            @data.HospitalAddress
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Admission date
+                        </span>
+
+                        <span class="detail-value">
+                            @(data.AdmissionDateTime.HasValue
+                                                        ? data.AdmissionDateTime.Value
+                                                        .ToLocalTime()
+                                                        .ToString(
+                                                        "dd MMM yyyy, hh:mm tt")
+                                                        : "Not recorded")
+                                                                     </span>
+                                                                 </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Discharge date
+                        </span>
+
+                        <span class="detail-value">
+                            @(data.DischargeDateTime.HasValue
+                                                        ? data.DischargeDateTime.Value
+                                                        .ToLocalTime()
+                                                        .ToString(
+                                                        "dd MMM yyyy, hh:mm tt")
+                                                        : "Currently admitted")
+                        </span>
+                    </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="dashboard-card app-card card">
+                    <div class="card-header">
+                        Clinical summary
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="mb-4">
+                            <div class="detail-label mb-1">
+                                Diagnosis
+                            </div>
+
+                            <div class="fw-semibold">
+                                @data.Diagnosis
                             </div>
                         </div>
-                                                }
+
+                        <div class="mb-4">
+                            <div class="detail-label mb-1">
+                                Medical record
                             </div>
-                        }
+
+                            <div>
+                                @data.RecordDescription
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="detail-label mb-1">
+                                Patient notes
+                            </div>
+
+                            <div>
+                                @data.PatientNotes
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
+
         </div>
-    </div>
+    </section>
 
-    <div class="app-card card mb-4">
-        <div class="card-header">
-            Latest Doctor Update
+    <!-- Medications -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Current medications</h2>
+
+            <p class="text-muted mb-0">
+                Medication, dosage and scheduled consumption time.
+            </p>
         </div>
 
-        <div class="card-body">
-            @if (!data.HasDoctorRequest)
-            {
-                <p class="text-muted mb-0">No doctor updates available yet.</p>
-            }
-            else
-            {
-                <div class="row g-3 align-items-start">
-                    <div class="col-md-8">
-                        <p class="mb-2">
-                            <strong>Message from doctor:</strong>
-                        </p>
-                        <p class="mb-0">@data.LatestDoctorRequestMessage</p>
-                    </div>
+        <div class="dashboard-card app-card card">
+            <div class="card-body">
 
-                    <div class="col-md-4">
-                        <p class="mb-2">
-                            <strong>Status:</strong>
-                            @if (data.LatestDoctorRequestCompleted)
-                            {
-                                <span class="badge bg-success">Acknowledged</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-warning text-dark">New Doctor Update</span>
-                            }
-                </p>
+            @if (data.CurrentMedications.Count == 0)
+                {
+                    <p class="text-muted mb-0">
+                        No active medication has been assigned.
+                    </p>
+                }
+                else
+                {
+                    <div class="row g-3">
 
-                <p class="mb-3 text-muted">
-                    @(data.LatestDoctorRequestDate.HasValue
-                                        ? data.LatestDoctorRequestDate.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                                        : "N/A")
-                </p>
-
-                @if (!data.LatestDoctorRequestCompleted && data.LatestDoctorRequestId.HasValue)
+                        @foreach (var medication in data.CurrentMedications)
                         {
-                            <form method="post" asp-page-handler="AcknowledgeDoctorUpdate">
-                                <input type="hidden" name="doctorRequestId" value="@data.LatestDoctorRequestId.Value" />
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    Acknowledge
-                                </button>
-                            </form>
-                        }
+                            <div class="col-md-6 col-xl-4">
+                                <div class="medication-card">
+
+                                    <div class="fw-bold text-primary mb-3">
+                                        @medication.MedicationName
+                                    </div>
+
+                                    <div class="detail-label">
+                                        Dosage
+                                    </div>
+
+                                    <div class="fw-semibold mb-3">
+                                        @medication.Dosage
+                                    </div>
+
+                                    <div class="detail-label">
+                                        Scheduled time
+                                    </div>
+
+                                    <div class="fw-semibold">
+                                        @(medication.ConsumptionTime.HasValue
+                                                                    ? medication.ConsumptionTime.Value
+                                                                    .ToString("HH:mm")
+                                                                    : "Not scheduled")
+                        </div>
+
+                                </div>
+                            </div>
+                                }
+
                     </div>
-                </div>
-            }
+                }
+
+            </div>
         </div>
-    </div>
+    </section>
 
-    <div class="dashboard-grid">
-        <a class="dashboard-tile" asp-page="/User/Tracker">
-            <span class="dashboard-tile-title">Vitals tracker</span>
-            <p class="dashboard-tile-desc">View your health metrics over time.</p>
-        </a>
+    <!-- Doctor update -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Latest doctor update</h2>
 
-        <a class="dashboard-tile" asp-page="/User/Logs">
-            <span class="dashboard-tile-title">My activity log</span>
-            <p class="dashboard-tile-desc">Events related to your care and account.</p>
-        </a>
+            <p class="text-muted mb-0">
+                Latest communication between the patient and doctor.
+            </p>
+        </div>
 
-        <a class="dashboard-tile" asp-page="/User/CareUpdates">
-            <span class="dashboard-tile-title">My care updates</span>
-            <p class="dashboard-tile-desc">View appointments and ask doctor questions.</p>
-        </a>
-    </div>
+        <div class="dashboard-card app-card card">
+            <div class="card-body">
+
+                @if (!data.HasDoctorRequest)
+                {
+                    <p class="text-muted mb-0">
+                        No doctor communication is available.
+                    </p>
+                }
+                else
+                {
+                    <div class="row g-4">
+
+                        <div class="col-lg-6">
+                            <div class="doctor-message h-100">
+
+                                <div class="small text-uppercase
+                                                    fw-semibold text-muted mb-2">
+                                    Patient message
+                                </div>
+
+                                <p class="mb-0">
+                                    @data.LatestDoctorRequestMessage
+                                </p>
+
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="doctor-message h-100">
+
+                                <div class="d-flex justify-content-between
+                                                    align-items-start gap-2 mb-2">
+
+                                    <div class="small text-uppercase
+                                                        fw-semibold text-muted">
+                                        Doctor response
+                                    </div>
+
+                                    <span class="badge
+                                                @(data.LatestDoctorRequestCompleted
+                                                                                      ? "bg-success"
+                                                                                      : "bg-warning text-dark")">
+
+                                        @(data.LatestDoctorRequestCompleted
+                                                                        ? "Completed"
+                                                                        : "Awaiting reply")
+                                                                                       </span>
+                                                                                   </div>
+
+                                <p class="mb-3">
+                                    @data.LatestDoctorReply
+                                </p>
+
+                                <div class="small text-muted">
+                                    @(data.LatestDoctorRequestDate.HasValue
+                                                                ? data.LatestDoctorRequestDate.Value
+                                                                .ToLocalTime()
+                                                                .ToString(
+                                                                "dd MMM yyyy, hh:mm tt")
+                                                                : "Date unavailable")
+                        </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                        }
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick actions -->
+    <section class="mb-4">
+        <div class="section-heading">
+            <h2>Quick actions</h2>
+
+            <p class="text-muted mb-0">
+                Open another patient portal feature.
+            </p>
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-md-4">
+                <a asp-page="/User/Tracker"
+                   class="quick-action">
+
+                    <div class="quick-action-title">
+                        Vitals tracker
+                    </div>
+
+                    <div class="small text-muted">
+                        Review safe ranges, readings and hourly trends.
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a asp-page="/User/Logs"
+                   class="quick-action">
+
+                    <div class="quick-action-title">
+                        Activity log
+                    </div>
+
+                    <div class="small text-muted">
+                        Review and acknowledge care and emergency events.
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a asp-page="/User/CareUpdates"
+                   class="quick-action">
+
+                    <div class="quick-action-title">
+                        Appointments
+                    </div>
+
+                    <div class="small text-muted">
+                        View appointments, reschedule and request care.
+                    </div>
+                </a>
+            </div>
+
+        </div>
+    </section>
 }
 
 @section Scripts {
     <script>
-        async function refreshLatestVitals() {
+        function setDashboardText(elementId, value) {
+            const element =
+                document.getElementById(elementId);
+
+            if (
+                element &&
+                value !== undefined &&
+                value !== null
+            ) {
+                element.textContent = value;
+            }
+        }
+
+        function updateDashboardAlert(
+            hasEmergency,
+            message
+        ) {
+            const alertBox =
+                document.getElementById(
+                    'dashboardAlert'
+                );
+
+            const badge =
+                document.getElementById(
+                    'overallStatusBadge'
+                );
+
+            if (alertBox) {
+                alertBox.className =
+                    'alert dashboard-status ' +
+                    (
+                        hasEmergency
+                            ? 'alert-danger'
+                            : 'alert-success'
+                    );
+
+                alertBox.innerHTML =
+                    (
+                        hasEmergency
+                            ? '<strong>Attention required.</strong> '
+                            : '<strong>Current status:</strong> '
+                    ) +
+                    '<span id="alertMessageValue"></span>';
+
+                setDashboardText(
+                    'alertMessageValue',
+                    message
+                );
+            }
+
+            if (badge) {
+                badge.className =
+                    'badge rounded-pill px-3 py-2 ' +
+                    (
+                        hasEmergency
+                            ? 'bg-danger'
+                            : 'bg-light text-success'
+                    );
+
+                badge.textContent =
+                    hasEmergency
+                        ? 'Attention required'
+                        : 'No urgent alerts';
+            }
+        }
+
+        async function refreshDashboardVitals() {
             try {
-                const response = await fetch('/User/Dashboard?handler=LatestVitals');
+                const response = await fetch(
+                    '/User/Dashboard?handler=LatestVitals'
+                );
+
                 const data = await response.json();
 
                 if (!data.success) {
@@ -261,26 +962,59 @@ else
                     return;
                 }
 
-                document.getElementById('heartRateValue').textContent = data.heartRate;
-                document.getElementById('SystolicbloodPressureValue').textContent = data.SystolicbloodPressureValue;
-                document.getElementById('DiastolicbloodPressureValue').textContent = data.DiastolicbloodPressureValue;
-                document.getElementById('respirationValue').textContent = data.respiration;
-                document.getElementById('batteryValue').textContent = data.battery;
-                document.getElementById('movementValue').textContent = data.movement;
-                document.getElementById('lastUpdatedValue').textContent = data.updatedAt;
+                setDashboardText(
+                    'heartRateValue',
+                    data.heartRate
+                );
 
-                const alertMessage = document.getElementById('alertMessageValue');
-                if (alertMessage) {
-                    alertMessage.textContent = data.alertMessage;
-                }
+                setDashboardText(
+                    'respirationValue',
+                    data.respiration
+                );
 
-            } catch (error) {
-                console.error('Failed to refresh latest vitals:', error);
+                setDashboardText(
+                    'systolicValue',
+                    data.systolicBloodPressure
+                );
+
+                setDashboardText(
+                    'diastolicValue',
+                    data.diastolicBloodPressure
+                );
+
+                setDashboardText(
+                    'batteryValue',
+                    data.battery
+                );
+
+                setDashboardText(
+                    'movementValue',
+                    data.movement
+                );
+
+                setDashboardText(
+                    'lastUpdatedValue',
+                    data.updatedAt
+                );
+
+                updateDashboardAlert(
+                    data.hasUnresolvedEmergency,
+                    data.alertMessage
+                );
+            }
+            catch (error) {
+                console.error(
+                    'Unable to refresh dashboard:',
+                    error
+                );
             }
         }
 
-        refreshLatestVitals();
+        refreshDashboardVitals();
 
-        setInterval(refreshLatestVitals, 30000);
+        setInterval(
+            refreshDashboardVitals,
+            30000
+        );
     </script>
 }

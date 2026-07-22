@@ -4,17 +4,107 @@
     ViewData["Title"] = "Vitals Tracker";
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Vitals tracker</h1>
-        <p class="page-subtitle text-muted">Compare vitals across one or more patients.</p>
-    </div>
-    <div class="page-actions">
-        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Dashboard">Dashboard</a>
-    </div>
-</div>
+<style>
+    .tracker-shell {
+        max-width: 1500px;
+        margin: 0 auto;
+    }
 
-<partial name="_AdminVitalsTracker" model="Model.ChartData" />
+    .tracker-header,
+    .patient-summary,
+    .vital-card {
+        background: #ffffff;
+        border: 1px solid #dfe9e7;
+        border-radius: 16px;
+    }
+
+    .tracker-header {
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .patient-summary {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .eyebrow {
+        color: #006a72;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .simulation-note {
+        background: #f5f8ff;
+        border: 1px solid #cfe0ff;
+        border-left: 4px solid #0d6efd;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+    }
+
+    .vital-card {
+        overflow: hidden;
+    }
+
+        .vital-card .card-body {
+            padding: 1.2rem;
+        }
+
+    .vital-header {
+        border-bottom: 1px solid #edf2f1;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .vital-title {
+        color: #006a72;
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .section-label {
+        color: #64748b;
+        font-size: 0.75rem;
+    }
+
+    .simulation-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
+    }
+
+        .simulation-buttons .btn {
+            font-size: 0.78rem;
+            padding: 0.45rem 0.3rem;
+        }
+
+    @@media (max-width: 767.98px) {
+        .tracker-header,
+        .patient-summary {
+            padding: 1.1rem;
+        }
+    }
+</style>
+
+<div class="tracker-shell">
+    <section class="tracker-header">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+            <div>
+                <div class="eyebrow mb-2">Patient monitoring</div>
+                <h1 class="h3 mb-2">Vitals tracker</h1>
+                <p class="text-muted mb-0">Compare vitals across one or more patients.</p>
+            </div>
+
+            <a asp-page="/Admin/Dashboard" class="btn btn-outline-secondary btn-sm">
+                Back to dashboard
+            </a>
+        </div>
+    </section>
+
+    <partial name="_AdminVitalsTracker" model="Model.ChartData" />
+</div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

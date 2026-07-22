@@ -240,9 +240,10 @@ namespace INFP_Proj.Pages.User
 
         public async Task<IActionResult> OnGetLatestVitalsAsync()
         {
-            string? currentUserId = _userManager.GetUserId(User);
+            string? currentUserId =
+                _userManager.GetUserId(User);
 
-            if (string.IsNullOrEmpty(currentUserId))
+            if (string.IsNullOrWhiteSpace(currentUserId))
             {
                 return new JsonResult(new
                 {
@@ -251,83 +252,151 @@ namespace INFP_Proj.Pages.User
                 });
             }
 
-            Patients? patient = await GetLinkedPatientAsync(currentUserId);
+            Patients? patient =
+                await GetLinkedPatientAsync(currentUserId);
 
             if (patient == null)
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "No patient record linked to this account."
+                    message =
+                        "No patient record is linked to this account."
                 });
             }
 
-            var braceletRelation = await _context.BraceletRelations
-                .Include(br => br.Bracelet)
-                .FirstOrDefaultAsync(br => br.PatientID == patient.PatientID);
+            /*
+             * Read the latest recorded vital only.
+             * This handler must not generate random readings
+             * or insert anything into the database.
+             */
+            Vitals? latestVitals =
+                await _context.Vitals
+                    .AsNoTracking()
+                    .Where(v =>
+                        v.PatientID == patient.PatientID)
+                    .OrderByDescending(v =>
+                        v.RecordedAt)
+                    .FirstOrDefaultAsync();
 
-            if (braceletRelation?.Bracelet == null)
-            {
-                return new JsonResult(new
-                {
-                    success = false,
-                    message = "No bracelet linked to this patient."
-                });
-            }
+            Bracelet? bracelet =
+                await _context.BraceletRelations
+                    .AsNoTracking()
+                    .Where(br =>
+                        br.PatientID == patient.PatientID)
+                    .Select(br =>
+                        br.Bracelet)
+                    .FirstOrDefaultAsync();
 
-            var bracelet = braceletRelation.Bracelet;
-            var random = new Random();
+            float? heartRate =
+                latestVitals?.HeartRate ??
+                bracelet?.HeartRate;
 
-            float heartRate = random.Next(65, 101);
-            float SystolicBloodPressure = random.Next(110, 141);
-            float DiastolicBloodPressure = random.Next(60, 81);
-            float respiration = random.Next(14, 25);
-            float movement = (float)Math.Round(random.NextDouble() * 2.0, 1);
+            float? respiratoryRate =
+                latestVitals?.RespiratoryRate ??
+                bracelet?.RespiratoryRate;
 
-            float battery = bracelet.Battery ?? 100;
-            battery = Math.Max(0, battery - 0.1f);
+            float? systolicBloodPressure =
+                latestVitals?.SystolicBloodPressure ??
+                bracelet?.SystolicBloodPressure;
 
-            bracelet.HeartRate = heartRate;
-            bracelet.SystolicBloodPressure = SystolicBloodPressure;
-            bracelet.DiastolicBloodPressure = DiastolicBloodPressure;
-            bracelet.RespiratoryRate = respiration;
-            bracelet.Movement = movement;
-            bracelet.Battery = battery;
+            float? diastolicBloodPressure =
+                latestVitals?.DiastolicBloodPressure ??
+                bracelet?.DiastolicBloodPressure;
 
-            var newVitals = new Vitals
-            {
-                PatientID = patient.PatientID,
-                HeartRate = heartRate,
-                SystolicBloodPressure = SystolicBloodPressure,
-                DiastolicBloodPressure = DiastolicBloodPressure,
-                RespiratoryRate = respiration,
-                RecordedAt = DateTime.UtcNow
-            };
+            bool hasUnresolvedEmergency =
+                await _context.Logs
+                    .AsNoTracking()
+                    .AnyAsync(log =>
+                        log.PatientID == patient.PatientID &&
+                        log.Emergency &&
+                        !log.Resolved);
 
-            _context.Vitals.Add(newVitals);
-            await _context.SaveChangesAsync();
-
-            bool hasUnresolvedEmergency = await _context.Logs
-                .AnyAsync(l =>
-                    (l.UserID == currentUserId || l.UserID == patient.UserID)
-                    && l.Emergency
-                    && !l.Resolved);
-
-            string alertMessage = BuildAlertMessage(newVitals, bracelet, hasUnresolvedEmergency);
+            string alertMessage =
+                BuildAlertMessage(
+                    latestVitals,
+                    bracelet,
+                    hasUnresolvedEmergency);
 
             return new JsonResult(new
             {
                 success = true,
-                heartRate,
-                SystolicBloodPressure,
-                DiastolicBloodPressure,
-                respiration,
-                movement,
-                battery = Math.Round(battery, 1),
-                updatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+
+                heartRate =
+                    heartRate?.ToString("0") ??
+                    "N/A",
+
+                respiration =
+                    respiratoryRate?.ToString("0") ??
+                    "N/A",
+
+                systolicBloodPressure =
+                    systolicBloodPressure?.ToString("0") ??
+                    "N/A",
+
+                diastolicBloodPressure =
+                    diastolicBloodPressure?.ToString("0") ??
+                    "N/A",
+
+                movement =
+                    bracelet?.Movement?.ToString("0.0") ??
+                    "N/A",
+
+                battery =
+                    bracelet?.Battery?.ToString("0.0") ??
+                    "N/A",
+
+                updatedAt =
+                    latestVitals == null
+                        ? "No reading"
+                        : ToSingaporeTime(
+                                latestVitals.RecordedAt)
+                            .ToString(
+                                "dd MMM yyyy, hh:mm tt"),
+
                 hasUnresolvedEmergency,
                 alertMessage
             });
+        }
+
+        private static DateTime ToSingaporeTime(
+    DateTime recordedAt)
+        {
+            DateTime utcTime =
+                recordedAt.Kind switch
+                {
+                    DateTimeKind.Utc =>
+                        recordedAt,
+
+                    DateTimeKind.Local =>
+                        recordedAt.ToUniversalTime(),
+
+                    _ =>
+                        DateTime.SpecifyKind(
+                            recordedAt,
+                            DateTimeKind.Utc)
+                };
+
+            try
+            {
+                TimeZoneInfo singaporeTimeZone =
+                    TimeZoneInfo.FindSystemTimeZoneById(
+                        "Singapore Standard Time");
+
+                return TimeZoneInfo.ConvertTimeFromUtc(
+                    utcTime,
+                    singaporeTimeZone);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                TimeZoneInfo singaporeTimeZone =
+                    TimeZoneInfo.FindSystemTimeZoneById(
+                        "Asia/Singapore");
+
+                return TimeZoneInfo.ConvertTimeFromUtc(
+                    utcTime,
+                    singaporeTimeZone);
+            }
         }
     }
 }

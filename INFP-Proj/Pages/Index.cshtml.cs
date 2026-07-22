@@ -85,7 +85,9 @@ namespace INFP_Proj.Pages
                         ? $"{p.User.FirstName} {p.User.LastName}"
                         : $"Patient #{p.PatientID}",
                     Status = p.Status,
-                    MedicationsSummary = medSummary
+                    MedicationsSummary = medSummary,
+                    AdmissionDateTime = latestRecord?.AdmissionDateTime,
+                    DischargeDateTime = latestRecord?.DischargeDateTime
                 };
             }).ToList();
         }

@@ -46,6 +46,7 @@
         public string RecordDescription { get; set; } = "No record description";
         public DateTime? AdmissionDateTime { get; set; }
         public DateTime? DischargeDateTime { get; set; }
+        public bool IsDischarged => DischargeDateTime.HasValue;
 
         public bool HasUnresolvedEmergency { get; set; }
         public string AlertMessage { get; set; } = "No urgent alerts.";

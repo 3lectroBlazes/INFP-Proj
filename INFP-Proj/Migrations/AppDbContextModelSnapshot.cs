@@ -70,7 +70,7 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentRequestID"));
 
-                    b.Property<DateTime>("DateTime")
+                    b.Property<DateTime>("AppointmentDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("DocAcknowledged")
@@ -275,6 +275,9 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogID"));
 
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("Emergency")
                         .HasColumnType("bit");
 
@@ -418,6 +421,9 @@ namespace INFP_Proj.Migrations
                     b.Property<DateTime?>("DischargeDateTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DischargeReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("HospitalID")
                         .HasColumnType("int");
 
@@ -470,29 +476,29 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThresholdID"));
 
-                    b.Property<float?>("DBPLowerThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("DBPLowerThreshold")
+                        .HasColumnType("int");
 
-                    b.Property<float?>("DBPUpperThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("DBPUpperThreshold")
+                        .HasColumnType("int");
 
-                    b.Property<float?>("HeartRateLowerPercentageThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("HeartRateLowerPercentageThreshold")
+                        .HasColumnType("int");
 
-                    b.Property<float?>("HeartRateUpperPercentageThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("HeartRateUpperPercentageThreshold")
+                        .HasColumnType("int");
 
-                    b.Property<float?>("RespiratoryRateLowerThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("RespiratoryRateLowerThreshold")
+                        .HasColumnType("int");
 
-                    b.Property<float?>("RespiratoryRateUpperPercentageThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("RespiratoryRateUpperPercentageThreshold")
+                        .HasColumnType("int");
 
-                    b.Property<float?>("SBPLowerThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("SBPLowerThreshold")
+                        .HasColumnType("int");
 
-                    b.Property<float?>("SBPUpperThreshold")
-                        .HasColumnType("real");
+                    b.Property<int>("SBPUpperThreshold")
+                        .HasColumnType("int");
 
                     b.HasKey("ThresholdID");
 
@@ -659,6 +665,59 @@ namespace INFP_Proj.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("INFP_Proj.Models.AppointmentChangeRequest", b =>
+                {
+                    b.Property<int>("AppointmentChangeRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentChangeRequestID"));
+
+                    b.Property<int>("AppointmentRequestID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RequestedDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserID")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("AppointmentChangeRequestID");
+
+                    b.HasIndex("AppointmentRequestID")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AppointmentChangeRequests_OnePending")
+                        .HasFilter("[Status] = 'Pending'");
+
+                    b.HasIndex("PatientID")
+                        .HasDatabaseName("IX_AppointmentChangeRequests_PatientID");
+
+                    b.ToTable("AppointmentChangeRequests", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -973,6 +1032,25 @@ namespace INFP_Proj.Migrations
                         .IsRequired();
 
                     b.Navigation("Patients");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Models.AppointmentChangeRequest", b =>
+                {
+                    b.HasOne("INFP_Proj.Data.Appointment", "Appointment")
+                        .WithMany()
+                        .HasForeignKey("AppointmentRequestID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Appointment");
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -30,11 +30,67 @@ namespace INFP_Proj.Data
         public DbSet<Log> Logs { get; set; }
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+
+        public DbSet<AppointmentChangeRequest>
+            AppointmentChangeRequests
+        { get; set; }
+
         public DbSet<Thresholds> Thresholds { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<AppointmentChangeRequest>(entity =>
+            {
+                entity.ToTable("AppointmentChangeRequests");
+
+                entity.HasKey(request =>
+                    request.AppointmentChangeRequestID);
+
+                entity.Property(request =>
+                        request.Status)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.Property(request =>
+                        request.Reason)
+                    .HasMaxLength(500);
+
+                entity.Property(request =>
+                        request.ReviewMessage)
+                    .HasMaxLength(500);
+
+                entity.Property(request =>
+                        request.ReviewedByUserID)
+                    .HasMaxLength(450);
+
+                entity.HasOne(request =>
+                        request.Appointment)
+                    .WithMany()
+                    .HasForeignKey(request =>
+                        request.AppointmentRequestID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(request =>
+                        request.Patient)
+                    .WithMany()
+                    .HasForeignKey(request =>
+                        request.PatientID)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasIndex(request =>
+                        request.AppointmentRequestID)
+                    .HasDatabaseName(
+                        "UX_AppointmentChangeRequests_OnePending")
+                    .IsUnique()
+                    .HasFilter("[Status] = 'Pending'");
+
+                entity.HasIndex(request =>
+                        request.PatientID)
+                    .HasDatabaseName(
+                        "IX_AppointmentChangeRequests_PatientID");
+            });
 
             modelBuilder.Entity<Records>()
                 .HasOne(r => r.Patients)
