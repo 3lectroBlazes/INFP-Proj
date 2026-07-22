@@ -25,6 +25,7 @@ namespace INFP_Proj.Data
 
         public DateTime RequestedAt { get; set; }
 
+        [ForeignKey("PatientID")]
         public Patients? Patient { get; set; }
     }
 }
