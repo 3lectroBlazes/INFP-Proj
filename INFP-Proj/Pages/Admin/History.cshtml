@@ -4,6 +4,112 @@
     ViewData["Title"] = "Admission History";
 }
 
+<style>
+    .log-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        .log-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.2rem;
+        }
+
+    .log-table {
+        margin-bottom: 0;
+    }
+
+        .log-table thead th {
+            background: #f1f8f7;
+            border-bottom: 1px solid #d8e7e4;
+            color: #47615d;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.035em;
+            padding: 0.9rem 1rem;
+            text-transform: uppercase;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .log-table tbody td {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #263b38;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .log-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .log-table tbody tr:hover td {
+            background: #f9fbfb;
+        }
+
+        .log-table tbody tr.admission-active td:first-child {
+            border-left: 4px solid #198754;
+        }
+
+        .log-table tbody tr.admission-discharged td:first-child {
+            border-left: 4px solid #6c757d;
+        }
+
+    .empty-panel {
+        background: #f8faf9;
+        border: 1px dashed #cbd9d6;
+        border-radius: 12px;
+        padding: 2.25rem 1.25rem;
+        text-align: center;
+    }
+
+    @@media (max-width: 767.98px) {
+        .log-table thead {
+            display: none;
+        }
+
+        .log-table, .log-table tbody, .log-table tr, .log-table td {
+            display: block;
+            width: 100%;
+        }
+
+            .log-table tbody tr {
+                border-bottom: 1px solid #dfe9e7;
+                padding: 0.45rem 0;
+            }
+
+                .log-table tbody tr:last-child {
+                    border-bottom: 0;
+                }
+
+            .log-table tbody td {
+                border-bottom: 0;
+                padding: 0.55rem 1rem;
+            }
+
+                .log-table tbody td::before {
+                    color: #72817e;
+                    content: attr(data-label);
+                    display: block;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    letter-spacing: 0.035em;
+                    margin-bottom: 0.2rem;
+                    text-transform: uppercase;
+                }
+
+            .log-table tbody tr.admission-active td:first-child,
+            .log-table tbody tr.admission-discharged td:first-child {
+                border-left-width: 4px;
+            }
+    }
+</style>
+
 <div class="page-header">
     <div>
         <h1 class="page-title">Admission history</h1>
@@ -14,7 +120,7 @@
     </div>
 </div>
 
-<div class="app-card card mb-4">
+<div class="log-card app-card card mb-4">
     <div class="card-body py-3">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-sm-8 col-md-5">
@@ -35,68 +141,75 @@
 
 @if (Model.Admissions.Count == 0)
 {
-    <div class="empty-state">
+    <div class="empty-panel">
         <p class="text-muted mb-0">No admission records found.</p>
     </div>
 }
 else
 {
-    <div class="app-table-wrapper table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Patient</th>
-                    <th>Diagnosis</th>
-                    <th>Ward / Bed</th>
-                    <th>Admitted</th>
-                    <th>Discharged</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.Admissions)
-                {
+    <div class="log-card app-card card">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2">
+            <span>Admission records</span>
+            <span class="small text-muted fw-normal">@Model.Admissions.Count total</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table log-table align-middle">
+                <thead>
                     <tr>
-                        <td class="fw-medium">@item.PatientName</td>
-                        <td>@item.Diagnosis</td>
-                        <td class="small text-muted">
-                            <div>@item.Ward</div>
-                            <div>@item.Bed</div>
-                        </td>
-                        <td class="text-nowrap">
-                            <time datetime="@item.AdmissionDateTime.ToString("o")">
-                                @item.AdmissionDateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                            </time>
-                        </td>
-                        <td class="text-nowrap">
-                            @if (item.DischargeDateTime.HasValue)
-                            {
-                                <time datetime="@item.DischargeDateTime.Value.ToString("o")">
-                                    @item.DischargeDateTime.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                                </time>
-                            }
-                            else
-                            {
-                                <span class="text-muted">&mdash;</span>
-                            }
-                        </td>
-                        <td>
-                            @if (item.IsActive)
-                            {
-                                <span class="badge bg-success">Active</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Discharged</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@item.PatientId">Open</a>
-                        </td>
+                        <th>Patient</th>
+                        <th>Diagnosis</th>
+                        <th>Ward / Bed</th>
+                        <th>Admitted</th>
+                        <th>Discharged</th>
+                        <th>Status</th>
+                        <th></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Admissions)
+                    {
+                        <tr class="@(item.IsActive ? "admission-active" : "admission-discharged")">
+                            <td data-label="Patient" class="fw-medium">@item.PatientName</td>
+                            <td data-label="Diagnosis">@item.Diagnosis</td>
+                            <td data-label="Ward / Bed" class="small text-muted">
+                                <div>@item.Ward</div>
+                                <div>@item.Bed</div>
+                            </td>
+                            <td data-label="Admitted" class="text-nowrap">
+                                <time datetime="@item.AdmissionDateTime.ToString("o")">
+                                    @item.AdmissionDateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                </time>
+                            </td>
+                            <td data-label="Discharged" class="text-nowrap">
+                                @if (item.DischargeDateTime.HasValue)
+                                {
+                                    <time datetime="@item.DischargeDateTime.Value.ToString("o")">
+                                        @item.DischargeDateTime.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                    </time>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">&mdash;</span>
+                                }
+                            </td>
+                            <td data-label="Status">
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Discharged</span>
+                                }
+                            </td>
+                            <td data-label="" class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@item.PatientId">Open</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 }

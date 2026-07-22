@@ -4,6 +4,156 @@
     ViewData["Title"] = "Activity Log";
 }
 
+<style>
+    .filter-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .log-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        .log-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.2rem;
+        }
+
+    .log-table {
+        margin-bottom: 0;
+    }
+
+        .log-table thead th {
+            background: #f1f8f7;
+            border-bottom: 1px solid #d8e7e4;
+            color: #47615d;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.035em;
+            padding: 0.9rem 1rem;
+            text-transform: uppercase;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .log-table tbody td {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #263b38;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .log-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .log-table tbody tr:hover td {
+            background: #f9fbfb;
+        }
+
+        .log-table tbody tr.active-emergency td:first-child {
+            border-left: 4px solid #dc3545;
+        }
+
+        .log-table tbody tr.resolved-emergency td:first-child {
+            border-left: 4px solid #198754;
+        }
+
+        .log-table tbody tr.standard-log td:first-child {
+            border-left: 4px solid transparent;
+        }
+
+    .event-type-label {
+        color: #7b8987;
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.035em;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+    }
+
+    .event-title {
+        color: #173f3b;
+        font-weight: 600;
+        line-height: 1.55;
+    }
+
+    .details-panel {
+        background: #f8faf9;
+        padding: 1.2rem;
+    }
+
+    .empty-panel {
+        background: #f8faf9;
+        border: 1px dashed #cbd9d6;
+        border-radius: 12px;
+        padding: 2.25rem 1.25rem;
+        text-align: center;
+    }
+
+    .summary-strip {
+        background: #f6faf9;
+        border: 1px solid #dfebe9;
+        border-radius: 12px;
+        margin-bottom: 1.25rem;
+        padding: 0.9rem 1rem;
+    }
+
+        .summary-strip strong {
+            color: #173f3b;
+        }
+
+    @@media (max-width: 767.98px) {
+        .log-table thead {
+            display: none;
+        }
+
+        .log-table, .log-table tbody, .log-table tr, .log-table td {
+            display: block;
+            width: 100%;
+        }
+
+            .log-table tbody tr {
+                border-bottom: 1px solid #dfe9e7;
+                padding: 0.45rem 0;
+            }
+
+                .log-table tbody tr:last-child {
+                    border-bottom: 0;
+                }
+
+            .log-table tbody td {
+                border-bottom: 0;
+                padding: 0.55rem 1rem;
+            }
+
+                .log-table tbody td::before {
+                    color: #72817e;
+                    content: attr(data-label);
+                    display: block;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    letter-spacing: 0.035em;
+                    margin-bottom: 0.2rem;
+                    text-transform: uppercase;
+                }
+
+            .log-table tbody tr.active-emergency td:first-child,
+            .log-table tbody tr.resolved-emergency td:first-child,
+            .log-table tbody tr.standard-log td:first-child {
+                border-left-width: 4px;
+            }
+    }
+</style>
+
 <div class="page-header">
     <div>
         <h1 class="page-title">Activity log</h1>
@@ -16,10 +166,13 @@
 
 @if (TempData["Message"] != null)
 {
-    <div class="alert alert-success" role="alert">@TempData["Message"]</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
-<div class="app-card card mb-4">
+<div class="filter-card app-card card mb-4">
     <div class="card-body py-3">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-sm-6 col-md-3">
@@ -56,82 +209,117 @@
 
 @if (Model.Logs.Count == 0)
 {
-    <div class="empty-state">
+    <div class="empty-panel">
         <p class="text-muted mb-0">No log entries match the selected filters.</p>
     </div>
 }
 else
 {
-    <div class="app-table-wrapper table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>User</th>
-                    <th>Event</th>
-                    <th>Emergency</th>
-                    <th>Resolution</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var entry in Model.Logs)
-                {
-                    bool isTrueEmergency = entry.Emergency && !entry.IsMedicationRequest;
-                    string rowClass = entry.Emergency
-                        ? (entry.Resolved ? "table-success" : "table-danger")
-                        : "";
-                    string detailsId = $"emergencyDetails-{entry.LogId}";
+    int activeEmergencyCount = Model.Logs.Count(entry => entry.Emergency && !entry.Resolved && !entry.IsMedicationRequest);
 
-                    <tr class="@rowClass">
-                        <td class="text-nowrap">
-                            <time datetime="@entry.Timestamp.ToString("o")">
-                                @entry.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
-                            </time>
-                        </td>
-                        <td>@entry.UserName</td>
-                        <td>@entry.Event</td>
-                        <td>
-                            @if (entry.Emergency)
-                            {
-                                <span class="badge bg-danger">Yes</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">No</span>
-                            }
-                        </td>
-                        <td>
-                            @if (!entry.Emergency)
-                            {
-                                <span class="text-muted">&mdash;</span>
-                            }
-                            else if (entry.Resolved)
-                            {
-                                <span class="badge bg-success">Resolved</span>
-                            }
-                            else if (entry.IsMedicationRequest)
-                            {
-                                <form method="post" asp-page-handler="Resolve" asp-route-id="@entry.LogId" class="m-0">
-                                    <input type="hidden" name="FromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" />
-                                    <input type="hidden" name="ToDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" />
-                                    <input type="hidden" name="UserId" value="@Model.UserId" />
-                                    <input type="hidden" name="EmergencyFilter" value="@Model.EmergencyFilter" />
-                                    <button type="submit" class="btn btn-sm btn-outline-success">Mark resolved</button>
-                                </form>
-                            }
-                            else
-                            {
-                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId">
-                                    Details
-                                </button>
-                            }
-                        </td>
+    <div class="summary-strip d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div><strong>@Model.Logs.Count</strong> log entries shown</div>
+
+        @if (activeEmergencyCount > 0)
+        {
+            <span class="badge bg-danger rounded-pill">
+                @activeEmergencyCount active @(activeEmergencyCount == 1 ? "emergency" : "emergencies")
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-success rounded-pill">No active emergencies</span>
+        }
+    </div>
+
+    <div class="log-card app-card card">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2">
+            <span>Activity history</span>
+            <span class="small text-muted fw-normal">Newest first</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table log-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Event</th>
+                        <th>Emergency</th>
+                        <th>Resolution</th>
                     </tr>
-                    @if (isTrueEmergency && !entry.Resolved)
+                </thead>
+                <tbody>
+                    @foreach (var entry in Model.Logs)
                     {
-                        <tr class="collapse" id="@detailsId">
-                            <td colspan="5" class="bg-light">
-                                <div class="p-3">
+                        bool isTrueEmergency = entry.Emergency && !entry.IsMedicationRequest;
+                        string rowClass;
+                        if (!entry.Emergency)
+                        {
+                            rowClass = "standard-log";
+                        }
+                        else if (entry.Resolved)
+                        {
+                            rowClass = "resolved-emergency";
+                        }
+                        else
+                        {
+                            rowClass = "active-emergency";
+                        }
+                        string detailsId = $"emergencyDetails-{entry.LogId}";
+
+                        <tr class="@rowClass">
+                            <td data-label="Timestamp" class="text-nowrap">
+                                <time datetime="@entry.Timestamp.ToString("o")">
+                                    @entry.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                                </time>
+                            </td>
+                            <td data-label="User">@entry.UserName</td>
+                            <td data-label="Event">
+                                <span class="event-type-label">@(entry.Emergency ? "Vital alert" : "Activity")</span>
+                                <div class="event-title">@entry.Event</div>
+                            </td>
+                            <td data-label="Emergency">
+                                @if (entry.Emergency)
+                                {
+                                    <span class="badge bg-danger">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No</span>
+                                }
+                            </td>
+                            <td data-label="Resolution">
+                                @if (!entry.Emergency)
+                                {
+                                    <span class="text-muted">&mdash;</span>
+                                }
+                                else if (entry.Resolved)
+                                {
+                                    <span class="badge bg-success">Resolved</span>
+                                }
+                                else if (entry.IsMedicationRequest)
+                                {
+                                    <form method="post" asp-page-handler="Resolve" asp-route-id="@entry.LogId" class="m-0">
+                                        <input type="hidden" name="FromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" />
+                                        <input type="hidden" name="ToDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" />
+                                        <input type="hidden" name="UserId" value="@Model.UserId" />
+                                        <input type="hidden" name="EmergencyFilter" value="@Model.EmergencyFilter" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Mark resolved</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId">
+                                        Details
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                        @if (isTrueEmergency && !entry.Resolved)
+                        {
+                            <tr class="collapse" id="@detailsId">
+                                <td colspan="5" class="details-panel">
                                     @if (!string.IsNullOrEmpty(entry.PatientName))
                                     {
                                         <p class="mb-2"><strong>Patient:</strong> @entry.PatientName</p>
@@ -192,12 +380,12 @@ else
                                             </span>
                                         }
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        }
                     }
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 }

@@ -4,6 +4,40 @@
     ViewData["Title"] = "Admit Patient";
 }
 
+<style>
+    .care-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        .care-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.15rem;
+        }
+
+        .care-card .card-body {
+            padding: 1.2rem;
+        }
+
+    .section-heading {
+        margin-bottom: 1rem;
+    }
+
+        .section-heading h2 {
+            color: #173f3b;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+    fieldset legend {
+        color: #006a72 !important;
+    }
+</style>
+
 <div class="page-header">
     <div>
         <h1 class="page-title">Admit patient</h1>
@@ -14,7 +48,8 @@
     </div>
 </div>
 
-<div class="app-card card">
+<div class="care-card app-card card">
+    <div class="card-header">Admission details</div>
     <div class="card-body">
         <form method="post">
             <div asp-validation-summary="All" class="alert alert-danger py-2" role="alert"></div>

@@ -4,6 +4,112 @@
     ViewData["Title"] = "Patient List";
 }
 
+<style>
+    .log-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        .log-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.2rem;
+        }
+
+    .log-table {
+        margin-bottom: 0;
+    }
+
+        .log-table thead th {
+            background: #f1f8f7;
+            border-bottom: 1px solid #d8e7e4;
+            color: #47615d;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.035em;
+            padding: 0.9rem 1rem;
+            text-transform: uppercase;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .log-table tbody td {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #263b38;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .log-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .log-table tbody tr:hover td {
+            background: #f9fbfb;
+        }
+
+        .log-table tbody tr.patient-admitted td:first-child {
+            border-left: 4px solid #198754;
+        }
+
+        .log-table tbody tr.patient-discharged td:first-child {
+            border-left: 4px solid #6c757d;
+        }
+
+    .empty-panel {
+        background: #f8faf9;
+        border: 1px dashed #cbd9d6;
+        border-radius: 12px;
+        padding: 2.25rem 1.25rem;
+        text-align: center;
+    }
+
+    @@media (max-width: 767.98px) {
+        .log-table thead {
+            display: none;
+        }
+
+        .log-table, .log-table tbody, .log-table tr, .log-table td {
+            display: block;
+            width: 100%;
+        }
+
+            .log-table tbody tr {
+                border-bottom: 1px solid #dfe9e7;
+                padding: 0.45rem 0;
+            }
+
+                .log-table tbody tr:last-child {
+                    border-bottom: 0;
+                }
+
+            .log-table tbody td {
+                border-bottom: 0;
+                padding: 0.55rem 1rem;
+            }
+
+                .log-table tbody td::before {
+                    color: #72817e;
+                    content: attr(data-label);
+                    display: block;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    letter-spacing: 0.035em;
+                    margin-bottom: 0.2rem;
+                    text-transform: uppercase;
+                }
+
+            .log-table tbody tr.patient-admitted td:first-child,
+            .log-table tbody tr.patient-discharged td:first-child {
+                border-left-width: 4px;
+            }
+    }
+</style>
+
 <div class="page-header">
     <div>
         <h1 class="page-title">Patient list</h1>
@@ -18,60 +124,70 @@
 
 @if (TempData["Message"] is string message)
 {
-    <div class="alert alert-success">@message</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
 @if (Model.Patients.Count == 0)
 {
-    <div class="empty-state">
+    <div class="empty-panel">
         <p class="text-muted mb-3">No patients registered yet.</p>
         <a class="btn btn-primary" asp-page="Create">Add new patient</a>
     </div>
 }
 else
 {
-    <div class="app-table-wrapper table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Patient</th>
-                    <th>Status</th>
-                    <th>Medications</th>
-                    <th>Admitted</th>
-                    <th>Discharged</th>
-                    <th>Nurse Call</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var patient in Model.Patients)
-                {
+    <div class="log-card app-card card">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2">
+            <span>All patients</span>
+            <span class="small text-muted fw-normal">@Model.Patients.Count total</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table log-table align-middle">
+                <thead>
                     <tr>
-                        <td class="fw-medium">@patient.PatientName</td>
-                        <td>
-                            <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
-                                @patient.Status
-                            </span>
-                        </td>
-                        <td class="text-muted small">@patient.MedicationsSummary</td>
-                        <td>@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
-                        <td>@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
-                        <td>
-                            @if (patient.NurseCall)
-                            {
-                                <span class="badge bg-success">Active</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger">Inactive</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
-                        </td>
+                        <th>Patient</th>
+                        <th>Status</th>
+                        <th>Medications</th>
+                        <th>Admitted</th>
+                        <th>Discharged</th>
+                        <th>Nurse Call</th>
+                        <th class="text-end">Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var patient in Model.Patients)
+                    {
+                        <tr class="@(patient.IsDischarged ? "patient-discharged" : "patient-admitted")">
+                            <td data-label="Patient" class="fw-medium">@patient.PatientName</td>
+                            <td data-label="Status">
+                                <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
+                                    @patient.Status
+                                </span>
+                            </td>
+                            <td data-label="Medications" class="text-muted small">@patient.MedicationsSummary</td>
+                            <td data-label="Admitted">@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                            <td data-label="Discharged">@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                            <td data-label="Nurse Call">
+                                @if (patient.NurseCall)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </td>
+                            <td data-label="Actions" class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 }

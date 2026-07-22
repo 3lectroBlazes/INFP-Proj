@@ -1,42 +1,40 @@
 @using INFP_Proj.ViewModel
 @model AdminVitalsChartViewModel
 
-<div class="app-card card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-12">
-                <label for="patientIds" class="form-label fw-semibold">Select patients</label>
-                <p class="text-muted small mb-2">Hold Ctrl (Windows) or Cmd (Mac) to select multiple patients. Compare vitals on the charts below.</p>
-                @if (Model.Patients.Count == 0)
-                {
-                    <p class="text-muted mb-0">No patients available. Add patients from the patient list first.</p>
-                }
-                else
-                {
-                    <select id="patientIds" name="patientIds" class="form-select" multiple size="@Math.Min(8, Math.Max(4, Model.Patients.Count))">
-                        @foreach (var patient in Model.Patients)
-                        {
-                            if (Model.SelectedPatientIds.Contains(patient.PatientId))
-                            {
-                                <option value="@patient.PatientId" selected="selected">@patient.DisplayName</option>
-                            }
-                            else
-                            {
-                                <option value="@patient.PatientId">@patient.DisplayName</option>
-                            }
-                        }
-                    </select>
-                }
-            </div>
-            @if (Model.Patients.Count > 0)
+<div class="patient-summary mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-12">
+            <label for="patientIds" class="form-label fw-semibold">Select patients</label>
+            <p class="text-muted small mb-2">Hold Ctrl (Windows) or Cmd (Mac) to select multiple patients. Compare vitals on the charts below.</p>
+            @if (Model.Patients.Count == 0)
             {
-                <div class="col-12 d-flex flex-wrap gap-2">
-                    <button type="submit" class="btn btn-primary">Apply selection</button>
-                    <a class="btn btn-outline-secondary" asp-page="/Admin/Tracker">Clear selection</a>
-                </div>
+                <p class="text-muted mb-0">No patients available. Add patients from the patient list first.</p>
             }
-        </form>
-    </div>
+            else
+            {
+                <select id="patientIds" name="patientIds" class="form-select" multiple size="@Math.Min(8, Math.Max(4, Model.Patients.Count))">
+                    @foreach (var patient in Model.Patients)
+                    {
+                        if (Model.SelectedPatientIds.Contains(patient.PatientId))
+                        {
+                            <option value="@patient.PatientId" selected="selected">@patient.DisplayName</option>
+                        }
+                        else
+                        {
+                            <option value="@patient.PatientId">@patient.DisplayName</option>
+                        }
+                    }
+                </select>
+            }
+        </div>
+        @if (Model.Patients.Count > 0)
+        {
+            <div class="col-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">Apply selection</button>
+                <a class="btn btn-outline-secondary" asp-page="/Admin/Tracker">Clear selection</a>
+            </div>
+        }
+    </form>
 </div>
 
 @if (Model.SelectedPatientIds.Count > 0)
@@ -50,39 +48,41 @@
 @if (Model.SelectedPatientIds.Count == 1)
 {
     <form id="vitals-simulator-antiforgery">@Html.AntiForgeryToken()</form>
-    <div class="app-card card mb-4" id="vitals-simulator" data-patient-id="@Model.SelectedPatientIds[0]" data-simulate-url="@Url.Page("/Admin/Tracker", "SimulateStep")">
+    <div class="vital-card mb-4" id="vitals-simulator" data-patient-id="@Model.SelectedPatientIds[0]" data-simulate-url="@Url.Page("/Admin/Tracker", "SimulateStep")">
         <div class="card-body">
-            <h2 class="h6 text-primary mb-1">Simulate vitals</h2>
-            <p class="text-muted small mb-3">
-                Sends live spike/dip readings to the vitals table for 60 seconds, then stops automatically.
-            </p>
+            <div class="vital-header">
+                <h2 class="vital-title mb-1">Simulate vitals</h2>
+                <p class="text-muted small mb-0">
+                    Sends live spike/dip readings to the vitals table for 60 seconds, then stops automatically.
+                </p>
+            </div>
             <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="fw-semibold mb-2">Heart rate</div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill sim-btn" data-vital="HeartRate" data-direction="Spike" data-label="heart rate spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm flex-fill sim-btn" data-vital="HeartRate" data-direction="Dip" data-label="heart rate dip">Dip</button>
+                <div class="col-md-6 col-lg-3">
+                    <div class="section-label mb-2">Heart rate</div>
+                    <div class="simulation-buttons">
+                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="HeartRate" data-direction="Spike" data-label="heart rate spike">Spike</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="HeartRate" data-direction="Dip" data-label="heart rate dip">Dip</button>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="fw-semibold mb-2">Breathing rate</div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill sim-btn" data-vital="RespiratoryRate" data-direction="Spike" data-label="breathing rate spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm flex-fill sim-btn" data-vital="RespiratoryRate" data-direction="Dip" data-label="breathing rate dip">Dip</button>
+                <div class="col-md-6 col-lg-3">
+                    <div class="section-label mb-2">Breathing rate</div>
+                    <div class="simulation-buttons">
+                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="RespiratoryRate" data-direction="Spike" data-label="breathing rate spike">Spike</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="RespiratoryRate" data-direction="Dip" data-label="breathing rate dip">Dip</button>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="fw-semibold mb-2">Systolic Blood pressure</div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill sim-btn" data-vital="SystolicBloodPressure" data-direction="Spike" data-label="blood pressure spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm flex-fill sim-btn" data-vital="SystolicBloodPressure" data-direction="Dip" data-label="blood pressure dip">Dip</button>
+                <div class="col-md-6 col-lg-3">
+                    <div class="section-label mb-2">Systolic pressure</div>
+                    <div class="simulation-buttons">
+                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="SystolicBloodPressure" data-direction="Spike" data-label="blood pressure spike">Spike</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="SystolicBloodPressure" data-direction="Dip" data-label="blood pressure dip">Dip</button>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="fw-semibold mb-2">Diastolic Blood pressure</div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-danger btn-sm flex-fill sim-btn" data-vital="DiastolicBloodPressure" data-direction="Spike" data-label="blood pressure spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm flex-fill sim-btn" data-vital="DiastolicBloodPressure" data-direction="Dip" data-label="blood pressure dip">Dip</button>
+                <div class="col-md-6 col-lg-3">
+                    <div class="section-label mb-2">Diastolic pressure</div>
+                    <div class="simulation-buttons">
+                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="DiastolicBloodPressure" data-direction="Spike" data-label="blood pressure spike">Spike</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="DiastolicBloodPressure" data-direction="Dip" data-label="blood pressure dip">Dip</button>
                     </div>
                 </div>
             </div>
@@ -95,7 +95,7 @@
 }
 else if (Model.Patients.Count > 0)
 {
-    <div class="alert alert-secondary mb-4">Select exactly one patient above to simulate vitals.</div>
+    <div class="simulation-note mb-4">Select exactly one patient above to simulate vitals.</div>
 }
 
 @if (Model.Series.Count == 0 || Model.Labels.Count == 0)
@@ -106,9 +106,11 @@ else
 {
     <div class="row g-4">
         <div class="col-lg-6">
-            <div class="app-card card h-100">
+            <div class="vital-card h-100">
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Heart rate (bpm)</h2>
+                    <div class="vital-header">
+                        <h2 class="vital-title">Heart rate (bpm)</h2>
+                    </div>
                     <div class="vitals-chart-container">
                         <canvas id="heartRateChart"></canvas>
                     </div>
@@ -116,9 +118,11 @@ else
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="app-card card h-100">
+            <div class="vital-card h-100">
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Breathing rate (breaths/min)</h2>
+                    <div class="vital-header">
+                        <h2 class="vital-title">Breathing rate (breaths/min)</h2>
+                    </div>
                     <div class="vitals-chart-container">
                         <canvas id="breathingRateChart"></canvas>
                     </div>
@@ -126,9 +130,11 @@ else
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="app-card card h-100">
+            <div class="vital-card h-100">
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Systolic Blood pressure (mmHg)</h2>
+                    <div class="vital-header">
+                        <h2 class="vital-title">Systolic blood pressure (mmHg)</h2>
+                    </div>
                     <div class="vitals-chart-container">
                         <canvas id="systolicBloodPressureChart"></canvas>
                     </div>
@@ -136,9 +142,11 @@ else
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="app-card card h-100">
+            <div class="vital-card h-100">
                 <div class="card-body">
-                    <h2 class="h6 text-primary mb-3">Diastolic Blood Pressure (mmHg)</h2>
+                    <div class="vital-header">
+                        <h2 class="vital-title">Diastolic blood pressure (mmHg)</h2>
+                    </div>
                     <div class="vitals-chart-container">
                         <canvas id="diastolicBloodPressureChart"></canvas>
                     </div>
