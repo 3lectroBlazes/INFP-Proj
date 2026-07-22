@@ -10,17 +10,24 @@
             <i class="bi bi-calendar-week"></i>
             Appointments Calendar
         </h2>
-
         <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
             <i class="bi bi-plus-lg me-1"></i> Add Appointment
         </button>
     </div>
     <hr />
 
-    <div id="calendar" class="app-card p-3"></div>
+    <div class="d-flex align-items-center mb-3 gap-3">
+        <span class="fw-bold small text-muted text-uppercase">Legend:</span>
+        <span class="badge rounded-pill" style="background-color: #0d6efd;">Normal</span>
+        <span class="badge rounded-pill" style="background-color: #fd7e14;">Urgent</span>
+        <span class="badge rounded-pill" style="background-color: #dc3545;">Emergency</span>
+    </div>
+
+    <div id="calendar" class="app-card p-3 shadow-sm rounded"></div>
+</div>
 </div>
 
-<!-- Add Appointment Modal -->
+<!-- Add Modal -->
 <div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-top border-success border-4">
@@ -34,6 +41,12 @@
                         <label class="form-label fw-bold">Patient ID</label>
                         <select id="addPatientId" class="form-select" asp-items="Model.PatientsList" required>
                             <option value="">-- Search by Name or ID --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Doctor</label>
+                        <select id="addDoctorId" class="form-select" asp-items="Model.DoctorsList" required>
+                            <option value="">-- Assign a Doctor --</option>
                         </select>
                     </div>
                     <div class="row">
@@ -64,13 +77,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="btnSubmitAdd">Save Appointment</button>
+                <button type="button" class="btn btn-success" id="btnSubmitAdd">Save</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Action / Preview Modal -->
+<!-- Preview Modal -->
 <div class="modal fade" id="actionModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -82,26 +95,22 @@
                 <div class="card mb-4 bg-light">
                     <div class="card-body text-start">
                         <p class="mb-1"><strong>Patient:</strong> <span id="prevPatient"></span></p>
+                        <p class="mb-1"><strong>Doctor:</strong> <span id="prevDoctor"></span></p>
                         <p class="mb-1"><strong>Date & Time:</strong> <span id="prevDateTime"></span></p>
                         <p class="mb-1"><strong>Urgency:</strong> <span id="prevUrgency"></span></p>
                         <p class="mb-0"><strong>Reason:</strong> <span id="prevReason"></span></p>
                     </div>
                 </div>
-                <p class="text-muted small mb-3 text-center">Choose an action for this appointment.</p>
                 <div class="d-flex justify-content-center gap-2">
-                    <button type="button" class="btn btn-primary" id="btnGoToUpdate">
-                        <i class="bi bi-pencil-square me-2"></i> Update
-                    </button>
-                    <button type="button" class="btn btn-danger" id="btnGoToDelete">
-                        <i class="bi bi-trash me-2"></i> Delete
-                    </button>
+                    <button type="button" class="btn btn-primary" id="btnGoToUpdate">Update</button>
+                    <button type="button" class="btn btn-danger" id="btnGoToDelete">Delete</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Restricted Update Modal (No Patient ID or Reason) -->
+<!-- Update Modal (No Patient/Reason) -->
 <div class="modal fade" id="updateModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-top border-primary border-4">
@@ -112,6 +121,14 @@
             <div class="modal-body">
                 <form id="updateForm">
                     <input type="hidden" id="updateApptId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Doctor</label>
+                        <select id="updateDoctorId" class="form-select" asp-items="Model.DoctorsList" required>
+                            <option value="">-- Assign a Doctor --</option>
+                        </select>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Date</label>
@@ -159,10 +176,7 @@
             var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
             var currentEventData = null;
 
-            var addPatientSelect = new TomSelect("#addPatientId", {
-                create: false,
-                sortField: { field: "text", direction: "asc" }
-            });
+            var addPatientSelect = new TomSelect("#addPatientId", { create: false, sortField: { field: "text", direction: "asc" } });
 
             function getFormattedDateTime(dateObj) {
                 let year = dateObj.getFullYear();
@@ -220,9 +234,7 @@
                         opt.hidden = false; opt.disabled = false; opt.style.display = '';
                     }
                 }
-                if (timeSelect.selectedIndex >= 0 && timeSelect.options[timeSelect.selectedIndex].disabled) {
-                    timeSelect.value = "";
-                }
+                if (timeSelect.selectedIndex >= 0 && timeSelect.options[timeSelect.selectedIndex].disabled) timeSelect.value = "";
             }
 
             document.getElementById('addModal').addEventListener('show.bs.modal', function (e) {
@@ -231,17 +243,13 @@
                     if (typeof addPatientSelect !== 'undefined') addPatientSelect.clear();
                     let timeSelect = document.getElementById('addTime');
                     for (let i = 0; i < timeSelect.options.length; i++) {
-                        timeSelect.options[i].hidden = false;
-                        timeSelect.options[i].disabled = false;
-                        timeSelect.options[i].style.display = '';
+                        timeSelect.options[i].hidden = false; timeSelect.options[i].disabled = false; timeSelect.options[i].style.display = '';
                     }
                 }
             });
 
             ['change', 'input'].forEach(evtType => {
-                document.getElementById('addDate').addEventListener(evtType, function(e) {
-                    filterAvailableTimes(e.target.value, 'addTime');
-                });
+                document.getElementById('addDate').addEventListener(evtType, function(e) { filterAvailableTimes(e.target.value, 'addTime'); });
                 document.getElementById('updateDate').addEventListener(evtType, function(e) {
                     let currentApptId = document.getElementById('updateApptId').value;
                     filterAvailableTimes(e.target.value, 'updateTime', currentApptId);
@@ -251,27 +259,17 @@
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'timeGridWeek',
                 height: "auto",
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                slotMinTime: '09:00:00',
-                slotMaxTime: '18:00:00',
-                slotDuration: '01:00:00',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+                slotMinTime: '09:00:00', slotMaxTime: '18:00:00', slotDuration: '01:00:00',
                 businessHours: { startTime: '09:00', endTime: '18:00' },
                 events: '?handler=FetchAppointments',
                 selectable: true,
 
                 dateClick: function(info) {
                     let now = new Date();
-                    if (info.date.setHours(0,0,0,0) < now.setHours(0,0,0,0)) {
-                        alert("Appointments cannot be scheduled in the past."); return;
-                    }
-                    let hour = info.date.getHours();
-                    if (hour >= 18) {
-                        alert("Appointments cannot be scheduled after the 5:00 PM slot."); return;
-                    }
+                    if (info.date.setHours(0,0,0,0) < now.setHours(0,0,0,0)) { alert("Cannot schedule in the past."); return; }
+                    if (info.date.getHours() >= 18) { alert("Cannot schedule after 5:00 PM."); return; }
+
                     document.getElementById('addForm').reset();
                     addPatientSelect.clear();
 
@@ -281,40 +279,37 @@
 
                     let timeSelect = document.getElementById('addTime');
                     let targetOption = Array.from(timeSelect.options).find(opt => opt.value === formatted.time);
-                    if (targetOption && !targetOption.disabled) {
-                        timeSelect.value = formatted.time;
-                    } else {
-                        timeSelect.value = "";
-                    }
+                    timeSelect.value = (targetOption && !targetOption.disabled) ? formatted.time : "";
                     addModal.show();
                 },
 
                 eventClick: function(info) {
                     currentEventData = info.event;
                     document.getElementById('prevPatient').innerText = currentEventData.extendedProps.patientName;
+                    document.getElementById('prevDoctor').innerText = currentEventData.extendedProps.doctorName;
                     document.getElementById('prevReason').innerText = currentEventData.extendedProps.reason;
                     document.getElementById('prevUrgency').innerText = currentEventData.extendedProps.urgency;
+
                     let dt = currentEventData.start;
                     document.getElementById('prevDateTime').innerText = dt.toLocaleDateString() + ' at ' + dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     actionModal.show();
                 }
             });
-
             calendar.render();
 
             document.getElementById('btnSubmitAdd').addEventListener('click', function() {
                 let dateVal = document.getElementById('addDate').value;
                 let timeVal = document.getElementById('addTime').value;
                 let patientVal = document.getElementById('addPatientId').value;
+                let doctorVal = document.getElementById('addDoctorId').value;
                 let reasonVal = document.getElementById('addReason').value;
 
-                if (!dateVal || !timeVal || !patientVal || !reasonVal) {
-                    alert("Please fill out all required fields."); return;
-                }
+                if (!dateVal || !timeVal || !patientVal || !reasonVal || !doctorVal) { alert("Please fill out all required fields."); return; }
 
                 let data = {
                     AppointmentRequestID: 0,
                     PatientID: parseInt(patientVal),
+                    DoctorID: doctorVal,
                     Reason: reasonVal,
                     DateTime: dateVal + 'T' + timeVal + ':00',
                     Urgency: document.getElementById('addUrgency').value
@@ -326,16 +321,10 @@
                     body: JSON.stringify(data)
                 }).then(res => res.json()).then(data => {
                     if(data.success) {
-                        addModal.hide();
-                        document.getElementById('addForm').reset();
+                        addModal.hide(); document.getElementById('addForm').reset();
                         if (typeof addPatientSelect !== 'undefined') addPatientSelect.clear();
                         calendar.refetchEvents();
-                    } else {
-                        alert(data.message || 'Error adding appointment.');
-                    }
-                }).catch(err => {
-                    console.error(err);
-                    alert('A network error occurred.');
+                    } else { alert(data.message || 'Error adding appointment.'); }
                 });
             });
 
@@ -343,6 +332,7 @@
                 actionModal.hide();
                 document.getElementById('updateApptId').value = currentEventData.id;
                 document.getElementById('updateUrgency').value = currentEventData.extendedProps.urgency;
+                document.getElementById('updateDoctorId').value = currentEventData.extendedProps.doctorId || "";
 
                 let eventDate = currentEventData.start;
                 let formatted = getFormattedDateTime(eventDate);
@@ -356,13 +346,13 @@
             document.getElementById('btnSubmitUpdate').addEventListener('click', function() {
                 let dateVal = document.getElementById('updateDate').value;
                 let timeVal = document.getElementById('updateTime').value;
+                let doctorVal = document.getElementById('updateDoctorId').value;
 
-                if (!dateVal || !timeVal) {
-                    alert("Please fill out all required fields."); return;
-                }
+                if (!dateVal || !timeVal || !doctorVal) { alert("Please fill out all required fields."); return; }
 
                 let data = {
                     AppointmentRequestID: parseInt(document.getElementById('updateApptId').value),
+                    DoctorID: doctorVal,
                     DateTime: dateVal + 'T' + timeVal + ':00',
                     Urgency: document.getElementById('updateUrgency').value
                 };
@@ -372,32 +362,19 @@
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
                     body: JSON.stringify(data)
                 }).then(res => res.json()).then(data => {
-                    if(data.success) {
-                        updateModal.hide();
-                        calendar.refetchEvents();
-                    } else {
-                        alert(data.message || 'Error updating appointment.');
-                    }
-                }).catch(err => {
-                    console.error(err);
-                    alert('A network error occurred.');
+                    if(data.success) { updateModal.hide(); calendar.refetchEvents(); }
+                    else { alert(data.message || 'Error updating appointment.'); }
                 });
             });
 
             document.getElementById('btnGoToDelete').addEventListener('click', function() {
                 if(!confirm("Are you sure you want to permanently delete this appointment?")) return;
-                let id = parseInt(currentEventData.id);
                 fetch('?handler=Delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-                    body: JSON.stringify(id)
+                    body: JSON.stringify(parseInt(currentEventData.id))
                 }).then(res => res.json()).then(data => {
-                    if(data.success) {
-                        actionModal.hide();
-                        calendar.refetchEvents();
-                    } else {
-                        alert('Error deleting appointment.');
-                    }
+                    if(data.success) { actionModal.hide(); calendar.refetchEvents(); }
                 });
             });
         });
