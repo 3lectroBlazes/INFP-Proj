@@ -4,6 +4,7 @@ using INFP_Proj.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260721220724_AddLogAcknowledgements")]
+    partial class AddLogAcknowledgements
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -470,29 +473,29 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThresholdID"));
 
-                    b.Property<int>("DBPLowerThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("DBPLowerThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("DBPUpperThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("DBPUpperThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("HeartRateLowerPercentageThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("HeartRateLowerPercentageThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("HeartRateUpperPercentageThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("HeartRateUpperPercentageThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("RespiratoryRateLowerThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("RespiratoryRateLowerThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("RespiratoryRateUpperPercentageThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("RespiratoryRateUpperPercentageThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("SBPLowerThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("SBPLowerThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("SBPUpperThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("SBPUpperThreshold")
+                        .HasColumnType("real");
 
                     b.HasKey("ThresholdID");
 
