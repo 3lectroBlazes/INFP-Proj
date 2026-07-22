@@ -10,9 +10,12 @@ namespace INFP_Proj.Services
 
         private readonly AppDbContext _context;
 
-        public VitalsSimulationService(AppDbContext context)
+        private readonly VitalsAlertService _vitalsAlertService;
+
+        public VitalsSimulationService(AppDbContext context, VitalsAlertService vitalsAlertService)
         {
             _context = context;
+            _vitalsAlertService = vitalsAlertService;
         }
 
         public async Task<Vitals?> RecordSimulatedReadingAsync(int patientId, string vital, string direction)
@@ -81,6 +84,7 @@ namespace INFP_Proj.Services
 
             _context.Vitals.Add(reading);
             await _context.SaveChangesAsync();
+            await _vitalsAlertService.EvaluateVitalsAsync(reading);
             return reading;
         }
 
