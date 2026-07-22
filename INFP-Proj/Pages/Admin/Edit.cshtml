@@ -4,6 +4,77 @@
     ViewData["Title"] = "Edit Patient";
 }
 
+<style>
+    .dashboard-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+        .dashboard-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.15rem;
+        }
+
+        .dashboard-card .card-body {
+            padding: 1.15rem;
+        }
+
+        .dashboard-card.section-danger .card-header {
+            color: #b91c1c;
+        }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid #edf2f1;
+    }
+
+        .detail-row:last-child {
+            border-bottom: 0;
+        }
+
+    .detail-label {
+        color: #6c757d;
+        font-size: 0.82rem;
+    }
+
+    .detail-value {
+        text-align: right;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #263b38;
+    }
+
+    .doctor-message {
+        background: #f8faf9;
+        border: 1px solid #e1eae8;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+        .doctor-message.doctor-message-completed {
+            background: #f0f9f5;
+            border-color: #bfe3d1;
+        }
+
+    @@media (max-width: 767.98px) {
+        .detail-row {
+            display: block;
+        }
+
+        .detail-value {
+            text-align: left;
+            margin-top: 0.2rem;
+        }
+    }
+</style>
+
 <div class="page-header">
     <div>
         <h1 class="page-title">@Model.Patient.PatientName</h1>
@@ -16,32 +87,42 @@
 
 @if (TempData["Message"] is string message)
 {
-    <div class="alert alert-success">@message</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 @if (TempData["Error"] is string error)
 {
-    <div class="alert alert-danger">@error</div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @error
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
-<div class="app-card card mb-4">
+<div class="dashboard-card app-card card mb-4">
     <div class="card-header">Patient details</div>
     <div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3 text-muted">Status</dt>
-            <dd class="col-sm-9">
+        <div class="detail-row">
+            <span class="detail-label">Status</span>
+            <span class="detail-value">
                 <span class="badge @(Model.Patient.IsDischarged ? "bg-secondary" : "bg-success")">
                     @Model.Patient.Status
                 </span>
-            </dd>
-            <dt class="col-sm-3 text-muted">Admitted</dt>
-            <dd class="col-sm-9">@(Model.Patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</dd>
-            <dt class="col-sm-3 text-muted">Discharged</dt>
-            <dd class="col-sm-9">@(Model.Patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</dd>
-        </dl>
+            </span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Admitted</span>
+            <span class="detail-value">@(Model.Patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Discharged</span>
+            <span class="detail-value">@(Model.Patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</span>
+        </div>
     </div>
 </div>
 
-<div class="app-card card mb-4">
+<div class="dashboard-card app-card card mb-4">
     <div class="card-header">Medications</div>
     <div class="card-body">
         @if (Model.Patient.MedicationLists.Count == 0)
@@ -108,7 +189,7 @@
         @if (!Model.Patient.IsDischarged)
         {
             <hr class="my-4" />
-            <h3 class="h6 text-muted text-uppercase mb-3">Add medication</h3>
+            <h3 class="h6 text-primary mb-3">Add medication</h3>
             <form method="post" asp-page-handler="AddMedication" asp-route-id="@Model.Patient.PatientId" class="row g-3 align-items-end">
                 <div class="col-md-5">
                     <label asp-for="Patient.NewMedicationID" class="form-label">Medication</label>
@@ -128,33 +209,31 @@
     </div>
 </div>
 
-<div class="app-card card mb-4">
-    <div class="card-header">Doctor's Request</div>
+<div class="dashboard-card app-card card mb-4">
+    <div class="card-header">Doctor's request</div>
     <div class="card-body">
 
         @foreach (var request in Model.DoctorRequests)
         {
-            <div class="card mb-2 @(request.Completed ? "bg-success bg-gradient text-white" : "")">
-                <div class="card-body">
-                    <p class="mb-1">@request.RequestMessage</p>
-                    @if (request.Completed)
-                    {
-                        <p class="mb-1"><strong>Reply:</strong> @request.ReplyMessage</p>
-                    }
+            <div class="doctor-message mb-3 @(request.Completed ? "doctor-message-completed" : "")">
+                <p class="mb-1">@request.RequestMessage</p>
+                @if (request.Completed)
+                {
+                    <p class="mb-1"><strong>Reply:</strong> @request.ReplyMessage</p>
+                }
 
-                    <small class="@(request.Completed ? "text-white-50" : "text-muted")">
-                        @request.RequestDate.ToString("dd MMM yyyy, hh:mm tt")
-                    </small>
+                <small class="text-muted">
+                    @request.RequestDate.ToString("dd MMM yyyy, hh:mm tt")
+                </small>
 
-                    @if (!request.Completed)
-                    {
-                        <form method="post" asp-page-handler="ReplyDoctorRequest" asp-route-id="@Model.Patient.PatientId" class="d-flex gap-2 mt-2">
-                            <input type="hidden" name="requestId" value="@request.DoctorRequestID" />
-                            <input type="text" name="ReplyMessage" class="form-control" placeholder="Text" />
-                            <button type="submit" class="btn btn-primary">Submit</button>
-                        </form>
-                    }
-                </div>
+                @if (!request.Completed)
+                {
+                    <form method="post" asp-page-handler="ReplyDoctorRequest" asp-route-id="@Model.Patient.PatientId" class="d-flex gap-2 mt-2">
+                        <input type="hidden" name="requestId" value="@request.DoctorRequestID" />
+                        <input type="text" name="ReplyMessage" class="form-control" placeholder="Text" />
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                }
             </div>
         }
 
@@ -171,7 +250,7 @@
     </div>
 </div>
 
-<div class="app-card card section-danger">
+<div class="dashboard-card app-card card section-danger">
     <div class="card-header">Discharge</div>
     <div class="card-body">
         @if (Model.Patient.IsDischarged)
