@@ -1,384 +1,1027 @@
 ﻿@page
 @model INFP_Proj.Pages.User.CareUpdatesModel
-@{
-    ViewData["Title"] = "My Care Updates";
-    var data = Model.CareData;
 
-    string AppointmentStatusBadge(string status)
+@{
+    ViewData["Title"] = "Appointments & Care Updates";
+
+    string AppointmentStatusBadge(string? status)
     {
-        return status switch
+        return status?.Trim().ToLowerInvariant() switch
         {
-            "Approved" => "bg-success",
-            "Rejected" => "bg-danger",
-            "Rescheduled" => "bg-warning text-dark",
-            "Pending" => "bg-secondary",
+            "approved" => "bg-success",
+            "scheduled" => "bg-success",
+            "rescheduled" => "bg-info text-dark",
+            "pending" => "bg-warning text-dark",
+            "rejected" => "bg-danger",
+            "cancelled" => "bg-dark",
+            "completed" => "bg-secondary",
             _ => "bg-secondary"
         };
     }
 
-    string UrgencyBadge(string urgency)
+    string UrgencyBadge(string? urgency)
     {
-        return urgency switch
+        return urgency?.Trim().ToLowerInvariant() switch
         {
-            "Urgent" => "bg-danger",
+            "urgent" => "bg-danger",
+            "emergency" => "bg-danger",
             _ => "bg-primary"
+        };
+    }
+
+    string ChangeRequestBadge(string? status)
+    {
+        return status?.Trim().ToLowerInvariant() switch
+        {
+            "approved" => "bg-success",
+            "rejected" => "bg-danger",
+            "pending" => "bg-warning text-dark",
+            _ => "bg-secondary"
         };
     }
 }
 
+<style>
+    .care-hero {
+        background: linear-gradient(135deg, #087f73, #0a9b8c);
+        border-radius: 18px;
+        color: #ffffff;
+        padding: 1.75rem;
+    }
+
+        .care-hero p {
+            color: rgba(255, 255, 255, 0.86);
+        }
+
+    .care-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        height: 100%;
+        overflow: hidden;
+    }
+
+        .care-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.15rem;
+        }
+
+        .care-card .card-body {
+            padding: 1.2rem;
+        }
+
+    .appointment-date-panel {
+        background: #f4f8f7;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .appointment-date {
+        color: #173f3b;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .appointment-number {
+        color: #006a72;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .detail-row {
+        border-bottom: 1px solid #edf2f1;
+        padding: 0.7rem 0;
+    }
+
+        .detail-row:last-child {
+            border-bottom: 0;
+        }
+
+    .detail-label {
+        color: #6c757d;
+        display: block;
+        font-size: 0.78rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .detail-value {
+        color: #263b38;
+        font-weight: 600;
+    }
+
+    .section-heading {
+        margin-bottom: 1rem;
+    }
+
+        .section-heading h2 {
+            color: #173f3b;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+    .pending-change-panel {
+        background: #fff8e7;
+        border: 1px solid #f2d58d;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .request-change-box {
+        border-top: 1px solid #edf2f1;
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+
+        .request-change-box summary {
+            cursor: pointer;
+            display: inline-block;
+            list-style: none;
+        }
+
+            .request-change-box summary::-webkit-details-marker {
+                display: none;
+            }
+
+    .request-change-form {
+        background: #f8faf9;
+        border-radius: 12px;
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+
+    .info-note {
+        background: #f4f8ff;
+        border-left: 4px solid #0d6efd;
+        border-radius: 10px;
+        color: #56657a;
+        font-size: 0.85rem;
+        padding: 0.85rem 1rem;
+    }
+
+    .empty-panel {
+        background: #f8faf9;
+        border: 1px dashed #cbd9d6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .doctor-message {
+        background: #f8faf9;
+        border: 1px solid #e1eae8;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .table thead th {
+        color: #50615e;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    @@media (max-width: 767.98px) {
+        .care-hero {
+            padding: 1.25rem;
+        }
+    }
+</style>
+
 <div class="page-header">
     <div>
-        <h1 class="page-title">My Care Updates</h1>
+        <h1 class="page-title">
+            Appointments & Care Updates
+        </h1>
+
         <p class="page-subtitle text-muted">
-            View upcoming appointments, doctor updates, and submit questions about your care.
+            Review confirmed appointments, request another date
+            and book future appointments.
         </p>
     </div>
+
     <div class="page-actions">
-        <a class="btn btn-outline-secondary btn-sm" asp-page="/User/Dashboard">Dashboard</a>
+        <a asp-page="/User/Dashboard"
+           class="btn btn-outline-secondary btn-sm">
+            Back to dashboard
+        </a>
     </div>
 </div>
 
 @if (TempData["CareUpdateMessage"] != null)
 {
-    <div class="alert alert-info">
+    <div class="alert alert-success alert-dismissible fade show">
         @TempData["CareUpdateMessage"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
     </div>
 }
 
-@if (!data.HasPatientRecord)
+@if (TempData["CareUpdateError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["CareUpdateError"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
+    </div>
+}
+
+@if (!Model.HasPatientRecord)
 {
     <div class="alert alert-info">
-        You do not have an active patient record linked to your account yet.
+        No patient record is linked to this account.
     </div>
 }
 else
 {
-    <div class="hero-panel mb-4">
-        <h1 class="mb-3">Care updates for @data.PatientName</h1>
-        <p>Keep track of upcoming appointments and communication with the doctor.</p>
-    </div>
+    <section class="care-hero mb-4">
+        <div class="d-flex flex-column flex-lg-row
+                        justify-content-between align-items-lg-center gap-3">
 
-    <div class="row g-4 mb-4">
-        <div class="col-lg-5">
-            <div class="app-card card h-100">
-                <div class="card-header">
-                    Upcoming Appointment
+            <div>
+                <div class="small text-uppercase fw-semibold mb-2">
+                    Patient appointment portal
+                </div>
+
+                <h1 class="h3 mb-2">
+                    Care updates for @Model.PatientName
+                </h1>
+
+                <p class="mb-0">
+                    Confirm appointments given by Reception and
+                    submit requests without changing confirmed dates.
+                </p>
+            </div>
+
+            <span class="badge bg-light text-success
+                             rounded-pill px-3 py-2">
+                Patient ID: @Model.PatientId
+            </span>
+        </div>
+    </section>
+
+    <!-- Confirmed appointments -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Appointments from Reception</h2>
+
+            <p class="text-muted mb-0">
+                These appointments have been scheduled or confirmed
+                by Reception.
+            </p>
+        </div>
+
+        @if (Model.ConfirmedAppointments.Count == 0)
+        {
+            <div class="empty-panel">
+                <h3 class="h6 mb-2">
+                    No confirmed upcoming appointments
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Approved appointments will appear here.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (
+                        var appointment
+                        in Model.ConfirmedAppointments)
+                {
+                    <div class="col-lg-6">
+                        <article class="care-card app-card card">
+
+                            <div class="card-header d-flex
+                                                    justify-content-between
+                                                    align-items-center gap-2">
+
+                                <span>
+                                    Appointment
+                                    #@appointment.AppointmentRequestID
+                                </span>
+
+                                <span class="badge
+                                                @AppointmentStatusBadge(
+                                      appointment.Status)">
+                        @appointment.Status
+                    </span>
                 </div>
 
                 <div class="card-body">
-                    <p class="mb-2">
-                        <strong>Title:</strong> @data.UpcomingAppointment.Title
-                    </p>
+                    <div class="appointment-date-panel mb-3">
 
-                    <p class="mb-2">
-                        <strong>Doctor:</strong> @data.UpcomingAppointment.DoctorName
-                    </p>
+                        <span class="detail-label">
+                            Confirmed date and time
+                        </span>
 
-                    <p class="mb-2">
-                        <strong>Date & Time:</strong>
-                        @data.UpcomingAppointment.AppointmentDateTime.ToString("yyyy-MM-dd HH:mm")
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Location:</strong> @data.UpcomingAppointment.Location
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Status:</strong>
-                        @if (data.AppointmentAcknowledged)
-                        {
-                            <span class="badge bg-success">Acknowledged</span>
-                        }
-                        else if (!string.IsNullOrWhiteSpace(data.AppointmentChangeRequest))
-                        {
-                            <span class="badge bg-warning text-dark">Change Requested</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-success">@data.UpcomingAppointment.Status</span>
-                        }
-                    </p>
-
-                    <p class="mb-3 text-muted">
-                        @data.UpcomingAppointment.Purpose
-                    </p>
-
-                    @if (!string.IsNullOrWhiteSpace(data.AppointmentChangeRequest))
-                    {
-                        <div class="alert alert-info mb-3">
-                            <strong>Change request submitted:</strong>
-                            @data.AppointmentChangeRequest
+                        <div class="appointment-date">
+                            @Model.FormatAppointmentDate(
+                                                        appointment.DateTime)
                         </div>
-                    }
+                    </div>
 
-                    @if (!data.AppointmentAcknowledged)
-                    {
-                        <form method="post" asp-page-handler="AcknowledgeAppointment" class="mb-3">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                Acknowledge Appointment
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Reason
+                        </span>
+
+                        <div class="detail-value">
+                            @appointment.Reason
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Urgency
+                        </span>
+
+                        <span class="badge
+                                        @UrgencyBadge(
+                                                                          appointment.Urgency)">
+                            @appointment.Urgency
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Patient acknowledgement
+                        </span>
+
+                        @if (
+                                                appointment
+                                                .PatientAcknowledged)
+                                    {
+                                        <span class="badge bg-success">
+                                            Acknowledged
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge
+                                                                     bg-warning text-dark">
+                                            Awaiting acknowledgement
+                                        </span>
+                                    }
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                                    appointment.DoctorResponse))
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            Reception or doctor response
+                                        </span>
+
+                                        <div class="detail-value">
+                                            @appointment.DoctorResponse
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (
+                                                    appointment
+                                                    .PendingChangeRequest != null)
+                                {
+                                    var pendingRequest =
+                                    appointment
+                                    .PendingChangeRequest;
+
+                                    <div class="pending-change-panel mt-3">
+                                        <div class="d-flex
+                                                                    justify-content-between
+                                                                    align-items-start
+                                                                    gap-2 mb-2">
+
+                                            <strong>
+                                                Date-change request
+                                            </strong>
+
+                                            <span class="badge
+                                                                @ChangeRequestBadge(
+                                                  pendingRequest.Status)">
+                                @pendingRequest.Status
+                            </span>
+                        </div>
+
+                        <div class="small text-muted">
+                            Current confirmed appointment
+                        </div>
+
+                        <div class="fw-semibold mb-3">
+                            @Model.FormatAppointmentDate(
+                                                        appointment.DateTime)
+                        </div>
+
+                        <div class="small text-muted">
+                            Preferred new date
+                        </div>
+
+                        <div class="fw-semibold mb-3">
+                            @Model.FormatAppointmentDate(
+                                                        pendingRequest
+                                                        .RequestedDateTime)
+                        </div>
+
+                        <div class="small text-muted">
+                            Reason
+                        </div>
+
+                        <div>
+                            @pendingRequest.Reason
+                        </div>
+
+                        <hr />
+
+                        <div class="small text-muted">
+                            The confirmed appointment remains
+                            unchanged until Reception approves
+                            this request.
+                        </div>
+                    </div>
+                                        }
+
+                                <div class="d-flex flex-wrap gap-2 mt-4">
+
+                                    @if (
+                                                            appointment.CanAcknowledge)
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="AcknowledgeAppointment"
+                                              asp-route-appointmentId="@appointment.AppointmentRequestID">
+
+                                            <button type="submit"
+                                                    class="btn btn-primary">
+                                                Acknowledge appointment
+                                            </button>
+                                        </form>
+                                    }
+
+                                    @if (
+                                                            appointment
+                                                            .CanRequestDateChange)
+                                    {
+                                        <details class="request-change-box w-100">
+
+                                            <summary class="btn
+                                                                            btn-outline-primary">
+                                                Request another date
+                                            </summary>
+
+                                            <div class="request-change-form">
+
+                                                <div class="info-note mb-3">
+                                                    Submitting this form will
+                                                    not change the confirmed
+                                                    appointment. Reception
+                                                    must approve the new date.
+                                                </div>
+
+                                                <form method="post"
+                                                      asp-page-handler="RequestDateChange"
+                                                      asp-route-appointmentId="@appointment.AppointmentRequestID">
+
+                                                    <div class="mb-3">
+                                                        <label for="requestedDateTime-@appointment.AppointmentRequestID"
+                                                               class="form-label">
+                                                            Preferred new date
+                                                            and time
+                                                        </label>
+
+                                                        <input id="requestedDateTime-@appointment.AppointmentRequestID"
+                                                               name="requestedDateTime"
+                                                               type="datetime-local"
+                                                               class="form-control"
+                                                               min="@Model.MinimumDateTimeValue"
+                                                               required />
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="changeReason-@appointment.AppointmentRequestID"
+                                                               class="form-label">
+                                                            Reason for changing
+                                                            the date
+                                                        </label>
+
+                                                        <textarea id="changeReason-@appointment.AppointmentRequestID"
+                                                  name="changeReason"
+                                                  class="form-control"
+                                                  rows="3"
+                                                  maxlength="500"
+                                                  placeholder="Explain why you cannot attend the confirmed appointment."
+                                                  required>
+                                                        </textarea>
+                                                    </div>
+
+                                                    <button type="submit"
+                                                            class="btn
+                                                                                   btn-primary">
+                                                        Submit date-change
+                                                        request
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </details>
+                                    }
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- Pending new appointments -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Pending appointment requests</h2>
+
+            <p class="text-muted mb-0">
+                Future appointments you requested that are still
+                waiting for Reception review.
+            </p>
+        </div>
+
+        @if (Model.PendingAppointments.Count == 0)
+        {
+            <div class="empty-panel">
+                <p class="text-muted mb-0">
+                    There are no pending appointment requests.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (
+                        var appointment
+                        in Model.PendingAppointments)
+                {
+                    <div class="col-md-6 col-xl-4">
+                        <div class="care-card app-card card">
+                            <div class="card-header">
+                                Request
+                                #@appointment.AppointmentRequestID
+                            </div>
+
+                            <div class="card-body">
+                                <div class="appointment-date-panel mb-3">
+                                    <span class="detail-label">
+                                        Preferred date and time
+                                    </span>
+
+                                    <div class="appointment-date">
+                                        @Model.FormatAppointmentDate(
+                                        appointment.DateTime)
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Reason
+                        </span>
+
+                        <div class="detail-value">
+                            @appointment.Reason
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Urgency
+                        </span>
+
+                        <span class="badge
+                                        @UrgencyBadge(
+                                                                          appointment.Urgency)">
+                            @appointment.Urgency
+                        </span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            Status
+                        </span>
+
+                        <span class="badge
+                                        @AppointmentStatusBadge(
+                                                                          appointment.Status)">
+                            @appointment.Status
+                        </span>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(
+                                        appointment.DoctorResponse))
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">
+                                            Reception response
+                                        </span>
+
+                                        <div>
+                                            @appointment.DoctorResponse
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="small text-muted mt-3">
+                                    You can acknowledge or request another
+                                    date after Reception confirms this
+                                    appointment.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- New appointment and doctor question -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Request care</h2>
+
+            <p class="text-muted mb-0">
+                Book another future appointment or ask the doctor
+                a question.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="care-card app-card card">
+                    <div class="card-header">
+                        Request a future appointment
+                    </div>
+
+                    <div class="card-body">
+                        <div class="info-note mb-4">
+                            This creates a new pending appointment
+                            request. Reception must review it before
+                            it becomes confirmed.
+                        </div>
+
+                        <form method="post"
+                              asp-page-handler="RequestNewAppointment">
+
+                            <div class="mb-3">
+                                <label asp-for="NewAppointmentRequest.PreferredDateTime"
+                                       class="form-label">
+                                    Preferred date and time
+                                </label>
+
+                                <input asp-for="NewAppointmentRequest.PreferredDateTime"
+                                       type="datetime-local"
+                                       class="form-control"
+                                       min="@Model.MinimumDateTimeValue"
+                                       required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="NewAppointmentRequest.Reason"
+                                       class="form-label">
+                                    Reason for appointment
+                                </label>
+
+                                <textarea asp-for="NewAppointmentRequest.Reason"
+                                          class="form-control"
+                                          rows="4"
+                                          maxlength="500"
+                                          placeholder="Describe why you need the appointment."
+                                          required>
+                                    </textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="NewAppointmentRequest.Urgency"
+                                       class="form-label">
+                                    Urgency
+                                </label>
+
+                                <select asp-for="NewAppointmentRequest.Urgency"
+                                        class="form-select">
+
+                                    <option value="Normal">
+                                        Normal
+                                    </option>
+
+                                    <option value="Urgent">
+                                        Urgent
+                                    </option>
+                                </select>
+                            </div>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Submit appointment request
                             </button>
                         </form>
-                    }
+                    </div>
+                </div>
+            </div>
 
-                    <hr />
+            <div class="col-lg-6">
+                <div class="care-card app-card card">
+                    <div class="card-header">
+                        Ask the doctor
+                    </div>
 
-                    <form method="post" asp-page-handler="RequestAppointmentChange">
-                        <div class="mb-3">
-                            <label asp-for="AppointmentChangeReason" class="form-label">
-                                Cannot attend or need to change?
-                            </label>
-                            <textarea asp-for="AppointmentChangeReason"
-                                      class="form-control"
-                                      rows="3"
-                                      placeholder="Example: I cannot attend at 10:30 AM. Can we change to afternoon?"></textarea>
-                        </div>
+                    <div class="card-body">
+                        <form method="post"
+                              asp-page-handler="AskDoctor">
 
-                        <button type="submit" class="btn btn-outline-primary btn-sm">
-                            Submit Change Request
-                        </button>
-                    </form>
+                            <div class="mb-3">
+                                <label asp-for="QuestionMessage"
+                                       class="form-label">
+                                    Question or concern
+                                </label>
+
+                                <textarea asp-for="QuestionMessage"
+                                          class="form-control"
+                                          rows="8"
+                                          maxlength="1000"
+                                          placeholder="Enter your question about medication, symptoms or recovery."
+                                          required>
+                                    </textarea>
+                            </div>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Submit question
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="col-lg-7">
-            <div class="app-card card h-100">
-                <div class="card-header">
-                    Ask Doctor a Question
-                </div>
+    <!-- Date change history -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Date-change request history</h2>
 
-                <div class="card-body">
-                    <form method="post" asp-page-handler="AskDoctor">
-                        <div class="mb-3">
-                            <label asp-for="QuestionMessage" class="form-label">
-                                Question or concern
-                            </label>
-
-                            <textarea asp-for="QuestionMessage"
-                                      class="form-control"
-                                      rows="5"
-                                      placeholder="Example: Should the patient take the medication before or after meals?"></textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">
-                            Submit Question
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="app-card card mb-4">
-        <div class="card-header">
-            Request a New Appointment
-        </div>
-
-        <div class="card-body">
-            <p class="text-muted">
-                Use this if you would like to meet the doctor even though no appointment has been arranged.
+            <p class="text-muted mb-0">
+                Review every date change submitted to Reception.
             </p>
-
-            <form method="post" asp-page-handler="RequestNewAppointment">
-                <div class="mb-3">
-                    <label asp-for="NewAppointmentRequest.PreferredDateTime" class="form-label">
-                        Preferred Date and Time
-                    </label>
-                    <input asp-for="NewAppointmentRequest.PreferredDateTime"
-                           type="datetime-local"
-                           class="form-control" />
-                    <span asp-validation-for="NewAppointmentRequest.PreferredDateTime" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="NewAppointmentRequest.Reason" class="form-label">
-                        Reason for Appointment
-                    </label>
-                    <textarea asp-for="NewAppointmentRequest.Reason"
-                              class="form-control"
-                              rows="3"
-                              placeholder="Example: I would like to discuss my medication, symptoms, or recovery progress."></textarea>
-                    <span asp-validation-for="NewAppointmentRequest.Reason" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="NewAppointmentRequest.Urgency" class="form-label">
-                        Urgency
-                    </label>
-                    <select asp-for="NewAppointmentRequest.Urgency" class="form-select">
-                        <option value="Normal">Normal</option>
-                        <option value="Urgent">Urgent</option>
-                    </select>
-                    <span asp-validation-for="NewAppointmentRequest.Urgency" class="text-danger small"></span>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                    Submit Appointment Request
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div class="app-card card mb-4">
-        <div class="card-header">
-            My Appointment Requests
         </div>
 
-        <div class="card-body">
-            @if (Model.Appointments.Count == 0)
-            {
-                <p class="text-muted mb-0">
-                    You have not submitted any appointment requests yet.
-                </p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Preferred Date</th>
-                                <th>Reason</th>
-                                <th>Urgency</th>
-                                <th>Status</th>
-                                <th>Doctor Response</th>
-                            </tr>
-                        </thead>
+        <div class="care-card app-card card">
+            <div class="card-body">
+                @if (Model.ChangeRequestHistory.Count == 0)
+                {
+                    <p class="text-muted mb-0">
+                        No date-change requests have been submitted.
+                    </p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover
+                                              align-middle mb-0">
 
-                        <tbody>
-                            @foreach (var request in Model.Appointments)
-                            {
+                            <thead>
                                 <tr>
-                                    <td class="text-nowrap">
-                                        @request.DateTime.ToString("yyyy-MM-dd HH:mm")
-                                    </td>
+                                    <th>Appointment</th>
+                                    <th>Current date</th>
+                                    <th>Requested date</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Reception response</th>
+                                </tr>
+                            </thead>
 
-                                    <td>
-                                        @request.Reason
-                                    </td>
+                            <tbody>
+                                @foreach (
+                                                        var request
+                                                        in Model.ChangeRequestHistory)
+                                {
+                                    <tr>
+                                        <td>
+                                            #@request.AppointmentRequestID
+                                        </td>
 
-                                    <td>
-                                        <span class="badge @UrgencyBadge(request.Urgency)">
-                                            @request.Urgency
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        <span class="badge @AppointmentStatusBadge(request.Status)">
-                                            @request.Status
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        @(string.IsNullOrWhiteSpace(request.DoctorResponse)
-                                                                    ? "-"
-                                                                    : request.DoctorResponse)
-                        </td>
-                    </tr>
-                                        }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    </div>
-
-    <div class="app-card card mb-4">
-        <div class="card-header">
-            Latest Doctor Communication
-        </div>
-
-        <div class="card-body">
-            @if (data.DoctorCommunications.Count == 0)
-            {
-                <p class="text-muted mb-0">No doctor communication yet.</p>
-            }
-            else
-            {
-                var latest = data.DoctorCommunications.First();
-
-                <div class="row g-3 align-items-start">
-                    <div class="col-md-8">
-                        <p class="mb-2"><strong>Message:</strong></p>
-                        <p class="mb-3">@latest.Message</p>
-
-                        <p class="mb-2"><strong>Reply:</strong></p>
-                        <p class="mb-0 text-muted">@latest.ReplyMessage</p>
-                    </div>
-
-                    <div class="col-md-4">
-                        <p class="mb-2">
-                            <strong>Status:</strong>
-                            @if (latest.Completed)
-                            {
-                                <span class="badge bg-success">Completed</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-warning text-dark">Pending</span>
-                            }
-                        </p>
-
-                        <p class="mb-0 text-muted">
-                            @latest.RequestDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                        </p>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h4 mb-0">Question & Update History</h2>
-    </div>
-
-    @if (data.DoctorCommunications.Count == 0)
-    {
-        <div class="empty-state">
-            <p class="text-muted mb-0">No questions or doctor updates have been recorded yet.</p>
-        </div>
-    }
-    else
-    {
-        <div class="app-table-wrapper table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Message / Question</th>
-                        <th>Reply</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach (var item in data.DoctorCommunications)
-                    {
-                        <tr>
-                            <td class="text-nowrap">
-                                @item.RequestDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                        <td class="text-nowrap">
+                                            @(request.CurrentAppointmentDate
+                                                                            .HasValue
+                                                                            ? Model
+                                                                            .FormatAppointmentDate(
+                                                                            request
+                                                                            .CurrentAppointmentDate
+                                                                            .Value)
+                                                                            : "-")
                             </td>
 
-                            <td>@item.Message</td>
-
-                            <td>@item.ReplyMessage</td>
+                                        <td class="text-nowrap">
+                                            @Model.FormatAppointmentDate(
+                                                                request.RequestedDateTime)
+                            </td>
 
                             <td>
-                                @if (item.Completed)
-                                {
-                                    <span class="badge bg-success">Completed</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">Pending</span>
-                                }
+                                @request.Reason
+                            </td>
+
+                            <td>
+                                <span class="badge
+                                                @ChangeRequestBadge(
+                                                                                          request.Status)">
+                                    @request.Status
+                                </span>
+                            </td>
+
+                            <td>
+                                @(string.IsNullOrWhiteSpace(
+                                                                request.ReviewMessage)
+                                                                ? "-"
+                                                                : request.ReviewMessage)
                             </td>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
-    }
+    </section>
+
+    <!-- Appointment history -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Appointment history</h2>
+
+            <p class="text-muted mb-0">
+                Past, completed, rejected and cancelled appointments.
+            </p>
+        </div>
+
+        <div class="care-card app-card card">
+            <div class="card-body">
+                @if (Model.AppointmentHistory.Count == 0)
+                {
+                    <p class="text-muted mb-0">
+                        No previous appointment records.
+                    </p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover
+                                              align-middle mb-0">
+
+                            <thead>
+                                <tr>
+                                    <th>Appointment</th>
+                                    <th>Date and time</th>
+                                    <th>Reason</th>
+                                    <th>Urgency</th>
+                                    <th>Status</th>
+                                    <th>Response</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (
+                                                        var appointment
+                                                        in Model.AppointmentHistory)
+                                {
+                                    <tr>
+                                        <td>
+                                            #@appointment
+                                            .AppointmentRequestID
+                                        </td>
+
+                                        <td class="text-nowrap">
+                                            @Model.FormatAppointmentDate(
+                                            appointment.DateTime)
+                            </td>
+
+                            <td>
+                                @appointment.Reason
+                            </td>
+
+                            <td>
+                                <span class="badge
+                                                @UrgencyBadge(
+                                                                                          appointment.Urgency)">
+                                    @appointment.Urgency
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge
+                                                @AppointmentStatusBadge(
+                                                                                          appointment.Status)">
+                                    @appointment.Status
+                                </span>
+                            </td>
+
+                            <td>
+                                @(string.IsNullOrWhiteSpace(
+                                                                appointment.DoctorResponse)
+                                                                ? "-"
+                                                                : appointment.DoctorResponse)
+                            </td>
+                        </tr>
+                                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Doctor communication -->
+    <section class="mb-4">
+        <div class="section-heading">
+            <h2>Doctor communication</h2>
+
+            <p class="text-muted mb-0">
+                Questions submitted by the patient and replies
+                from the doctor.
+            </p>
+        </div>
+
+        <div class="care-card app-card card">
+            <div class="card-body">
+                @if (Model.DoctorRequests.Count == 0)
+                {
+                    <p class="text-muted mb-0">
+                        No questions have been submitted.
+                    </p>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (
+                                        var request
+                                        in Model.DoctorRequests)
+                        {
+                            <div class="col-lg-6">
+                                <div class="doctor-message h-100">
+
+                                    <div class="d-flex
+                                                            justify-content-between
+                                                            align-items-start
+                                                            gap-2 mb-3">
+
+                                        <span class="badge
+                                                        @(request.Completed
+                                                                                              ? "bg-success"
+                                                                                              : "bg-warning text-dark")">
+
+                                            @(request.Completed
+                                                                            ? "Replied"
+                                                                            : "Awaiting reply")
+                            </span>
+
+                                                                        <span class="small text-muted">
+                                                                            @Model.FormatUtcDate(
+                                                                            request.RequestDate)
+                                                                                             </span>
+                                                                                         </div>
+
+                                    <div class="detail-label">
+                                        Patient question
+                                    </div>
+
+                                    <p class="mb-3">
+                                        @request.RequestMessage
+                                    </p>
+
+                                    <div class="detail-label">
+                                        Doctor response
+                                    </div>
+
+                                    <p class="mb-0">
+                                        @(string.IsNullOrWhiteSpace(
+                                                                    request.ReplyMessage)
+                                                                    ? "No reply yet."
+                                                                    : request.ReplyMessage)
+                        </p>
+                    </div>
+                </div>
+                                }
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
 }
 
 @section Scripts {
