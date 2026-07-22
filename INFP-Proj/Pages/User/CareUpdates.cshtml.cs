@@ -593,9 +593,8 @@ namespace INFP_Proj.Pages.User
                             Status =
                                 workflowStatus,
 
-                            DoctorResponse =
-                                appointment.DoctorResponse,
-
+                            DoctorResponse = GetReadableResponse(
+                                appointment.DoctorResponse),
                             DocAcknowledged =
                                 receptionAcknowledged,
 
@@ -691,6 +690,30 @@ namespace INFP_Proj.Pages.User
                     .OrderByDescending(request =>
                         request.RequestDate)
                     .ToListAsync();
+        }
+
+        private static string? GetReadableResponse(
+        string? storedValue)
+        {
+            if (string.IsNullOrWhiteSpace(storedValue))
+                return null;
+
+            if (!storedValue.StartsWith(
+                "DOC:",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return storedValue.Trim();
+            }
+
+            string[] parts = storedValue.Split('|', 2);
+
+            if (parts.Length < 2 ||
+                string.IsNullOrWhiteSpace(parts[1]))
+            {
+                return null;
+            }
+
+            return parts[1].Trim();
         }
 
         private async Task<Patients?>

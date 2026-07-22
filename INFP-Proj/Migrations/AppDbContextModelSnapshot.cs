@@ -76,6 +76,10 @@ namespace INFP_Proj.Migrations
                     b.Property<bool>("DocAcknowledged")
                         .HasColumnType("bit");
 
+                    b.Property<string>("DoctorID")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("DoctorResponse")
                         .HasColumnType("nvarchar(max)");
 
@@ -105,7 +109,7 @@ namespace INFP_Proj.Migrations
 
                     b.HasIndex("PatientID");
 
-                    b.ToTable("Appointments");
+                    b.ToTable("Appointments", (string)null);
                 });
 
             modelBuilder.Entity("INFP_Proj.Data.Beds", b =>
@@ -666,7 +670,6 @@ namespace INFP_Proj.Migrations
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
-
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {

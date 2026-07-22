@@ -139,7 +139,9 @@ namespace INFP_Proj.Pages.Admin.Reception
                 Status = "Pending",
                 AppointmentDate = dto.DateTime,
                 RequestedAt = DateTime.Now,
-                DoctorResponse = encodedDoctor
+                DoctorResponse = encodedDoctor,
+                DocAcknowledged = true,
+                PatientAcknowledged = false
             };
 
             _context.Appointments.Add(newAppt);
