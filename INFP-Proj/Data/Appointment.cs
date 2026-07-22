@@ -19,7 +19,6 @@ namespace INFP_Proj.Data
         public required DateTime AppointmentDate { get; set; }
         public DateTime RequestedAt { get; set; } = DateTime.Now;
 
-
         [ForeignKey("PatientID")]
         public Patients? Patient { get; set; }
     }

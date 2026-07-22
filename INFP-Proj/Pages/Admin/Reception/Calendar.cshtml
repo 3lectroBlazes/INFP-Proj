@@ -6,7 +6,10 @@
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2><i class="bi bi-calendar-week"></i> Appointments Calendar</h2>
+        <h2 class="page-title">
+            <i class="bi bi-calendar-week"></i>
+            Appointments Calendar
+        </h2>
 
         <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
             <i class="bi bi-plus-lg me-1"></i> Add Appointment
@@ -14,9 +17,10 @@
     </div>
     <hr />
 
-    <div id="calendar" class="bg-white p-3 shadow-sm rounded"></div>
+    <div id="calendar" class="app-card p-3"></div>
 </div>
 
+<!-- Add Appointment Modal -->
 <div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-top border-success border-4">
@@ -37,7 +41,6 @@
                             <label class="form-label fw-bold">Date</label>
                             <input type="date" class="form-control" id="addDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" required>
                         </div>
-
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Time</label>
                             <select class="form-select" id="addTime" asp-items="Model.TimeSlots" required>
@@ -67,26 +70,38 @@
     </div>
 </div>
 
+<!-- Action / Preview Modal -->
 <div class="modal fade" id="actionModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content text-center">
+    <div class="modal-dialog">
+        <div class="modal-content">
             <div class="modal-header bg-light">
-                <h5 class="modal-title w-100">Manage Appointment</h5>
+                <h5 class="modal-title w-100">Appointment Preview</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body py-4">
-                <p class="text-muted small mb-4">Choose an action for this appointment.</p>
-                <button type="button" class="btn btn-primary w-100 mb-2" id="btnGoToUpdate">
-                    <i class="bi bi-pencil-square me-2"></i> Update Form
-                </button>
-                <button type="button" class="btn btn-danger w-100" id="btnGoToDelete">
-                    <i class="bi bi-trash me-2"></i> Delete Appointment
-                </button>
+                <div class="card mb-4 bg-light">
+                    <div class="card-body text-start">
+                        <p class="mb-1"><strong>Patient:</strong> <span id="prevPatient"></span></p>
+                        <p class="mb-1"><strong>Date & Time:</strong> <span id="prevDateTime"></span></p>
+                        <p class="mb-1"><strong>Urgency:</strong> <span id="prevUrgency"></span></p>
+                        <p class="mb-0"><strong>Reason:</strong> <span id="prevReason"></span></p>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3 text-center">Choose an action for this appointment.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-primary" id="btnGoToUpdate">
+                        <i class="bi bi-pencil-square me-2"></i> Update
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnGoToDelete">
+                        <i class="bi bi-trash me-2"></i> Delete
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Restricted Update Modal (No Patient ID or Reason) -->
 <div class="modal fade" id="updateModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-top border-primary border-4">
@@ -97,29 +112,17 @@
             <div class="modal-body">
                 <form id="updateForm">
                     <input type="hidden" id="updateApptId" />
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Patient ID</label>
-                        <select id="updatePatientId" class="form-select" asp-items="Model.PatientsList" required>
-                            <option value="">-- Search by Name or ID --</option>
-                        </select>
-                    </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Date</label>
                             <input type="date" class="form-control" id="updateDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" required>
                         </div>
-
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Time</label>
                             <select class="form-select" id="updateTime" asp-items="Model.TimeSlots" required>
                                 <option value="">-- Select Time --</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Reason</label>
-                        <input type="text" class="form-control" id="updateReason" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Urgency</label>
@@ -143,7 +146,6 @@
 
 @section Scripts {
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
@@ -155,15 +157,9 @@
             var addModal = new bootstrap.Modal(document.getElementById('addModal'));
             var actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
             var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
-
             var currentEventData = null;
 
             var addPatientSelect = new TomSelect("#addPatientId", {
-                create: false,
-                sortField: { field: "text", direction: "asc" }
-            });
-
-            var updatePatientSelect = new TomSelect("#updatePatientId", {
                 create: false,
                 sortField: { field: "text", direction: "asc" }
             });
@@ -174,10 +170,7 @@
                 let day = String(dateObj.getDate()).padStart(2, '0');
                 let hours = String(dateObj.getHours()).padStart(2, '0');
                 let minutes = String(dateObj.getMinutes()).padStart(2, '0');
-                return {
-                    date: `${year}-${month}-${day}`,
-                    time: `${hours}:${minutes}`
-                };
+                return { date: `${year}-${month}-${day}`, time: `${hours}:${minutes}` };
             }
 
             let todayFormatted = getFormattedDateTime(new Date()).date;
@@ -194,53 +187,39 @@
 
                 allEvents.forEach(evt => {
                     if (!evt.start) return;
-
                     let evtFormatted = getFormattedDateTime(evt.start);
                     if (ignoreEventId && evt.id == ignoreEventId) {
-                        if (evtFormatted.date === dateVal) {
-                            currentEventOrigTime = evtFormatted.time;
-                        }
+                        if (evtFormatted.date === dateVal) currentEventOrigTime = evtFormatted.time;
                         return;
                     }
-
-                    if (evtFormatted.date === dateVal) {
-                        bookedTimes.push(evtFormatted.time);
-                    }
+                    if (evtFormatted.date === dateVal) bookedTimes.push(evtFormatted.time);
                 });
 
                 let now = new Date();
                 let isToday = (dateVal === getFormattedDateTime(now).date);
                 let currentHour = now.getHours();
                 let currentMinute = now.getMinutes();
-
                 let options = timeSelect.options;
+
                 for (let i = 0; i < options.length; i++) {
                     let opt = options[i];
                     if (opt.value === "") continue;
-
                     let isBooked = bookedTimes.includes(opt.value);
                     let isPastTime = false;
 
                     if (isToday) {
                         let [optHour, optMin] = opt.value.split(':').map(Number);
                         if (optHour < currentHour || (optHour === currentHour && optMin < currentMinute)) {
-                            if (opt.value !== currentEventOrigTime) {
-                                isPastTime = true;
-                            }
+                            if (opt.value !== currentEventOrigTime) isPastTime = true;
                         }
                     }
 
                     if (isBooked || isPastTime) {
-                        opt.hidden = true;
-                        opt.disabled = true;
-                        opt.style.display = 'none'; 
+                        opt.hidden = true; opt.disabled = true; opt.style.display = 'none';
                     } else {
-                        opt.hidden = false;
-                        opt.disabled = false;
-                        opt.style.display = '';   
+                        opt.hidden = false; opt.disabled = false; opt.style.display = '';
                     }
                 }
-
                 if (timeSelect.selectedIndex >= 0 && timeSelect.options[timeSelect.selectedIndex].disabled) {
                     timeSelect.value = "";
                 }
@@ -250,7 +229,6 @@
                 if (e.relatedTarget) {
                     document.getElementById('addForm').reset();
                     if (typeof addPatientSelect !== 'undefined') addPatientSelect.clear();
-
                     let timeSelect = document.getElementById('addTime');
                     for (let i = 0; i < timeSelect.options.length; i++) {
                         timeSelect.options[i].hidden = false;
@@ -264,7 +242,6 @@
                 document.getElementById('addDate').addEventListener(evtType, function(e) {
                     filterAvailableTimes(e.target.value, 'addTime');
                 });
-
                 document.getElementById('updateDate').addEventListener(evtType, function(e) {
                     let currentApptId = document.getElementById('updateApptId').value;
                     filterAvailableTimes(e.target.value, 'updateTime', currentApptId);
@@ -282,33 +259,24 @@
                 slotMinTime: '09:00:00',
                 slotMaxTime: '18:00:00',
                 slotDuration: '01:00:00',
-                businessHours: {
-                    startTime: '09:00',
-                    endTime: '18:00'
-                },
+                businessHours: { startTime: '09:00', endTime: '18:00' },
                 events: '?handler=FetchAppointments',
                 selectable: true,
 
                 dateClick: function(info) {
                     let now = new Date();
-
                     if (info.date.setHours(0,0,0,0) < now.setHours(0,0,0,0)) {
-                        alert("Appointments cannot be scheduled in the past.");
-                        return;
+                        alert("Appointments cannot be scheduled in the past."); return;
                     }
-
                     let hour = info.date.getHours();
                     if (hour >= 18) {
-                        alert("Appointments cannot be scheduled after the 5:00 PM slot.");
-                        return;
+                        alert("Appointments cannot be scheduled after the 5:00 PM slot."); return;
                     }
-
                     document.getElementById('addForm').reset();
                     addPatientSelect.clear();
 
                     let formatted = getFormattedDateTime(info.date);
                     document.getElementById('addDate').value = formatted.date;
-
                     filterAvailableTimes(formatted.date, 'addTime');
 
                     let timeSelect = document.getElementById('addTime');
@@ -318,12 +286,16 @@
                     } else {
                         timeSelect.value = "";
                     }
-
                     addModal.show();
                 },
 
                 eventClick: function(info) {
                     currentEventData = info.event;
+                    document.getElementById('prevPatient').innerText = currentEventData.extendedProps.patientName;
+                    document.getElementById('prevReason').innerText = currentEventData.extendedProps.reason;
+                    document.getElementById('prevUrgency').innerText = currentEventData.extendedProps.urgency;
+                    let dt = currentEventData.start;
+                    document.getElementById('prevDateTime').innerText = dt.toLocaleDateString() + ' at ' + dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     actionModal.show();
                 }
             });
@@ -337,14 +309,7 @@
                 let reasonVal = document.getElementById('addReason').value;
 
                 if (!dateVal || !timeVal || !patientVal || !reasonVal) {
-                    alert("Please fill out all required fields.");
-                    return;
-                }
-
-                let selectedDateTime = new Date(dateVal + 'T' + timeVal + ':00');
-                if (selectedDateTime < new Date()) {
-                    alert("Appointments cannot be scheduled in the past.");
-                    return;
+                    alert("Please fill out all required fields."); return;
                 }
 
                 let data = {
@@ -376,18 +341,14 @@
 
             document.getElementById('btnGoToUpdate').addEventListener('click', function() {
                 actionModal.hide();
-
                 document.getElementById('updateApptId').value = currentEventData.id;
-                document.getElementById('updateReason').value = currentEventData.title;
                 document.getElementById('updateUrgency').value = currentEventData.extendedProps.urgency;
-                updatePatientSelect.setValue(currentEventData.extendedProps.patientId);
 
                 let eventDate = currentEventData.start;
                 let formatted = getFormattedDateTime(eventDate);
                 document.getElementById('updateDate').value = formatted.date;
 
                 filterAvailableTimes(formatted.date, 'updateTime', currentEventData.id);
-
                 document.getElementById('updateTime').value = formatted.time;
                 updateModal.show();
             });
@@ -395,26 +356,13 @@
             document.getElementById('btnSubmitUpdate').addEventListener('click', function() {
                 let dateVal = document.getElementById('updateDate').value;
                 let timeVal = document.getElementById('updateTime').value;
-                let patientVal = document.getElementById('updatePatientId').value;
-                let reasonVal = document.getElementById('updateReason').value;
 
-                if (!dateVal || !timeVal || !patientVal || !reasonVal) {
-                    alert("Please fill out all required fields.");
-                    return;
-                }
-
-                let selectedDateTime = new Date(dateVal + 'T' + timeVal + ':00');
-                let originalDateTime = currentEventData.start;
-
-                if (selectedDateTime < new Date() && selectedDateTime.getTime() !== originalDateTime.getTime()) {
-                    alert("Appointments cannot be rescheduled to a past date/time.");
-                    return;
+                if (!dateVal || !timeVal) {
+                    alert("Please fill out all required fields."); return;
                 }
 
                 let data = {
                     AppointmentRequestID: parseInt(document.getElementById('updateApptId').value),
-                    PatientID: parseInt(patientVal),
-                    Reason: reasonVal,
                     DateTime: dateVal + 'T' + timeVal + ':00',
                     Urgency: document.getElementById('updateUrgency').value
                 };
@@ -438,9 +386,7 @@
 
             document.getElementById('btnGoToDelete').addEventListener('click', function() {
                 if(!confirm("Are you sure you want to permanently delete this appointment?")) return;
-
                 let id = parseInt(currentEventData.id);
-
                 fetch('?handler=Delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
@@ -449,8 +395,7 @@
                     if(data.success) {
                         actionModal.hide();
                         calendar.refetchEvents();
-                    }
-                    else {
+                    } else {
                         alert('Error deleting appointment.');
                     }
                 });

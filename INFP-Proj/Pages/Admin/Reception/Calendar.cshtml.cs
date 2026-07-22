@@ -17,7 +17,6 @@ namespace INFP_Proj.Pages.Admin.Reception
         }
 
         public List<SelectListItem> PatientsList { get; set; } = new List<SelectListItem>();
-
         public List<SelectListItem> TimeSlots { get; set; } = new List<SelectListItem>();
 
         public async Task OnGetAsync()
@@ -33,16 +32,16 @@ namespace INFP_Proj.Pages.Admin.Reception
                       })
                 .ToListAsync();
 
-            int startHour = 9;  
-            int endHour = 17;  
+            int startHour = 9;
+            int endHour = 17;
 
             for (int i = startHour; i <= endHour; i++)
             {
                 DateTime time = DateTime.Today.AddHours(i);
                 TimeSlots.Add(new SelectListItem
                 {
-                    Value = time.ToString("HH:mm"),  
-                    Text = time.ToString("hh:mm tt") 
+                    Value = time.ToString("HH:mm"),
+                    Text = time.ToString("hh:mm tt")
                 });
             }
         }
@@ -50,14 +49,17 @@ namespace INFP_Proj.Pages.Admin.Reception
         public async Task<JsonResult> OnGetFetchAppointmentsAsync()
         {
             var appointments = await _context.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Select(a => new
                 {
                     id = a.AppointmentRequestID,
-                    title = a.Reason,
+                    title = $"{a.Patient.User.FirstName} - {a.Reason}",
                     start = a.AppointmentDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                     extendedProps = new
                     {
                         patientId = a.PatientID,
+                        patientName = $"{a.Patient.User.FirstName} {a.Patient.User.LastName}",
+                        reason = a.Reason,
                         urgency = a.Urgency,
                         status = a.Status
                     }
@@ -81,7 +83,7 @@ namespace INFP_Proj.Pages.Admin.Reception
 
             if (isDoubleBooked)
             {
-                return new JsonResult(new { success = false, message = "This time slot is already booked. Please select another time." });
+                return new JsonResult(new { success = false, message = "This time slot is already booked." });
             }
 
             var newAppt = new Appointment
@@ -100,7 +102,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             return new JsonResult(new { success = true });
         }
 
-        public async Task<IActionResult> OnPostUpdateAsync([FromBody] AppointmentDto dto)
+        public async Task<IActionResult> OnPostUpdateAsync([FromBody] AppointmentUpdateDto dto)
         {
             if (dto == null || dto.AppointmentRequestID == 0) return BadRequest();
 
@@ -114,14 +116,12 @@ namespace INFP_Proj.Pages.Admin.Reception
 
             if (isDoubleBooked)
             {
-                return new JsonResult(new { success = false, message = "This time slot is already booked by another patient." });
+                return new JsonResult(new { success = false, message = "This time slot is already booked." });
             }
 
             var appt = await _context.Appointments.FindAsync(dto.AppointmentRequestID);
             if (appt == null) return NotFound();
 
-            appt.PatientID = dto.PatientID;
-            appt.Reason = dto.Reason;
             appt.Urgency = dto.Urgency ?? "Normal";
             appt.AppointmentDate = dto.DateTime;
 
@@ -145,6 +145,13 @@ namespace INFP_Proj.Pages.Admin.Reception
             public int AppointmentRequestID { get; set; }
             public int PatientID { get; set; }
             public string Reason { get; set; } = string.Empty;
+            public string Urgency { get; set; } = string.Empty;
+            public DateTime DateTime { get; set; }
+        }
+
+        public class AppointmentUpdateDto
+        {
+            public int AppointmentRequestID { get; set; }
             public string Urgency { get; set; } = string.Empty;
             public DateTime DateTime { get; set; }
         }
