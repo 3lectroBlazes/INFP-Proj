@@ -5,11 +5,11 @@
 }
 
 <div class="container mt-4">
-    <h2>Manage Admins</h2>
+    <h2 class="page-title">Manage Admins</h2>
 
     <hr />
 
-    <div class="card mb-4">
+    <div class="app-card mb-4">
         <div class="card-header">Create New Admin</div>
         <div class="card-body">
             <form method="post" asp-page-handler="Create">
@@ -59,41 +59,43 @@
         </div>
     </div>
 
-    <table class="table table-striped" id="adminTable">
-        <thead>
-            <tr>
-                <th>First Name</th>
-                <th>Middle Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var admin in Model.AdminUsers)
-            {
+    <div class="app-table-wrapper">
+        <table class="table table-striped" id="adminTable">
+            <thead>
                 <tr>
-                    <td>@admin.FirstName</td>
-                    <td>@admin.MiddleName</td>
-                    <td>@admin.LastName</td>
-                    <td>@admin.Email</td>
-                    <td>@admin.Role</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editAdminModal"
-                                onclick="populateEditModal('@admin.Id', '@admin.FirstName', '@admin.MiddleName', '@admin.LastName', '@admin.Email', '@admin.Role')">
-                            Edit
-                        </button>
-
-                        <form method="post" asp-page-handler="Delete" style="display:inline;">
-                            <input type="hidden" name="id" value="@admin.Id" />
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this admin?');">Delete</button>
-                        </form>
-                    </td>
+                    <th>First Name</th>
+                    <th>Middle Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var admin in Model.AdminUsers)
+                {
+                    <tr>
+                        <td>@admin.FirstName</td>
+                        <td>@admin.MiddleName</td>
+                        <td>@admin.LastName</td>
+                        <td>@admin.Email</td>
+                        <td>@admin.Role</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editAdminModal"
+                                    onclick="populateEditModal('@admin.Id', '@admin.FirstName', '@admin.MiddleName', '@admin.LastName', '@admin.Email', '@admin.Role')">
+                                Edit
+                            </button>
+
+                            <form method="post" asp-page-handler="Delete" style="display:inline;">
+                                <input type="hidden" name="id" value="@admin.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this admin?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
