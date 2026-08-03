@@ -4,7 +4,7 @@
 @inject UserManager<AppUser> UserManager
 @{
     var user = await UserManager.GetUserAsync(User);
-    var roles = await UserManager.GetRolesAsync(user);
+    var roles = user != null ? await UserManager.GetRolesAsync(user) : new List<string>();
 }
 
 <!DOCTYPE html>
