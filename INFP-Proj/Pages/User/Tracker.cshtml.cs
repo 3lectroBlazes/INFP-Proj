@@ -396,10 +396,16 @@ namespace INFP_Proj.Pages.User
                         .ToString("0.#"),
 
                 respiratoryLower =
-                    thresholds.Respiratory.Lower.ToString("0"),
+                    thresholds
+                        .Respiratory
+                        .Lower
+                        .ToString("0.#"),
 
                 respiratoryUpper =
-                    thresholds.Respiratory.Upper.ToString("0"),
+                    thresholds
+                        .Respiratory
+                        .Upper
+                        .ToString("0.#"),
 
                 systolicLower =
                     thresholds
@@ -848,14 +854,19 @@ namespace INFP_Proj.Pages.User
 
             float respiratoryUpper =
                 respiratoryBaseline *
-                (1f +
-                 configuration
-                     .RespiratoryUpperPercentage / 100f);
+                (
+                    1f +
+                    configuration
+                        .RespiratoryUpperPercentage /
+                    100f
+                );
 
-            respiratoryUpper = MathF.Ceiling(
-                Math.Max(
-                    configuration.RespiratoryLowerThreshold + 1f,
-                    respiratoryUpper));
+            respiratoryUpper = Math.Max(
+                configuration
+                    .RespiratoryLowerThreshold +
+                1f,
+
+                respiratoryUpper);
 
             return new PatientThresholdState
             {

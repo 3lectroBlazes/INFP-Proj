@@ -62,12 +62,6 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
-builder.Services.AddScoped<VitalsAlertService>();
-
-builder.Services.AddScoped<VitalsAlertService>();
-
 WebApplication app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

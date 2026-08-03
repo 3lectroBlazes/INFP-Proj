@@ -28,8 +28,16 @@ namespace INFP_Proj.Data
         public DbSet<Relationships> Relationships { get; set; }
         public DbSet<BraceletRelation> BraceletRelations { get; set; }
         public DbSet<Log> Logs { get; set; }
+
+        public DbSet<LogAcknowledgement>
+            LogAcknowledgements
+        { get; set; }
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+
+        public DbSet<AppointmentChangeRequest>
+            AppointmentChangeRequests
+        { get; set; }
 
         public DbSet<Thresholds> Thresholds { get; set; }
 
@@ -37,20 +45,93 @@ namespace INFP_Proj.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Appointment>(entity =>
+            modelBuilder.Entity<LogAcknowledgement>(entity =>
             {
-                entity.ToTable("Appointments");
+                entity.ToTable("LogAcknowledgements");
 
-                entity.HasKey(a => a.AppointmentRequestID);
+                entity.HasKey(acknowledgement =>
+                    acknowledgement.LogAcknowledgementID);
 
-                entity.Property(a => a.Reason)
-                    .HasMaxLength(500)
+                entity.Property(acknowledgement =>
+                        acknowledgement.UserID)
+                    .HasMaxLength(450)
                     .IsRequired();
 
-                entity.HasOne(a => a.Patient)
+                /*
+                 * The same relative can acknowledge the same
+                 * emergency only once.
+                 */
+                entity.HasIndex(acknowledgement => new
+                {
+                    acknowledgement.LogID,
+                    acknowledgement.UserID
+                })
+                    .IsUnique()
+                    .HasDatabaseName(
+                        "UX_LogAcknowledgements_LogID_UserID");
+
+                entity.HasOne<Log>()
                     .WithMany()
-                    .HasForeignKey(a => a.PatientID)
+                    .HasForeignKey(acknowledgement =>
+                        acknowledgement.LogID)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(acknowledgement =>
+                        acknowledgement.UserID)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            modelBuilder.Entity<AppointmentChangeRequest>(entity =>
+            {
+                entity.ToTable("AppointmentChangeRequests");
+
+                entity.HasKey(request =>
+                    request.AppointmentChangeRequestID);
+
+                entity.Property(request =>
+                        request.Status)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.Property(request =>
+                        request.Reason)
+                    .HasMaxLength(500);
+
+                entity.Property(request =>
+                        request.ReviewMessage)
+                    .HasMaxLength(500);
+
+                entity.Property(request =>
+                        request.ReviewedByUserID)
+                    .HasMaxLength(450);
+
+                entity.HasOne(request =>
+                        request.Appointment)
+                    .WithMany()
+                    .HasForeignKey(request =>
+                        request.AppointmentRequestID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(request =>
+                        request.Patient)
+                    .WithMany()
+                    .HasForeignKey(request =>
+                        request.PatientID)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasIndex(request =>
+                        request.AppointmentRequestID)
+                    .HasDatabaseName(
+                        "UX_AppointmentChangeRequests_OnePending")
+                    .IsUnique()
+                    .HasFilter("[Status] = 'Pending'");
+
+                entity.HasIndex(request =>
+                        request.PatientID)
+                    .HasDatabaseName(
+                        "IX_AppointmentChangeRequests_PatientID");
             });
 
             modelBuilder.Entity<Records>()

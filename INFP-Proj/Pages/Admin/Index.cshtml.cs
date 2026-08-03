@@ -18,7 +18,7 @@ namespace INFP_Proj.Pages.Admin
 
         public async Task OnGetAsync()
         {
-            List<Patients> patients = await _context.Patients
+            var patients = await _context.Patients
                 .Include(p => p.User)
                 .OrderBy(p => p.PatientID)
                 .ToListAsync();

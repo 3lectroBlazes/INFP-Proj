@@ -29,21 +29,10 @@ namespace INFP_Proj.Pages.User
         public string PatientName { get; set; } =
             string.Empty;
 
-        /*
-         * Appointments accepted or assigned by Reception.
-         *
-         * This includes:
-         * - Awaiting Patient
-         * - Confirmed
-         */
         public List<AppointmentDisplayItem>
             ConfirmedAppointments
         { get; set; } = new();
 
-        /*
-         * Appointment dates proposed by the patient
-         * and awaiting Reception.
-         */
         public List<AppointmentDisplayItem>
             PendingAppointments
         { get; set; } = new();
@@ -52,13 +41,6 @@ namespace INFP_Proj.Pages.User
             AppointmentHistory
         { get; set; } = new();
 
-        /*
-         * Retained temporarily so the existing cshtml does
-         * not fail to compile.
-         *
-         * The single-table workflow no longer keeps a separate
-         * date-change history, so this list remains empty.
-         */
         public List<ChangeRequestDisplayItem>
             ChangeRequestHistory
         { get; set; } = new();
@@ -75,6 +57,8 @@ namespace INFP_Proj.Pages.User
         [BindProperty]
         public string? QuestionMessage { get; set; }
 
+
+
         public string MinimumDateTimeValue =>
             GetSingaporeNow()
                 .AddMinutes(5)
@@ -86,8 +70,8 @@ namespace INFP_Proj.Pages.User
         }
 
         /*
-         * Patient acknowledges a date already accepted
-         * or assigned by Reception.
+         * The patient acknowledges a confirmed appointment.
+         * This does not change the appointment date or status.
          */
         public async Task<IActionResult>
             OnPostAcknowledgeAppointmentAsync(
@@ -137,65 +121,42 @@ namespace INFP_Proj.Pages.User
                 return RedirectToPage();
             }
 
-            /*
-             * Also recognises old Scheduled, Approved and
-             * Rescheduled records for compatibility.
-             */
-            if (!IsReceptionAcknowledged(appointment))
+            if (!IsConfirmedAppointment(appointment))
             {
                 SetError(
                     "This appointment is still awaiting " +
-                    "Reception review.");
+                    "Reception approval.");
 
                 return RedirectToPage();
             }
 
-            /*
-             * Correct older records where the status indicated
-             * Reception approval but DocAcknowledged was false.
-             */
-            appointment.DocAcknowledged = true;
-
             if (appointment.PatientAcknowledged)
             {
-                if (!string.Equals(
-                        appointment.Status,
-                        "Confirmed",
-                        StringComparison.OrdinalIgnoreCase))
-                {
-                    appointment.Status = "Confirmed";
-                    await _context.SaveChangesAsync();
-                }
-
                 SetMessage(
-                    "This appointment has already been confirmed.");
+                    "This appointment has already been acknowledged.");
 
                 return RedirectToPage();
             }
 
             appointment.PatientAcknowledged = true;
-            appointment.Status = "Confirmed";
 
             await _context.SaveChangesAsync();
 
             SetMessage(
-                "The appointment has been confirmed.");
+                "The appointment has been acknowledged.");
 
             return RedirectToPage();
         }
 
         /*
-         * Patient requests another date using the same
-         * Appointments row.
-         *
-         * Under the team's chosen workflow, the previous date
-         * is replaced immediately and Reception must accept the
-         * newly proposed date.
+         * Creates a separate pending date-change request.
+         * The confirmed Appointment.DateTime is not changed here.
          */
         public async Task<IActionResult>
             OnPostRequestDateChangeAsync(
                 int appointmentId,
-                DateTime? requestedDateTime)
+                DateTime? requestedDateTime,
+                string? changeReason)
         {
             Patients? patient =
                 await GetCurrentLinkedPatientAsync();
@@ -263,60 +224,115 @@ namespace INFP_Proj.Pages.User
                 return RedirectToPage();
             }
 
-            /*
-             * Patient may only change an appointment that
-             * Reception previously accepted or assigned.
-             */
-            if (!IsReceptionAcknowledged(appointment))
+            if (!IsConfirmedAppointment(appointment))
             {
                 SetError(
-                    "This appointment is already awaiting " +
-                    "Reception review.");
+                    "A date change can only be requested after " +
+                    "Reception confirms the appointment.");
 
                 return RedirectToPage();
             }
 
-            if (appointment.AppointmentDate == requestedTime)
+            if (appointment.DateTime == requestedTime)
             {
                 SetError(
-                    "The requested date is the same as the " +
-                    "current appointment date.");
+                    "The requested time is the same as the " +
+                    "current appointment time.");
 
                 return RedirectToPage();
             }
 
-            /*
-             * Patient accepts the date they have proposed.
-             * Reception must now review it.
-             */
-            appointment.AppointmentDate = requestedTime;
-            appointment.PatientAcknowledged = true;
-            appointment.DocAcknowledged = false;
-            appointment.Status = "Awaiting Reception";
+            string reason =
+                changeReason?.Trim() ??
+                string.Empty;
 
-            /*
-             * Remove an old Reception response because it may
-             * relate to the previous date.
-             */
-            appointment.DoctorResponse = null;
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                SetError(
+                    "Enter a reason for requesting another date.");
 
-            await _context.SaveChangesAsync();
+                return RedirectToPage();
+            }
+
+            if (reason.Length > 500)
+            {
+                SetError(
+                    "The reason cannot exceed 500 characters.");
+
+                return RedirectToPage();
+            }
+
+            bool pendingRequestExists =
+                await _context
+                    .AppointmentChangeRequests
+                    .AsNoTracking()
+                    .AnyAsync(request =>
+                        request.AppointmentRequestID ==
+                            appointmentId &&
+                        request.Status == "Pending");
+
+            if (pendingRequestExists)
+            {
+                SetError(
+                    "A date-change request is already pending " +
+                    "for this appointment.");
+
+                return RedirectToPage();
+            }
+
+            var changeRequest =
+                new AppointmentChangeRequest
+                {
+                    AppointmentRequestID =
+                        appointment.AppointmentRequestID,
+
+                    PatientID =
+                        patient.PatientID,
+
+                    RequestedDateTime =
+                        requestedTime,
+
+                    Reason = reason,
+
+                    Status = "Pending",
+
+                    RequestedAt =
+                        DateTime.UtcNow,
+
+                    ReviewedAt = null,
+
+                    ReviewMessage = null,
+
+                    ReviewedByUserID = null
+                };
+
+            _context.AppointmentChangeRequests.Add(
+                changeRequest);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                SetError(
+                    "A pending date-change request already " +
+                    "exists for this appointment.");
+
+                return RedirectToPage();
+            }
 
             SetMessage(
                 "Your preferred date has been sent to " +
-                "Reception for confirmation.");
+                "Reception for approval. The current confirmed " +
+                "appointment remains unchanged.");
 
             return RedirectToPage();
         }
 
         /*
-         * Patient proposes a new future appointment.
-         *
-         * Since the patient selected this date:
-         * PatientAcknowledged = true
-         *
-         * Reception has not accepted it:
-         * DocAcknowledged = false
+         * Creates another Appointment row.
+         * Patients may have multiple future appointment requests.
          */
         public async Task<IActionResult>
             OnPostRequestNewAppointmentAsync()
@@ -382,10 +398,10 @@ namespace INFP_Proj.Pages.User
             }
 
             string urgency =
-                string.Equals(
-                    NewAppointmentRequest.Urgency,
-                    "Urgent",
-                    StringComparison.OrdinalIgnoreCase)
+                NewAppointmentRequest.Urgency
+                    .Equals(
+                        "Urgent",
+                        StringComparison.OrdinalIgnoreCase)
                     ? "Urgent"
                     : "Normal";
 
@@ -395,11 +411,10 @@ namespace INFP_Proj.Pages.User
                     .AnyAsync(appointment =>
                         appointment.PatientID ==
                             patient.PatientID &&
-                        appointment.AppointmentDate ==
+                        appointment.DateTime ==
                             preferredDateTime &&
                         appointment.Status != "Rejected" &&
-                        appointment.Status != "Cancelled" &&
-                        appointment.Status != "Completed");
+                        appointment.Status != "Cancelled");
 
             if (duplicateRequestExists)
             {
@@ -416,29 +431,19 @@ namespace INFP_Proj.Pages.User
                     PatientID =
                         patient.PatientID,
 
-                    Reason =
-                        reason,
+                    Reason = reason,
 
-                    Urgency =
-                        urgency,
+                    Urgency = urgency,
 
-                    /*
-                     * Patient selected this date and is waiting
-                     * for Reception to accept it.
-                     */
-                    Status =
-                        "Awaiting Reception",
+                    Status = "Pending",
 
-                    DoctorResponse =
-                        null,
+                    DoctorResponse = null,
 
-                    DocAcknowledged =
-                        false,
+                    DocAcknowledged = false,
 
-                    PatientAcknowledged =
-                        true,
+                    PatientAcknowledged = false,
 
-                    AppointmentDate =
+                    DateTime =
                         preferredDateTime,
 
                     RequestedAt =
@@ -451,7 +456,7 @@ namespace INFP_Proj.Pages.User
             await _context.SaveChangesAsync();
 
             SetMessage(
-                "Your appointment request was submitted " +
+                "Your future appointment request was submitted " +
                 "to Reception for review.");
 
             return RedirectToPage();
@@ -503,11 +508,9 @@ namespace INFP_Proj.Pages.User
                     RequestDate =
                         DateTime.UtcNow,
 
-                    ReplyMessage =
-                        null,
+                    ReplyMessage = null,
 
-                    Completed =
-                        false
+                    Completed = false
                 };
 
             _context.DoctorRequests.Add(
@@ -551,24 +554,74 @@ namespace INFP_Proj.Pages.User
                         appointment.PatientID ==
                             patient.PatientID)
                     .OrderBy(appointment =>
-                        appointment.AppointmentDate)
+                        appointment.DateTime)
                     .ToListAsync();
+
+            List<AppointmentChangeRequest>
+                changeRequests =
+                    await _context
+                        .AppointmentChangeRequests
+                        .AsNoTracking()
+                        .Where(request =>
+                            request.PatientID ==
+                                patient.PatientID)
+                        .OrderByDescending(request =>
+                            request.RequestedAt)
+                        .ToListAsync();
+
+            Dictionary<int, AppointmentChangeRequest>
+                latestRequestByAppointment =
+                    changeRequests
+                        .GroupBy(request =>
+                            request.AppointmentRequestID)
+                        .ToDictionary(
+                            group => group.Key,
+                            group => group
+                                .OrderByDescending(request =>
+                                    request.RequestedAt)
+                                .First());
+
+            Dictionary<int, AppointmentChangeRequest>
+                pendingRequestByAppointment =
+                    changeRequests
+                        .Where(request =>
+                            request.Status.Equals(
+                                "Pending",
+                                StringComparison.OrdinalIgnoreCase))
+                        .GroupBy(request =>
+                            request.AppointmentRequestID)
+                        .ToDictionary(
+                            group => group.Key,
+                            group => group
+                                .OrderByDescending(request =>
+                                    request.RequestedAt)
+                                .First());
 
             List<AppointmentDisplayItem> displayItems =
                 appointments
                     .Select(appointment =>
                     {
+                        pendingRequestByAppointment
+                            .TryGetValue(
+                                appointment
+                                    .AppointmentRequestID,
+                                out AppointmentChangeRequest?
+                                    pendingRequest);
+
+                        latestRequestByAppointment
+                            .TryGetValue(
+                                appointment
+                                    .AppointmentRequestID,
+                                out AppointmentChangeRequest?
+                                    latestRequest);
+
+                        bool isConfirmed =
+                            IsConfirmedAppointment(
+                                appointment);
+
                         bool isClosed =
                             IsClosedStatus(
                                 appointment.Status);
-
-                        bool receptionAcknowledged =
-                            IsReceptionAcknowledged(
-                                appointment);
-
-                        string workflowStatus =
-                            GetAppointmentWorkflowStatus(
-                                appointment);
 
                         return new AppointmentDisplayItem
                         {
@@ -576,13 +629,8 @@ namespace INFP_Proj.Pages.User
                                 appointment
                                     .AppointmentRequestID,
 
-                            /*
-                             * The display item keeps the name
-                             * DateTime so your existing cshtml
-                             * continues to compile.
-                             */
                             DateTime =
-                                appointment.AppointmentDate,
+                                appointment.DateTime,
 
                             Reason =
                                 appointment.Reason,
@@ -591,12 +639,13 @@ namespace INFP_Proj.Pages.User
                                 appointment.Urgency,
 
                             Status =
-                                workflowStatus,
+                                appointment.Status,
 
-                            DoctorResponse = GetReadableResponse(
-                                appointment.DoctorResponse),
+                            DoctorResponse =
+                                appointment.DoctorResponse,
+
                             DocAcknowledged =
-                                receptionAcknowledged,
+                                appointment.DocAcknowledged,
 
                             PatientAcknowledged =
                                 appointment
@@ -605,29 +654,17 @@ namespace INFP_Proj.Pages.User
                             RequestedAt =
                                 appointment.RequestedAt,
 
-                            /*
-                             * Here, IsConfirmed means Reception
-                             * has accepted or assigned the date.
-                             *
-                             * The final status may still be
-                             * Awaiting Patient.
-                             */
                             IsConfirmed =
-                                receptionAcknowledged,
+                                isConfirmed,
 
                             IsClosed =
                                 isClosed,
 
-                            /*
-                             * Compatibility properties for the
-                             * existing cshtml. There is no separate
-                             * date-change entity anymore.
-                             */
                             PendingChangeRequest =
-                                null,
+                                pendingRequest,
 
                             LatestChangeRequest =
-                                null
+                                latestRequest
                         };
                     })
                     .ToList();
@@ -635,32 +672,21 @@ namespace INFP_Proj.Pages.User
             DateTime singaporeNow =
                 GetSingaporeNow();
 
-            /*
-             * Reception has assigned or accepted these dates.
-             *
-             * They may be:
-             * - Awaiting Patient
-             * - Confirmed
-             */
             ConfirmedAppointments =
                 displayItems
                     .Where(item =>
                         item.DateTime >= singaporeNow &&
-                        item.DocAcknowledged &&
+                        item.IsConfirmed &&
                         !item.IsClosed)
                     .OrderBy(item =>
                         item.DateTime)
                     .ToList();
 
-            /*
-             * Reception has not yet accepted these patient
-             * proposed dates.
-             */
             PendingAppointments =
                 displayItems
                     .Where(item =>
                         item.DateTime >= singaporeNow &&
-                        !item.DocAcknowledged &&
+                        !item.IsConfirmed &&
                         !item.IsClosed)
                     .OrderBy(item =>
                         item.DateTime)
@@ -675,11 +701,54 @@ namespace INFP_Proj.Pages.User
                         item.DateTime)
                     .ToList();
 
-            /*
-             * Separate date-change history no longer exists.
-             */
+            Dictionary<int, Appointment>
+                appointmentLookup =
+                    appointments.ToDictionary(
+                        appointment =>
+                            appointment
+                                .AppointmentRequestID);
+
             ChangeRequestHistory =
-                new List<ChangeRequestDisplayItem>();
+                changeRequests
+                    .Select(request =>
+                    {
+                        appointmentLookup.TryGetValue(
+                            request.AppointmentRequestID,
+                            out Appointment? appointment);
+
+                        return new ChangeRequestDisplayItem
+                        {
+                            AppointmentChangeRequestID =
+                                request
+                                    .AppointmentChangeRequestID,
+
+                            AppointmentRequestID =
+                                request
+                                    .AppointmentRequestID,
+
+                            CurrentAppointmentDate =
+                                appointment?.DateTime,
+
+                            RequestedDateTime =
+                                request.RequestedDateTime,
+
+                            Reason =
+                                request.Reason,
+
+                            Status =
+                                request.Status,
+
+                            RequestedAt =
+                                request.RequestedAt,
+
+                            ReviewedAt =
+                                request.ReviewedAt,
+
+                            ReviewMessage =
+                                request.ReviewMessage
+                        };
+                    })
+                    .ToList();
 
             DoctorRequests =
                 await _context.DoctorRequests
@@ -690,30 +759,6 @@ namespace INFP_Proj.Pages.User
                     .OrderByDescending(request =>
                         request.RequestDate)
                     .ToListAsync();
-        }
-
-        private static string? GetReadableResponse(
-        string? storedValue)
-        {
-            if (string.IsNullOrWhiteSpace(storedValue))
-                return null;
-
-            if (!storedValue.StartsWith(
-                "DOC:",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                return storedValue.Trim();
-            }
-
-            string[] parts = storedValue.Split('|', 2);
-
-            if (parts.Length < 2 ||
-                string.IsNullOrWhiteSpace(parts[1]))
-            {
-                return null;
-            }
-
-            return parts[1].Trim();
         }
 
         private async Task<Patients?>
@@ -728,10 +773,6 @@ namespace INFP_Proj.Pages.User
                 return null;
             }
 
-            /*
-             * First check whether the logged-in account is
-             * the patient.
-             */
             Patients? patient =
                 await _context.Patients
                     .Include(item =>
@@ -745,10 +786,6 @@ namespace INFP_Proj.Pages.User
                 return patient;
             }
 
-            /*
-             * Otherwise check whether the account is linked
-             * to a patient through Relationships.
-             */
             int? linkedPatientId =
                 await _context.Relationships
                     .Where(relationship =>
@@ -809,12 +846,8 @@ namespace INFP_Proj.Pages.User
                 message;
         }
 
-        /*
-         * Supports older status values while the team
-         * transitions to acknowledgement-based workflow.
-         */
         private static bool
-            IsReceptionAcknowledged(
+            IsConfirmedAppointment(
                 Appointment appointment)
         {
             if (appointment.DocAcknowledged)
@@ -822,60 +855,15 @@ namespace INFP_Proj.Pages.User
                 return true;
             }
 
-            return string.Equals(
-                       appointment.Status,
+            return appointment.Status.Equals(
                        "Approved",
                        StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(
-                       appointment.Status,
+                   appointment.Status.Equals(
                        "Scheduled",
                        StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(
-                       appointment.Status,
+                   appointment.Status.Equals(
                        "Rescheduled",
-                       StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(
-                       appointment.Status,
-                       "Confirmed",
-                       StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(
-                       appointment.Status,
-                       "Awaiting Patient",
                        StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static string
-            GetAppointmentWorkflowStatus(
-                Appointment appointment)
-        {
-            if (IsClosedStatus(appointment.Status))
-            {
-                return appointment.Status;
-            }
-
-            bool receptionAcknowledged =
-                IsReceptionAcknowledged(
-                    appointment);
-
-            if (receptionAcknowledged &&
-                appointment.PatientAcknowledged)
-            {
-                return "Confirmed";
-            }
-
-            if (receptionAcknowledged &&
-                !appointment.PatientAcknowledged)
-            {
-                return "Awaiting Patient";
-            }
-
-            if (!receptionAcknowledged &&
-                appointment.PatientAcknowledged)
-            {
-                return "Awaiting Reception";
-            }
-
-            return "Pending";
         }
 
         private static bool IsClosedStatus(
@@ -974,10 +962,6 @@ namespace INFP_Proj.Pages.User
                 set;
             }
 
-            /*
-             * Kept as DateTime for compatibility with the
-             * current CareUpdates.cshtml.
-             */
             public DateTime DateTime
             {
                 get;
@@ -1038,18 +1022,14 @@ namespace INFP_Proj.Pages.User
                 set;
             }
 
-            /*
-             * Compatibility properties only.
-             * They are always null under the single-table design.
-             */
-            public DateChangeDisplayItem?
+            public AppointmentChangeRequest?
                 PendingChangeRequest
             {
                 get;
                 set;
             }
 
-            public DateChangeDisplayItem?
+            public AppointmentChangeRequest?
                 LatestChangeRequest
             {
                 get;
@@ -1057,47 +1037,16 @@ namespace INFP_Proj.Pages.User
             }
 
             public bool CanAcknowledge =>
-                DocAcknowledged &&
-                !PatientAcknowledged &&
-                !IsClosed;
+                IsConfirmed &&
+                !IsClosed &&
+                !PatientAcknowledged;
 
             public bool CanRequestDateChange =>
-                DocAcknowledged &&
-                !IsClosed;
+                IsConfirmed &&
+                !IsClosed &&
+                PendingChangeRequest == null;
         }
 
-        /*
-         * Compatibility display class for the existing cshtml.
-         * It is not an EF entity and does not create a table.
-         */
-        public sealed class DateChangeDisplayItem
-        {
-            public DateTime RequestedDateTime
-            {
-                get;
-                set;
-            }
-
-            public string? Reason
-            {
-                get;
-                set;
-            }
-
-            public string Status
-            {
-                get;
-                set;
-            } = string.Empty;
-        }
-
-        /*
-         * Compatibility class for the existing date-change
-         * history section.
-         *
-         * ChangeRequestHistory is always empty because the
-         * separate table has been removed.
-         */
         public sealed class ChangeRequestDisplayItem
         {
             public int AppointmentChangeRequestID

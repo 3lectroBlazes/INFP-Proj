@@ -59,17 +59,10 @@ namespace INFP_Proj.Pages.User
              * Show:
              * 1. Logs belonging directly to the logged-in user.
              * 2. Emergency logs belonging to the linked patient.
-             *
-             * Both halves of the Union need matching Includes,
-             * otherwise EF Core will not populate navigation
-             * properties consistently across the combined set.
              */
             IQueryable<Log> query =
                 _context.Logs
                     .AsNoTracking()
-                    .Include(log => log.User)
-                    .Include(log => log.Patient)
-                        .ThenInclude(patient => patient!.User)
                     .Where(log =>
                         log.UserID == currentUserId);
 
@@ -78,9 +71,6 @@ namespace INFP_Proj.Pages.User
                 query = query.Union(
                     _context.Logs
                         .AsNoTracking()
-                        .Include(log => log.User)
-                        .Include(log => log.Patient)
-                            .ThenInclude(patient => patient!.User)
                         .Where(log =>
                             log.Emergency &&
                             log.PatientID ==
@@ -93,6 +83,46 @@ namespace INFP_Proj.Pages.User
                         log.Timestamp)
                     .ToListAsync();
 
+            List<int> logIds =
+                databaseLogs
+                    .Select(log => log.LogID)
+                    .ToList();
+
+            /*
+             * Load individual relative acknowledgements
+             * for all displayed emergency logs.
+             */
+            List<LogAcknowledgement> acknowledgements =
+                logIds.Count == 0
+                    ? new List<LogAcknowledgement>()
+                    : await _context.LogAcknowledgements
+                        .AsNoTracking()
+                        .Where(acknowledgement =>
+                            logIds.Contains(
+                                acknowledgement.LogID))
+                        .ToListAsync();
+
+            /*
+             * All users linked through Relationships are currently
+             * treated as relatives/caretakers for this patient.
+             */
+            List<string> relativeUserIds =
+                linkedPatientId.HasValue
+                    ? await _context.Relationships
+                        .AsNoTracking()
+                        .Where(relationship =>
+                            relationship.PatientID ==
+                                linkedPatientId.Value)
+                        .Select(relationship =>
+                            relationship.UserID)
+                        .Distinct()
+                        .ToListAsync()
+                    : new List<string>();
+
+            HashSet<string> relativeUserIdSet =
+                relativeUserIds.ToHashSet(
+                    StringComparer.OrdinalIgnoreCase);
+
             Logs = databaseLogs
                 .Select(log =>
                 {
@@ -101,45 +131,62 @@ namespace INFP_Proj.Pages.User
                         log.PatientID ==
                             linkedPatientId.Value;
 
-                    /*
-                     * relativeAcknowledged is a single shared flag:
-                     * true once ANY linked relative has acknowledged.
-                     * There is no per-relative record anymore.
-                     */
+                    bool currentRelativeAcknowledged =
+                        !isSelf &&
+                        acknowledgements.Any(
+                            acknowledgement =>
+                                acknowledgement.LogID ==
+                                    log.LogID &&
+                                acknowledgement.UserID ==
+                                    currentUserId);
+
                     bool currentUserAcknowledged =
                         isSelf
                             ? log.selfAcknowledged
-                            : log.relativeAcknowledged;
+                            : currentRelativeAcknowledged;
+
+                    int relativeAcknowledgementCount =
+                        acknowledgements
+                            .Where(acknowledgement =>
+                                acknowledgement.LogID ==
+                                    log.LogID &&
+                                relativeUserIdSet.Contains(
+                                    acknowledgement.UserID))
+                            .Select(acknowledgement =>
+                                acknowledgement.UserID)
+                            .Distinct(
+                                StringComparer.OrdinalIgnoreCase)
+                            .Count();
 
                     return new LogListItem
                     {
                         LogId = log.LogID,
-                        UserName =
-                            log.User == null
-                                ? string.Empty
-                                : $"{log.User.FirstName} {log.User.LastName}".Trim(),
                         Event = log.Event,
                         Emergency = log.Emergency,
                         Resolved = log.Resolved,
                         Timestamp = log.Timestamp,
-                        IsMedicationRequest = log.MedicationListID.HasValue,
 
                         SelfAcknowledged =
                             log.selfAcknowledged,
 
+                        /*
+                         * This now means at least one relative
+                         * has acknowledged the emergency.
+                         */
                         RelativeAcknowledged =
-                            log.relativeAcknowledged,
-
-                        AcknowledgedAt =
-                            log.AcknowledgedAt,
-
-                        PatientName =
-                            log.Patient?.User == null
-                                ? null
-                                : $"{log.Patient.User.FirstName} {log.Patient.User.LastName}".Trim(),
+                            relativeAcknowledgementCount > 0,
 
                         CurrentUserAcknowledged =
                             currentUserAcknowledged,
+
+                        CurrentRelativeAcknowledged =
+                            currentRelativeAcknowledged,
+
+                        RelativeAcknowledgementCount =
+                            relativeAcknowledgementCount,
+
+                        TotalRelativeCount =
+                            relativeUserIds.Count,
 
                         CanAcknowledge =
                             log.Emergency &&
@@ -215,7 +262,8 @@ namespace INFP_Proj.Pages.User
             }
 
             /*
-             * Patient acknowledgement.
+             * Patient acknowledgement remains in the existing
+             * selfAcknowledged column.
              */
             if (isSelf)
             {
@@ -229,7 +277,6 @@ namespace INFP_Proj.Pages.User
                 }
 
                 emergencyLog.selfAcknowledged = true;
-                emergencyLog.AcknowledgedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
@@ -261,24 +308,56 @@ namespace INFP_Proj.Pages.User
                 return RedirectToPage();
             }
 
-            /*
-             * relativeAcknowledged is now a single shared flag on
-             * the Log itself. The first linked relative to
-             * acknowledge locks it for the group.
-             */
-            if (emergencyLog.relativeAcknowledged)
+            bool alreadyAcknowledged =
+                await _context.LogAcknowledgements
+                    .AsNoTracking()
+                    .AnyAsync(acknowledgement =>
+                        acknowledgement.LogID ==
+                            logId &&
+                        acknowledgement.UserID ==
+                            currentUserId);
+
+            if (alreadyAcknowledged)
             {
                 TempData["Message"] =
-                    "This emergency has already been " +
-                    "acknowledged by a relative.";
+                    "You have already acknowledged " +
+                    "this emergency.";
 
                 return RedirectToPage();
             }
 
-            emergencyLog.relativeAcknowledged = true;
-            emergencyLog.AcknowledgedAt = DateTime.UtcNow;
+            _context.LogAcknowledgements.Add(
+                new LogAcknowledgement
+                {
+                    LogID = logId,
+                    UserID = currentUserId,
+                    AcknowledgedAt = DateTime.UtcNow
+                });
 
-            await _context.SaveChangesAsync();
+            /*
+             * Keep the old shared Boolean updated for compatibility
+             * with any existing teammate code.
+             *
+             * It now means:
+             * "At least one relative acknowledged."
+             *
+             * The page itself uses LogAcknowledgements to identify
+             * each individual relative.
+             */
+            emergencyLog.relativeAcknowledged = true;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                TempData["Message"] =
+                    "You have already acknowledged " +
+                    "this emergency.";
+
+                return RedirectToPage();
+            }
 
             TempData["Message"] =
                 "Emergency acknowledged successfully.";
