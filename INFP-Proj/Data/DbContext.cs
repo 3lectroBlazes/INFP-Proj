@@ -28,6 +28,10 @@ namespace INFP_Proj.Data
         public DbSet<Relationships> Relationships { get; set; }
         public DbSet<BraceletRelation> BraceletRelations { get; set; }
         public DbSet<Log> Logs { get; set; }
+
+        public DbSet<LogAcknowledgement>
+            LogAcknowledgements
+        { get; set; }
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
 
@@ -40,6 +44,44 @@ namespace INFP_Proj.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<LogAcknowledgement>(entity =>
+            {
+                entity.ToTable("LogAcknowledgements");
+
+                entity.HasKey(acknowledgement =>
+                    acknowledgement.LogAcknowledgementID);
+
+                entity.Property(acknowledgement =>
+                        acknowledgement.UserID)
+                    .HasMaxLength(450)
+                    .IsRequired();
+
+                /*
+                 * The same relative can acknowledge the same
+                 * emergency only once.
+                 */
+                entity.HasIndex(acknowledgement => new
+                {
+                    acknowledgement.LogID,
+                    acknowledgement.UserID
+                })
+                    .IsUnique()
+                    .HasDatabaseName(
+                        "UX_LogAcknowledgements_LogID_UserID");
+
+                entity.HasOne<Log>()
+                    .WithMany()
+                    .HasForeignKey(acknowledgement =>
+                        acknowledgement.LogID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(acknowledgement =>
+                        acknowledgement.UserID)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
 
             modelBuilder.Entity<AppointmentChangeRequest>(entity =>
             {

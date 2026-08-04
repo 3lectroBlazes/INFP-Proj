@@ -16,7 +16,7 @@ namespace INFP_Proj.Data
         public string? DoctorResponse { get; set; }
         public bool DocAcknowledged { get; set; } = false;
         public bool PatientAcknowledged { get; set; } = false;
-        public required DateTime AppointmentDate { get; set; }
+        public required DateTime DateTime { get; set; }
         public DateTime RequestedAt { get; set; } = DateTime.Now;
 
 

@@ -67,5 +67,14 @@ nunit-*.xml
 # Local config overrides (secrets)
 appsettings.*.local.json
 secrets.json
+appsettings.json
+appsettings.Development.json
+
+# Seed data (contains hardcoded accounts/credentials)
+INFP-Proj/Data/DbSeeder.cs
+
+# Publish profiles (deployment config; the .pubxml.user variant can carry
+# saved credentials/connection strings)
+INFP-Proj/Properties/PublishProfiles/
 
 .vscode

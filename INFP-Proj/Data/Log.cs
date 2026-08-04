@@ -18,7 +18,6 @@ namespace INFP_Proj.Data
         public bool selfAcknowledged { get; set; } = false;
         public bool relativeAcknowledged { get; set; } = false;
         public DateTime Timestamp { get; set; } = DateTime.Now;
-        public DateTime? AcknowledgedAt { get; set; }
 
         [ForeignKey("UserID")]
         public AppUser? User { get; set; }

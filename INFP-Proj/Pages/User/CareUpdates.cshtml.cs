@@ -233,7 +233,7 @@ namespace INFP_Proj.Pages.User
                 return RedirectToPage();
             }
 
-            if (appointment.AppointmentDate == requestedTime)
+            if (appointment.DateTime == requestedTime)
             {
                 SetError(
                     "The requested time is the same as the " +
@@ -411,7 +411,7 @@ namespace INFP_Proj.Pages.User
                     .AnyAsync(appointment =>
                         appointment.PatientID ==
                             patient.PatientID &&
-                        appointment.AppointmentDate ==
+                        appointment.DateTime ==
                             preferredDateTime &&
                         appointment.Status != "Rejected" &&
                         appointment.Status != "Cancelled");
@@ -443,7 +443,7 @@ namespace INFP_Proj.Pages.User
 
                     PatientAcknowledged = false,
 
-                    AppointmentDate =
+                    DateTime =
                         preferredDateTime,
 
                     RequestedAt =
@@ -554,7 +554,7 @@ namespace INFP_Proj.Pages.User
                         appointment.PatientID ==
                             patient.PatientID)
                     .OrderBy(appointment =>
-                        appointment.AppointmentDate)
+                        appointment.DateTime)
                     .ToListAsync();
 
             List<AppointmentChangeRequest>
@@ -630,7 +630,7 @@ namespace INFP_Proj.Pages.User
                                     .AppointmentRequestID,
 
                             DateTime =
-                                appointment.AppointmentDate,
+                                appointment.DateTime,
 
                             Reason =
                                 appointment.Reason,
@@ -727,7 +727,7 @@ namespace INFP_Proj.Pages.User
                                     .AppointmentRequestID,
 
                             CurrentAppointmentDate =
-                                appointment?.AppointmentDate,
+                                appointment?.DateTime,
 
                             RequestedDateTime =
                                 request.RequestedDateTime,

@@ -11,10 +11,14 @@ namespace INFP_Proj.ViewModel
         public bool IsMedicationRequest { get; set; }
         public bool SelfAcknowledged { get; set; }
         public bool RelativeAcknowledged { get; set; }
-        public DateTime? AcknowledgedAt { get; set; }
+        public bool CurrentRelativeAcknowledged { get; set; }
+        public int RelativeAcknowledgementCount { get; set; }
+        public int TotalRelativeCount { get; set; }
+
         public string? PatientName { get; set; }
         public bool CurrentUserAcknowledged { get; set; }
         public bool CanAcknowledge { get; set; }
+
         public bool CanResolve => SelfAcknowledged || RelativeAcknowledged;
     }
 }
