@@ -110,6 +110,40 @@ namespace INFP_Proj.Pages
             return RedirectToPage("Index");
         }
 
+        public async Task<IActionResult> OnPostResendAsync()
+        {
+            string? pendingEmail = otpService.GetPendingEmail(HttpContext.Session, Purpose);
+
+            if (string.IsNullOrEmpty(pendingEmail))
+            {
+                ClearPending();
+                RequiresOtp = false;
+                ModelState.AddModelError("", "Your session has expired. Please sign in again.");
+                return Page();
+            }
+
+            var user = await userManager.FindByEmailAsync(pendingEmail);
+            if (user == null)
+            {
+                ClearPending();
+                RequiresOtp = false;
+                ModelState.AddModelError("", "Username or Password incorrect");
+                return Page();
+            }
+
+            bool sent = await otpService.GenerateAndSendAsync(HttpContext.Session, Purpose, pendingEmail, EmailSubject, BodyTemplate);
+
+            RequiresOtp = true;
+
+            if (!sent)
+            {
+                ModelState.AddModelError("", "We couldn't resend your verification code right now. Please try again later.");
+                return Page();
+            }
+
+            return Page();
+        }
+
         public async Task<IActionResult> OnPostVerifyOtpAsync()
         {
             string? pendingEmail = otpService.GetPendingEmail(HttpContext.Session, Purpose);
