@@ -35,9 +35,21 @@ namespace INFP_Proj.Pages
             this.otpService = otpService;
         }
 
-        public void OnGet()
+        private IActionResult RedirectToRoleHome()
         {
+            bool isAdmin = User.HasClaim(c => c.Type == "IsAdmin" && c.Value == "True");
+            return RedirectToPage(isAdmin ? "/Admin/Index" : "/User/Index");
+        }
+
+        public IActionResult OnGet()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToRoleHome();
+            }
+
             RequiresOtp = !string.IsNullOrEmpty(otpService.GetPendingEmail(HttpContext.Session, Purpose));
+            return Page();
         }
 
         public IActionResult OnGetReset()
@@ -107,7 +119,7 @@ namespace INFP_Proj.Pages
             }
 
             await signInManager.SignInAsync(user, LModel.RememberMe);
-            return RedirectToPage("Index");
+            return RedirectToRoleHome();
         }
 
         public async Task<IActionResult> OnPostResendAsync()
@@ -183,8 +195,8 @@ namespace INFP_Proj.Pages
             bool rememberMe = bool.TryParse(HttpContext.Session.GetString(PendingRememberMeKey), out bool remember) && remember;
             ClearPending();
 
-            await signInManager.SignInAsync(user, rememberMe);
-            return RedirectToPage("Index");
+            await signInManager.SignInAsync(user, LModel.RememberMe);
+            return RedirectToRoleHome();
         }
 
         private void ClearPending()

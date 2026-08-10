@@ -22,8 +22,6 @@ namespace INFP_Proj.Data
             // <tableName> <name> = new <tableName> { <tableData> };
             //  E.G Allergies Penicillin = new Allergies { Allergy = "Penicillin" };
 
-
-
             // ^^ Extra seeds above. Please delete after use. ^^ 
 
             if (userManager.Users.Any()) return;
@@ -93,8 +91,10 @@ namespace INFP_Proj.Data
             AppUser evan = await CreateUser2FA("Evan", null, "IDK", "elsw185@gmail.com", "12345678", "Reception");
             AppUser sadev = await CreateUser2FA("Sadev", null, "Mawadavilage", "sadevdulneth01@gmail.com", "12345678", "User");
             AppUser miku = await CreateUser("Hatsune", null, "Miku", "hatsune.miku@hospital.com", "12345678", "User");
-            AppUser sasha = await CreateUser("Sasha", null, "Sasthi", "sasha.sasthi@hospital.com", "12345678", "User");
             AppUser teto = await CreateUser("Kasane", null, "Teto", "kasane.teto@hospital.com", "12345678", "User");
+            AppUser doc = await CreateUser("Gawr", null, "Gura", "doc@doc.com", "12345678", "Doctor");
+            AppUser nurse = await CreateUser("Hoshimachi", null, "Suisei", "nur@nur.com", "12345678", "Nurse");
+            AppUser recep = await CreateUser("Magic", null, "Gatherer", "kek@kek.com", "12345678", "Reception");
 
             // Hospitals
             Hospitals hospital = new Hospitals
@@ -374,7 +374,6 @@ namespace INFP_Proj.Data
 
             // Relationships
             context.Relationships.AddRange(
-                new Relationships { PatientID = sadevPatient.PatientID, UserID = sasha.Id },
                 new Relationships { PatientID = tetoPatient.PatientID, UserID = miku.Id }
             );
 

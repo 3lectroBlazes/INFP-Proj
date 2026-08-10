@@ -13,5 +13,6 @@ namespace INFP_Proj.ViewModel
         public string Password { get; set; }
 
         public bool RememberMe { get; set; }
+
     }
 }

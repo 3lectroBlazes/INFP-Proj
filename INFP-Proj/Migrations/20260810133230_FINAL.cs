@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace INFP_Proj.Migrations
 {
     /// <inheritdoc />
-    public partial class inital : Migration
+    public partial class FINAL : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -277,6 +277,7 @@ namespace INFP_Proj.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RelationCode = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -493,6 +494,38 @@ namespace INFP_Proj.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AppointmentChangeRequests",
+                columns: table => new
+                {
+                    AppointmentChangeRequestID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AppointmentRequestID = table.Column<int>(type: "int", nullable: false),
+                    PatientID = table.Column<int>(type: "int", nullable: false),
+                    RequestedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReviewedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReviewMessage = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ReviewedByUserID = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppointmentChangeRequests", x => x.AppointmentChangeRequestID);
+                    table.ForeignKey(
+                        name: "FK_AppointmentChangeRequests_Appointments_AppointmentRequestID",
+                        column: x => x.AppointmentRequestID,
+                        principalTable: "Appointments",
+                        principalColumn: "AppointmentRequestID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AppointmentChangeRequests_Patients_PatientID",
+                        column: x => x.PatientID,
+                        principalTable: "Patients",
+                        principalColumn: "PatientID");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Logs",
                 columns: table => new
                 {
@@ -586,6 +619,32 @@ namespace INFP_Proj.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "LogAcknowledgements",
+                columns: table => new
+                {
+                    LogAcknowledgementID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LogID = table.Column<int>(type: "int", nullable: false),
+                    UserID = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    AcknowledgedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LogAcknowledgements", x => x.LogAcknowledgementID);
+                    table.ForeignKey(
+                        name: "FK_LogAcknowledgements_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_LogAcknowledgements_Logs_LogID",
+                        column: x => x.LogID,
+                        principalTable: "Logs",
+                        principalColumn: "LogID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AllergyLists_AllergyID",
                 table: "AllergyLists",
@@ -595,6 +654,18 @@ namespace INFP_Proj.Migrations
                 name: "IX_AllergyLists_PatientID",
                 table: "AllergyLists",
                 column: "PatientID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppointmentChangeRequests_PatientID",
+                table: "AppointmentChangeRequests",
+                column: "PatientID");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_AppointmentChangeRequests_OnePending",
+                table: "AppointmentChangeRequests",
+                column: "AppointmentRequestID",
+                unique: true,
+                filter: "[Status] = 'Pending'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_PatientID",
@@ -659,6 +730,17 @@ namespace INFP_Proj.Migrations
                 name: "IX_DoctorRequests_PatientID",
                 table: "DoctorRequests",
                 column: "PatientID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LogAcknowledgements_UserID",
+                table: "LogAcknowledgements",
+                column: "UserID");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_LogAcknowledgements_LogID_UserID",
+                table: "LogAcknowledgements",
+                columns: new[] { "LogID", "UserID" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Logs_MedicationListID",
@@ -738,7 +820,7 @@ namespace INFP_Proj.Migrations
                 name: "AllergyLists");
 
             migrationBuilder.DropTable(
-                name: "Appointments");
+                name: "AppointmentChangeRequests");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -762,7 +844,7 @@ namespace INFP_Proj.Migrations
                 name: "DoctorRequests");
 
             migrationBuilder.DropTable(
-                name: "Logs");
+                name: "LogAcknowledgements");
 
             migrationBuilder.DropTable(
                 name: "Records");
@@ -780,10 +862,16 @@ namespace INFP_Proj.Migrations
                 name: "Allergies");
 
             migrationBuilder.DropTable(
+                name: "Appointments");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "Bracelets");
+
+            migrationBuilder.DropTable(
+                name: "Logs");
 
             migrationBuilder.DropTable(
                 name: "Beds");

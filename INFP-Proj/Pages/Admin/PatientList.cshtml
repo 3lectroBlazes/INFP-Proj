@@ -1,7 +1,7 @@
 @page
-@model INFP_Proj.Pages.Admin.HistoryModel
+@model INFP_Proj.Pages.Admin.IndexModel
 @{
-    ViewData["Title"] = "Admission History";
+    ViewData["Title"] = "Patient List";
 }
 
 <style>
@@ -52,11 +52,11 @@
             background: #f9fbfb;
         }
 
-        .log-table tbody tr.admission-active td:first-child {
+        .log-table tbody tr.patient-admitted td:first-child {
             border-left: 4px solid #198754;
         }
 
-        .log-table tbody tr.admission-discharged td:first-child {
+        .log-table tbody tr.patient-discharged td:first-child {
             border-left: 4px solid #6c757d;
         }
 
@@ -103,8 +103,8 @@
                     text-transform: uppercase;
                 }
 
-            .log-table tbody tr.admission-active td:first-child,
-            .log-table tbody tr.admission-discharged td:first-child {
+            .log-table tbody tr.patient-admitted td:first-child,
+            .log-table tbody tr.patient-discharged td:first-child {
                 border-left-width: 4px;
             }
     }
@@ -112,45 +112,37 @@
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">Admission history</h1>
-        <p class="page-subtitle text-muted">All patient admission records (newest first).</p>
+        <h1 class="page-title">Patient list</h1>
+        <p class="page-subtitle text-muted">All registered patients and admission status.</p>
     </div>
     <div class="page-actions">
         <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Dashboard</a>
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Logs">Activity log</a>
+        <a class="btn btn-primary btn-sm" asp-page="Create">Add patient</a>
     </div>
 </div>
 
-<div class="log-card app-card card mb-4">
-    <div class="card-body py-3">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-sm-8 col-md-5">
-                <label asp-for="PatientId" class="form-label">Patient</label>
-                <select asp-for="PatientId" class="form-select" asp-items="Model.PatientOptions">
-                    <option value="">All patients</option>
-                </select>
-            </div>
-            <div class="col-auto d-grid">
-                <button type="submit" class="btn btn-primary">Filter</button>
-            </div>
-            <div class="col-12">
-                <a class="btn btn-link btn-sm px-0" asp-page="/Admin/History">Clear filter</a>
-            </div>
-        </form>
+@if (TempData["Message"] is string message)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-</div>
+}
 
-@if (Model.Admissions.Count == 0)
+@if (Model.Patients.Count == 0)
 {
     <div class="empty-panel">
-        <p class="text-muted mb-0">No admission records found.</p>
+        <p class="text-muted mb-3">No patients registered yet.</p>
+        <a class="btn btn-primary" asp-page="Create">Add new patient</a>
     </div>
 }
 else
 {
     <div class="log-card app-card card">
         <div class="card-header d-flex justify-content-between align-items-center gap-2">
-            <span>Admission records</span>
-            <span class="small text-muted fw-normal">@Model.Admissions.Count total</span>
+            <span>All patients</span>
+            <span class="small text-muted fw-normal">@Model.Patients.Count total</span>
         </div>
 
         <div class="table-responsive">
@@ -158,53 +150,39 @@ else
                 <thead>
                     <tr>
                         <th>Patient</th>
-                        <th>Diagnosis</th>
-                        <th>Ward / Bed</th>
+                        <th>Status</th>
+                        <th>Medications</th>
                         <th>Admitted</th>
                         <th>Discharged</th>
-                        <th>Status</th>
-                        <th></th>
+                        <th>Nurse Call</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model.Admissions)
+                    @foreach (var patient in Model.Patients)
                     {
-                        <tr class="@(item.IsActive ? "admission-active" : "admission-discharged")">
-                            <td data-label="Patient" class="fw-medium">@item.PatientName</td>
-                            <td data-label="Diagnosis">@item.Diagnosis</td>
-                            <td data-label="Ward / Bed" class="small text-muted">
-                                <div>@item.Ward</div>
-                                <div>@item.Bed</div>
-                            </td>
-                            <td data-label="Admitted" class="text-nowrap">
-                                <time datetime="@item.AdmissionDateTime.ToString("o")">
-                                    @item.AdmissionDateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                                </time>
-                            </td>
-                            <td data-label="Discharged" class="text-nowrap">
-                                @if (item.DischargeDateTime.HasValue)
-                                {
-                                    <time datetime="@item.DischargeDateTime.Value.ToString("o")">
-                                        @item.DischargeDateTime.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-                                    </time>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">&mdash;</span>
-                                }
-                            </td>
+                        <tr class="@(patient.IsDischarged ? "patient-discharged" : "patient-admitted")">
+                            <td data-label="Patient" class="fw-medium">@patient.PatientName</td>
                             <td data-label="Status">
-                                @if (item.IsActive)
+                                <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
+                                    @patient.Status
+                                </span>
+                            </td>
+                            <td data-label="Medications" class="text-muted small">@patient.MedicationsSummary</td>
+                            <td data-label="Admitted">@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                            <td data-label="Discharged">@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                            <td data-label="Nurse Call">
+                                @if (patient.NurseCall)
                                 {
                                     <span class="badge bg-success">Active</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Discharged</span>
+                                    <span class="badge bg-danger">Inactive</span>
                                 }
                             </td>
-                            <td data-label="" class="text-end">
-                                <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@item.PatientId">Open</a>
+                            <td data-label="Actions" class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
                             </td>
                         </tr>
                     }

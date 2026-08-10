@@ -36,6 +36,12 @@ builder.Services.AddAuthorization(options =>
             Claim? isAdminClaim = context.User.FindFirst("IsAdmin");
             return isAdminClaim != null && bool.Parse(isAdminClaim.Value);
         }));
+    options.AddPolicy("UserOnlyPolicy", policy =>
+        policy.RequireAssertion(context =>
+        {
+            Claim? isUserClaim = context.User.FindFirst("IsUser");
+            return isUserClaim != null && bool.Parse(isUserClaim.Value);
+        }));
 });
 
 builder.Services.AddRazorPages(options =>

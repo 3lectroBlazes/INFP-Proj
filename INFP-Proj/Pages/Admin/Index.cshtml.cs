@@ -1,27 +1,81 @@
-﻿using INFP_Proj.Data;
+using INFP_Proj.Data;
 using INFP_Proj.ViewModel;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+
 
 namespace INFP_Proj.Pages.Admin
 {
-    public class IndexModel : PageModel
+    public class DashboardModel : PageModel
     {
+        private const int MaxEmergencyLogs = 10;
         private readonly AppDbContext _context;
 
-        public IndexModel(AppDbContext context)
+        public DashboardModel(AppDbContext context)
         {
             _context = context;
         }
 
+        public IList<DoctorRequestItem> DoctorRequests { get; set; } = new List<DoctorRequestItem>();
+        public IList<EmergencyLogItem> EmergencyLogs { get; set; } = new List<EmergencyLogItem>();
         public IList<PatientListItem> Patients { get; set; } = new List<PatientListItem>();
 
         public async Task OnGetAsync()
         {
-            var patients = await _context.Patients
-                .Include(p => p.User)
-                .OrderBy(p => p.PatientID)
+            DoctorRequests = await _context.DoctorRequests
+                .Where(dr => !dr.Completed)
+                .OrderByDescending(dr => dr.RequestDate)
+                .Select(dr => new DoctorRequestItem
+                {
+                    DoctorRequestId = dr.DoctorRequestID,
+                    PatientId = dr.PatientID,
+                    PatientName = dr.Patient != null && dr.Patient.User != null
+                        ? $"{dr.Patient.User.FirstName} {dr.Patient.User.LastName}"
+                        : $"Patient #{dr.PatientID}",
+                    RequestMessage = dr.RequestMessage,
+                    RequestDate = dr.RequestDate
+                })
                 .ToListAsync();
+
+            EmergencyLogs = await _context.Logs
+                .Where(l => l.Emergency && !l.Resolved)
+                .OrderByDescending(l => l.Timestamp)
+                .Take(MaxEmergencyLogs)
+                .Select(l => new EmergencyLogItem
+                {
+                    Event = l.Event,
+                    UserName = l.User != null
+                        ? $"{l.User.FirstName} {l.User.LastName}"
+                        : $"User #{l.UserID}",
+                    Timestamp = l.Timestamp
+                })
+                .ToListAsync();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isUserRole = User.IsInRole("User");
+
+            List<Patients> patients;
+
+            if (isUserRole && userId != null)
+            {
+                var relatedPatientIds = await _context.Relationships
+                    .Where(r => r.UserID == userId)
+                    .Select(r => r.PatientID)
+                    .ToListAsync();
+
+                patients = await _context.Patients
+                    .Include(p => p.User)
+                    .Where(p => p.UserID == userId || relatedPatientIds.Contains(p.PatientID))
+                    .OrderBy(p => p.PatientID)
+                    .ToListAsync();
+            }
+            else
+            {
+                patients = await _context.Patients
+                    .Include(p => p.User)
+                    .OrderBy(p => p.PatientID)
+                    .ToListAsync();
+            }
 
             var patientIds = patients.Select(p => p.PatientID).ToList();
 
@@ -41,8 +95,6 @@ namespace INFP_Proj.Pages.Admin
                     .OrderByDescending(r => r.AdmissionDateTime)
                     .FirstOrDefault();
 
-                // Only show medications for the current admission (medications attached to,
-                // or added after, the latest record's medication list).
                 var patientMeds = medicationLists
                     .Where(m => m.PatientID == p.PatientID
                         && (latestRecord == null || m.MedicationListID >= latestRecord.MedicationListID))
@@ -66,5 +118,21 @@ namespace INFP_Proj.Pages.Admin
                 };
             }).ToList();
         }
+    }
+
+    public class DoctorRequestItem
+    {
+        public int DoctorRequestId { get; set; }
+        public int PatientId { get; set; }
+        public string PatientName { get; set; } = string.Empty;
+        public string RequestMessage { get; set; } = string.Empty;
+        public DateTime RequestDate { get; set; }
+    }
+
+    public class EmergencyLogItem
+    {
+        public string Event { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
     }
 }

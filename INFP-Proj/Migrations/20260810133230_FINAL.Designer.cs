@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260712155523_inital")]
-    partial class inital
+    [Migration("20260810133230_FINAL")]
+    partial class FINAL
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -382,6 +382,9 @@ namespace INFP_Proj.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("RelationCode")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -662,6 +665,89 @@ namespace INFP_Proj.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("INFP_Proj.Models.AppointmentChangeRequest", b =>
+                {
+                    b.Property<int>("AppointmentChangeRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentChangeRequestID"));
+
+                    b.Property<int>("AppointmentRequestID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RequestedDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserID")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("AppointmentChangeRequestID");
+
+                    b.HasIndex("AppointmentRequestID")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AppointmentChangeRequests_OnePending")
+                        .HasFilter("[Status] = 'Pending'");
+
+                    b.HasIndex("PatientID")
+                        .HasDatabaseName("IX_AppointmentChangeRequests_PatientID");
+
+                    b.ToTable("AppointmentChangeRequests", (string)null);
+                });
+
+            modelBuilder.Entity("INFP_Proj.Models.LogAcknowledgement", b =>
+                {
+                    b.Property<int>("LogAcknowledgementID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogAcknowledgementID"));
+
+                    b.Property<DateTime>("AcknowledgedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LogID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserID")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LogAcknowledgementID");
+
+                    b.HasIndex("UserID");
+
+                    b.HasIndex("LogID", "UserID")
+                        .IsUnique()
+                        .HasDatabaseName("UX_LogAcknowledgements_LogID_UserID");
+
+                    b.ToTable("LogAcknowledgements", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -976,6 +1062,40 @@ namespace INFP_Proj.Migrations
                         .IsRequired();
 
                     b.Navigation("Patients");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Models.AppointmentChangeRequest", b =>
+                {
+                    b.HasOne("INFP_Proj.Data.Appointment", "Appointment")
+                        .WithMany()
+                        .HasForeignKey("AppointmentRequestID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("INFP_Proj.Data.Patients", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Appointment");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("INFP_Proj.Models.LogAcknowledgement", b =>
+                {
+                    b.HasOne("INFP_Proj.Data.Log", null)
+                        .WithMany()
+                        .HasForeignKey("LogID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("INFP_Proj.Models.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
