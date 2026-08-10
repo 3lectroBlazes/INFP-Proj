@@ -156,23 +156,6 @@
     }
 </style>
 
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Patient Dashboard</h1>
-
-        <p class="page-subtitle text-muted">
-            Review your patient information, current vitals and care updates.
-        </p>
-    </div>
-
-    <div class="page-actions">
-        <a asp-page="/User/Tracker"
-           class="btn btn-outline-primary btn-sm">
-            View Vitals
-        </a>
-    </div>
-</div>
-
 @if (!data.HasPatientRecord)
 {
     <div class="alert alert-info">
@@ -240,7 +223,261 @@ else
             </a>
         }
 </div>
+<!-- Vitals -->
+<section class="mb-5">
+    <div class="section-heading d-flex flex-column flex-md-row
+                    justify-content-between align-items-md-end gap-2">
 
+        <div>
+            <h2>Latest vitals</h2>
+
+            <p class="text-muted mb-0">
+                Most recent readings recorded for the patient.
+            </p>
+        </div>
+
+        <a asp-page="/User/Tracker"
+           class="btn btn-outline-primary btn-sm">
+            Open full tracker
+        </a>
+    </div>
+
+    <div class="dashboard-card app-card card">
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Heart rate
+                        </div>
+
+                        <div class="vital-value">
+                            <span id="heartRateValue">
+                                @(data.HeartRate.HasValue
+                                                                ? data.HeartRate.Value.ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                bpm
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Breathing rate
+                        </div>
+
+                        <div class="vital-value">
+                            <span id="respirationValue">
+                                @(data.RespiratoryRate.HasValue
+                                                                ? data.RespiratoryRate.Value
+                                                                .ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                breaths/min
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Systolic pressure
+                        </div>
+
+                        <div class="vital-value">
+                            <span id="systolicValue">
+                                @(data.SystolicBloodPressure.HasValue
+                                                                ? data.SystolicBloodPressure.Value
+                                                                .ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                mmHg
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="vital-box">
+                        <div class="vital-label">
+                            Diastolic pressure
+                        </div>
+
+                        <div class="vital-value">
+                            <span id="diastolicValue">
+                                @(data.DiastolicBloodPressure.HasValue
+                                                                ? data.DiastolicBloodPressure.Value
+                                                                .ToString("0")
+                                                                : "N/A")
+                                                                    </span>
+
+                            <span class="vital-unit">
+                                mmHg
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+ <!-- Medications -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Current medications</h2>
+
+            <p class="text-muted mb-0">
+                Medication, dosage and scheduled consumption time.
+            </p>
+        </div>
+
+        <div class="dashboard-card app-card card">
+            <div class="card-body">
+
+            @if (data.CurrentMedications.Count == 0)
+                {
+                    <p class="text-muted mb-0">
+                        No active medication has been assigned.
+                    </p>
+                }
+                else
+                {
+                    <div class="row g-3">
+
+                        @foreach (var medication in data.CurrentMedications)
+                        {
+                            <div class="col-md-6 col-xl-4">
+                                <div class="medication-card">
+
+                                    <div class="fw-bold text-primary mb-3">
+                                        @medication.MedicationName
+                                    </div>
+
+                                    <div class="detail-label">
+                                        Dosage
+                                    </div>
+
+                                    <div class="fw-semibold mb-3">
+                                        @medication.Dosage
+                                    </div>
+
+                                    <div class="detail-label">
+                                        Scheduled time
+                                    </div>
+
+                                    <div class="fw-semibold">
+                                        @(medication.ConsumptionTime.HasValue
+                                                                    ? medication.ConsumptionTime.Value
+                                                                    .ToString("HH:mm")
+                                                                    : "Not scheduled")
+                        </div>
+
+                                </div>
+                            </div>
+                                }
+
+                    </div>
+                }
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Doctor update -->
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2>Latest doctor update</h2>
+
+            <p class="text-muted mb-0">
+                Latest communication between the patient and doctor.
+            </p>
+        </div>
+
+        <div class="dashboard-card app-card card">
+            <div class="card-body">
+
+                @if (!data.HasDoctorRequest)
+                {
+                    <p class="text-muted mb-0">
+                        No doctor communication is available.
+                    </p>
+                }
+                else
+                {
+                    <div class="row g-4">
+
+                        <div class="col-lg-6">
+                            <div class="doctor-message h-100">
+
+                                <div class="small text-uppercase
+                                                    fw-semibold text-muted mb-2">
+                                    Patient message
+                                </div>
+
+                                <p class="mb-0">
+                                    @data.LatestDoctorRequestMessage
+                                </p>
+
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="doctor-message h-100">
+
+                                <div class="d-flex justify-content-between
+                                                    align-items-start gap-2 mb-2">
+
+                                    <div class="small text-uppercase
+                                                        fw-semibold text-muted">
+                                        Doctor response
+                                    </div>
+
+                                    <span class="badge
+                                                @(data.LatestDoctorRequestCompleted
+                                                                                      ? "bg-success"
+                                                                                      : "bg-warning text-dark")">
+
+                                        @(data.LatestDoctorRequestCompleted
+                                                                        ? "Completed"
+                                                                        : "Awaiting reply")
+                                                                                       </span>
+                                                                                   </div>
+
+                                <p class="mb-3">
+                                    @data.LatestDoctorReply
+                                </p>
+
+                                <div class="small text-muted">
+                                    @(data.LatestDoctorRequestDate.HasValue
+                                                                ? data.LatestDoctorRequestDate.Value
+                                                                .ToLocalTime()
+                                                                .ToString(
+                                                                "dd MMM yyyy, hh:mm tt")
+                                                                : "Date unavailable")
+                        </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                        }
+
+            </div>
+        </div>
+    </section>
 <!-- Main overview -->
 <section class="mb-5">
     <div class="section-heading">
@@ -447,118 +684,6 @@ else
     </div>
 </section>
 
-<!-- Vitals -->
-<section class="mb-5">
-    <div class="section-heading d-flex flex-column flex-md-row
-                    justify-content-between align-items-md-end gap-2">
-
-        <div>
-            <h2>Latest vitals</h2>
-
-            <p class="text-muted mb-0">
-                Most recent readings recorded for the patient.
-            </p>
-        </div>
-
-        <a asp-page="/User/Tracker"
-           class="btn btn-outline-primary btn-sm">
-            Open full tracker
-        </a>
-    </div>
-
-    <div class="dashboard-card app-card card">
-        <div class="card-body">
-
-            <div class="row g-3">
-
-                <div class="col-6 col-lg-3">
-                    <div class="vital-box">
-                        <div class="vital-label">
-                            Heart rate
-                        </div>
-
-                        <div class="vital-value">
-                            <span id="heartRateValue">
-                                @(data.HeartRate.HasValue
-                                                                ? data.HeartRate.Value.ToString("0")
-                                                                : "N/A")
-                                                                    </span>
-
-                            <span class="vital-unit">
-                                bpm
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-6 col-lg-3">
-                    <div class="vital-box">
-                        <div class="vital-label">
-                            Breathing rate
-                        </div>
-
-                        <div class="vital-value">
-                            <span id="respirationValue">
-                                @(data.RespiratoryRate.HasValue
-                                                                ? data.RespiratoryRate.Value
-                                                                .ToString("0")
-                                                                : "N/A")
-                                                                    </span>
-
-                            <span class="vital-unit">
-                                breaths/min
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-6 col-lg-3">
-                    <div class="vital-box">
-                        <div class="vital-label">
-                            Systolic pressure
-                        </div>
-
-                        <div class="vital-value">
-                            <span id="systolicValue">
-                                @(data.SystolicBloodPressure.HasValue
-                                                                ? data.SystolicBloodPressure.Value
-                                                                .ToString("0")
-                                                                : "N/A")
-                                                                    </span>
-
-                            <span class="vital-unit">
-                                mmHg
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-6 col-lg-3">
-                    <div class="vital-box">
-                        <div class="vital-label">
-                            Diastolic pressure
-                        </div>
-
-                        <div class="vital-value">
-                            <span id="diastolicValue">
-                                @(data.DiastolicBloodPressure.HasValue
-                                                                ? data.DiastolicBloodPressure.Value
-                                                                .ToString("0")
-                                                                : "N/A")
-                                                                    </span>
-
-                            <span class="vital-unit">
-                                mmHg
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</section>
-
 <!-- Care information -->
 <section class="mb-5">
     <div class="section-heading">
@@ -674,152 +799,6 @@ else
                     </div>
                 </div>
             </div>
-
-        </div>
-    </section>
-
-    <!-- Medications -->
-    <section class="mb-5">
-        <div class="section-heading">
-            <h2>Current medications</h2>
-
-            <p class="text-muted mb-0">
-                Medication, dosage and scheduled consumption time.
-            </p>
-        </div>
-
-        <div class="dashboard-card app-card card">
-            <div class="card-body">
-
-            @if (data.CurrentMedications.Count == 0)
-                {
-                    <p class="text-muted mb-0">
-                        No active medication has been assigned.
-                    </p>
-                }
-                else
-                {
-                    <div class="row g-3">
-
-                        @foreach (var medication in data.CurrentMedications)
-                        {
-                            <div class="col-md-6 col-xl-4">
-                                <div class="medication-card">
-
-                                    <div class="fw-bold text-primary mb-3">
-                                        @medication.MedicationName
-                                    </div>
-
-                                    <div class="detail-label">
-                                        Dosage
-                                    </div>
-
-                                    <div class="fw-semibold mb-3">
-                                        @medication.Dosage
-                                    </div>
-
-                                    <div class="detail-label">
-                                        Scheduled time
-                                    </div>
-
-                                    <div class="fw-semibold">
-                                        @(medication.ConsumptionTime.HasValue
-                                                                    ? medication.ConsumptionTime.Value
-                                                                    .ToString("HH:mm")
-                                                                    : "Not scheduled")
-                        </div>
-
-                                </div>
-                            </div>
-                                }
-
-                    </div>
-                }
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Doctor update -->
-    <section class="mb-5">
-        <div class="section-heading">
-            <h2>Latest doctor update</h2>
-
-            <p class="text-muted mb-0">
-                Latest communication between the patient and doctor.
-            </p>
-        </div>
-
-        <div class="dashboard-card app-card card">
-            <div class="card-body">
-
-                @if (!data.HasDoctorRequest)
-                {
-                    <p class="text-muted mb-0">
-                        No doctor communication is available.
-                    </p>
-                }
-                else
-                {
-                    <div class="row g-4">
-
-                        <div class="col-lg-6">
-                            <div class="doctor-message h-100">
-
-                                <div class="small text-uppercase
-                                                    fw-semibold text-muted mb-2">
-                                    Patient message
-                                </div>
-
-                                <p class="mb-0">
-                                    @data.LatestDoctorRequestMessage
-                                </p>
-
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6">
-                            <div class="doctor-message h-100">
-
-                                <div class="d-flex justify-content-between
-                                                    align-items-start gap-2 mb-2">
-
-                                    <div class="small text-uppercase
-                                                        fw-semibold text-muted">
-                                        Doctor response
-                                    </div>
-
-                                    <span class="badge
-                                                @(data.LatestDoctorRequestCompleted
-                                                                                      ? "bg-success"
-                                                                                      : "bg-warning text-dark")">
-
-                                        @(data.LatestDoctorRequestCompleted
-                                                                        ? "Completed"
-                                                                        : "Awaiting reply")
-                                                                                       </span>
-                                                                                   </div>
-
-                                <p class="mb-3">
-                                    @data.LatestDoctorReply
-                                </p>
-
-                                <div class="small text-muted">
-                                    @(data.LatestDoctorRequestDate.HasValue
-                                                                ? data.LatestDoctorRequestDate.Value
-                                                                .ToLocalTime()
-                                                                .ToString(
-                                                                "dd MMM yyyy, hh:mm tt")
-                                                                : "Date unavailable")
-                        </div>
-
-                            </div>
-                        </div>
-
-                    </div>
-                        }
-
-            </div>
         </div>
     </section>
 
@@ -879,6 +858,61 @@ else
 
         </div>
     </section>
+    <div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Recent Patients</h5>
+        <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Index">View all</a>
+    </div>
+
+    @if (Model.Patients.Count == 0)
+    {
+        <p class="text-muted small"> No patients registered to view with you yet. </p>
+        <button class="btn btn-primary"> Insert a relation code </button>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Patient</th>
+                        <th>Status</th>
+                        <th>Medications</th>
+                        <th>Nurse Call</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var patient in Model.Patients.Take(5))  
+                    {
+                        <tr>
+                            <td class="fw-medium">@patient.PatientName</td>
+                            <td>
+                                <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
+                                    @patient.Status
+                                </span>
+                            </td>
+                            <td class="text-muted">@patient.MedicationsSummary</td>
+                            <td>
+                                @if (patient.NurseCall)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-page="/User/View" asp-route-id="@patient.PatientId">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 }
 
 @section Scripts {

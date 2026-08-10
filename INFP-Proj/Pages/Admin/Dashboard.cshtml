@@ -116,6 +116,69 @@
         }
     </div>
 </section>
+<div class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Recent Patients</h5>
+        <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Index">View all</a>
+    </div>
+
+    @if (Model.Patients.Count == 0)
+    {
+        <p class="text-muted small"> No patients registered yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Patient</th>
+                        <th>Status</th>
+                        <th>Medications</th>
+                        <th>Nurse Call</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var patient in Model.Patients.Take(5))  
+                    {
+                        <tr>
+                            <td class="fw-medium">@patient.PatientName</td>
+                            <td>
+                                <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
+                                    @patient.Status
+                                </span>
+                            </td>
+                            <td class="text-muted">@patient.MedicationsSummary</td>
+                            <td>
+                                @if (patient.NurseCall)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-page="/Admin/Edit" asp-route-id="@patient.PatientId">
+                                    @if (User.IsInRole("Doctor"))
+                                    {
+                                        <text>Edit</text>
+                                    }
+                                    else
+                                    {
+                                        <text>View</text>
+                                    }
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+    </div>
 
 <!-- Quick actions -->
 <section class="mb-5">
