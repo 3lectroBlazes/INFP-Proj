@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace INFP_Proj.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260722153627_initial")]
-    partial class initial
+    [Migration("20260712155523_inital")]
+    partial class inital
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -73,7 +73,7 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentRequestID"));
 
-                    b.Property<DateTime>("AppointmentDate")
+                    b.Property<DateTime>("DateTime")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("DocAcknowledged")
@@ -278,9 +278,6 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LogID"));
 
-                    b.Property<DateTime?>("AcknowledgedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<bool>("Emergency")
                         .HasColumnType("bit");
 
@@ -424,9 +421,6 @@ namespace INFP_Proj.Migrations
                     b.Property<DateTime?>("DischargeDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DischargeReason")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("HospitalID")
                         .HasColumnType("int");
 
@@ -479,29 +473,29 @@ namespace INFP_Proj.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThresholdID"));
 
-                    b.Property<int>("DBPLowerThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("DBPLowerThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("DBPUpperThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("DBPUpperThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("HeartRateLowerPercentageThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("HeartRateLowerPercentageThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("HeartRateUpperPercentageThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("HeartRateUpperPercentageThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("RespiratoryRateLowerThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("RespiratoryRateLowerThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("RespiratoryRateUpperPercentageThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("RespiratoryRateUpperPercentageThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("SBPLowerThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("SBPLowerThreshold")
+                        .HasColumnType("real");
 
-                    b.Property<int>("SBPUpperThreshold")
-                        .HasColumnType("int");
+                    b.Property<float?>("SBPUpperThreshold")
+                        .HasColumnType("real");
 
                     b.HasKey("ThresholdID");
 
@@ -669,8 +663,6 @@ namespace INFP_Proj.Migrations
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
-
-            
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
@@ -986,7 +978,6 @@ namespace INFP_Proj.Migrations
                     b.Navigation("Patients");
                 });
 
-            
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("INFP_Proj.Models.AppRole", null)

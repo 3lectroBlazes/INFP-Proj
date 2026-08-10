@@ -50,7 +50,7 @@
                 </form>
 
                 <p class="text-center text-muted small mt-4 mb-0">
-                    No account? <a asp-page="/Register" class="text-primary">Register</a>
+                    No account? <a asp-page="/Register" class="text-primary">Too bad loser</a>
                 </p>
             }
             else
@@ -67,6 +67,10 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">Verify and sign in</button>
+                </form>
+
+                <form method="post" asp-page-handler="Resend" class="mt-2">
+                    <button type="submit" class="btn btn-link w-100 p-0">Resend code</button>
                 </form>
 
                 <p class="text-center text-muted small mt-3 mb-0">

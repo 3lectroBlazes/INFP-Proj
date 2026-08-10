@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace INFP_Proj.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class inital : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -134,14 +134,14 @@ namespace INFP_Proj.Migrations
                 {
                     ThresholdID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SBPUpperThreshold = table.Column<int>(type: "int", nullable: false),
-                    SBPLowerThreshold = table.Column<int>(type: "int", nullable: false),
-                    DBPUpperThreshold = table.Column<int>(type: "int", nullable: false),
-                    DBPLowerThreshold = table.Column<int>(type: "int", nullable: false),
-                    HeartRateUpperPercentageThreshold = table.Column<int>(type: "int", nullable: false),
-                    HeartRateLowerPercentageThreshold = table.Column<int>(type: "int", nullable: false),
-                    RespiratoryRateUpperPercentageThreshold = table.Column<int>(type: "int", nullable: false),
-                    RespiratoryRateLowerThreshold = table.Column<int>(type: "int", nullable: false)
+                    SBPUpperThreshold = table.Column<float>(type: "real", nullable: true),
+                    SBPLowerThreshold = table.Column<float>(type: "real", nullable: true),
+                    DBPUpperThreshold = table.Column<float>(type: "real", nullable: true),
+                    DBPLowerThreshold = table.Column<float>(type: "real", nullable: true),
+                    HeartRateUpperPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    HeartRateLowerPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    RespiratoryRateUpperPercentageThreshold = table.Column<float>(type: "real", nullable: true),
+                    RespiratoryRateLowerThreshold = table.Column<float>(type: "real", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -329,7 +329,7 @@ namespace INFP_Proj.Migrations
                     DoctorResponse = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DocAcknowledged = table.Column<bool>(type: "bit", nullable: false),
                     PatientAcknowledged = table.Column<bool>(type: "bit", nullable: false),
-                    AppointmentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -493,38 +493,6 @@ namespace INFP_Proj.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AppointmentChangeRequests",
-                columns: table => new
-                {
-                    AppointmentChangeRequestID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AppointmentRequestID = table.Column<int>(type: "int", nullable: false),
-                    PatientID = table.Column<int>(type: "int", nullable: false),
-                    RequestedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReviewedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReviewMessage = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ReviewedByUserID = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AppointmentChangeRequests", x => x.AppointmentChangeRequestID);
-                    table.ForeignKey(
-                        name: "FK_AppointmentChangeRequests_Appointments_AppointmentRequestID",
-                        column: x => x.AppointmentRequestID,
-                        principalTable: "Appointments",
-                        principalColumn: "AppointmentRequestID",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_AppointmentChangeRequests_Patients_PatientID",
-                        column: x => x.PatientID,
-                        principalTable: "Patients",
-                        principalColumn: "PatientID");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Logs",
                 columns: table => new
                 {
@@ -538,8 +506,7 @@ namespace INFP_Proj.Migrations
                     Resolved = table.Column<bool>(type: "bit", nullable: false),
                     selfAcknowledged = table.Column<bool>(type: "bit", nullable: false),
                     relativeAcknowledged = table.Column<bool>(type: "bit", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    AcknowledgedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -576,8 +543,7 @@ namespace INFP_Proj.Migrations
                     MedicationListID = table.Column<int>(type: "int", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AdmissionDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DischargeDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DischargeReason = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    DischargeDateTime = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -629,18 +595,6 @@ namespace INFP_Proj.Migrations
                 name: "IX_AllergyLists_PatientID",
                 table: "AllergyLists",
                 column: "PatientID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AppointmentChangeRequests_PatientID",
-                table: "AppointmentChangeRequests",
-                column: "PatientID");
-
-            migrationBuilder.CreateIndex(
-                name: "UX_AppointmentChangeRequests_OnePending",
-                table: "AppointmentChangeRequests",
-                column: "AppointmentRequestID",
-                unique: true,
-                filter: "[Status] = 'Pending'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_PatientID",
@@ -784,7 +738,7 @@ namespace INFP_Proj.Migrations
                 name: "AllergyLists");
 
             migrationBuilder.DropTable(
-                name: "AppointmentChangeRequests");
+                name: "Appointments");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -824,9 +778,6 @@ namespace INFP_Proj.Migrations
 
             migrationBuilder.DropTable(
                 name: "Allergies");
-
-            migrationBuilder.DropTable(
-                name: "Appointments");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

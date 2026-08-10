@@ -88,12 +88,6 @@
         text-transform: uppercase;
     }
 
-    .event-meta {
-        color: #6c7c79;
-        font-size: 0.78rem;
-        margin-top: 0.3rem;
-    }
-
     .acknowledgement-panel {
         min-width: 225px;
     }
@@ -348,45 +342,28 @@ else
 
                         <tr class="@rowClass">
                             <td data-label="Timestamp">
-                                <time class="timestamp-value"
-                                      datetime="@entry.Timestamp.ToString("o")">
-                                    @(entry.Timestamp
-                                         .ToString("dd/MM/yyyy hh:mm:ss tt"))
-                                </time>
-                            </td>
+                            <time class="timestamp-value"
+                                  datetime="@entry.Timestamp.ToString("o")">
+                                @(entry.Timestamp
+                                     .ToLocalTime()
+                                    .ToString("dd/MM/yyyy hh:mm:ss tt"))
+                             </time>
+                    </td>
 
-                            <td data-label="Event">
-                                <span class="event-type-label">
-                                    @(entry.Emergency
-                                        ? "Vital alert"
-                                        : entry.IsMedicationRequest
-                                            ? "Medication"
-                                            : "Activity")
-                                </span>
+                    <td data-label="Event">
+                        <span class="event-type-label">
+                            @(entry.Emergency
+                                                        ? "Vital alert"
+                                                        : "Activity")
+                        </span>
 
                                 <div class="event-title">
                                     @entry.Event
                                 </div>
-
-                                @if (!string.IsNullOrWhiteSpace(entry.UserName) ||
-                                            !string.IsNullOrWhiteSpace(entry.PatientName))
-                                {
-                                    <div class="event-meta">
-                                        @if (!string.IsNullOrWhiteSpace(entry.UserName))
-                                        {
-                                            <span>@entry.UserName</span>
-                                        }
-                                        @if (entry.Emergency &&
-                                                    !string.IsNullOrWhiteSpace(entry.PatientName))
-                                        {
-                                            <span>&middot; Patient: @entry.PatientName</span>
-                                        }
-                                    </div>
-                                }
                             </td>
 
                             <td data-label="Status">
-                                @if (!entry.Emergency)
+                        @if (!entry.Emergency)
                                 {
                                     <span class="badge bg-secondary">
                                         Standard activity
@@ -424,31 +401,63 @@ else
                                                 Emergency resolved
                                             </span>
                                         }
-                                        else if (entry.CurrentUserAcknowledged)
+                                        else if (Model.IsPatient)
                                         {
-                                            <span class="badge bg-success">
-                                                You acknowledged this
-                                            </span>
-                                        }
-                                        else if (entry.CanAcknowledge)
-                                        {
-                                            <form method="post"
-                                                  asp-page-handler="Acknowledge"
-                                                  asp-route-id="@entry.LogId"
-                                                  class="m-0">
+                                            @if (entry.SelfAcknowledged)
+                                            {
+                                                <span class="badge bg-success">
+                                                    You acknowledged this
+                                                </span>
+                                            }
+                                            else if (entry.CanAcknowledge)
+                                            {
+                                                <form method="post"
+                                                      asp-page-handler="Acknowledge"
+                                                      asp-route-id="@entry.LogId"
+                                                      class="m-0">
 
-                                                <button type="submit"
-                                                        class="btn btn-primary btn-sm">
-                                                    Acknowledge alert
-                                                </button>
-                                            </form>
+                                                    <button type="submit"
+                                                            class="btn btn-primary btn-sm">
+                                                        Acknowledge alert
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge
+                                                                                 bg-warning text-dark">
+                                                    Acknowledgement pending
+                                                </span>
+                                            }
                                         }
                                         else
                                         {
-                                            <span class="badge
-                                                                             bg-warning text-dark">
-                                                Acknowledgement pending
-                                            </span>
+                                            @if (entry.CurrentRelativeAcknowledged)
+                                            {
+                                                <span class="badge bg-success">
+                                                    You acknowledged this
+                                                </span>
+                                            }
+                                            else if (entry.CanAcknowledge)
+                                            {
+                                                <form method="post"
+                                                      asp-page-handler="Acknowledge"
+                                                      asp-route-id="@entry.LogId"
+                                                      class="m-0">
+
+                                                    <button type="submit"
+                                                            class="btn btn-primary btn-sm">
+                                                        Acknowledge alert
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge
+                                                                                 bg-warning text-dark">
+                                                    Acknowledgement pending
+                                                </span>
+                                            }
                                         }
                                     </div>
 
@@ -470,32 +479,26 @@ else
                                             }
                                         </div>
 
-                                        <div>
-                                            Relative:
-
-                                            @if (entry.RelativeAcknowledged)
-                                            {
-                                                <strong class="text-success">
-                                                    Acknowledged
-                                                </strong>
-                                            }
-                                            else
-                                            {
-                                                <strong class="text-warning">
-                                                    Pending
-                                                </strong>
-                                            }
-                                        </div>
-
-                                        @if (entry.AcknowledgedAt.HasValue)
+                                        @if (entry.TotalRelativeCount > 0)
                                         {
                                             <div>
-                                                Acknowledged at:
+                                                Relatives:
 
                                                 <strong>
-                                                    @entry.AcknowledgedAt.Value
-                                                        .ToLocalTime()
-                                                        .ToString("dd/MM/yyyy hh:mm:ss tt")
+                                                    @entry.RelativeAcknowledgementCount
+                                                    of
+                                                    @entry.TotalRelativeCount
+                                                    acknowledged
+                                                </strong>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                Relatives:
+
+                                                <strong>
+                                                    None linked
                                                 </strong>
                                             </div>
                                         }

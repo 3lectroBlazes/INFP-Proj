@@ -151,14 +151,8 @@ namespace INFP_Proj.Pages.Admin
             return RedirectToPage(new { id });
         }
 
-        public async Task<IActionResult> OnPostDischargeAsync(int id, string dischargeReason)
+        public async Task<IActionResult> OnPostDischargeAsync(int id)
         {
-            if (dischargeReason == "Deceased" && !User.IsInRole("Doctor"))
-            {
-                TempData["Error"] = "Only a doctor can record a discharge as Deceased.";
-                return RedirectToPage(new { id });
-            }
-
             var patient = await _context.Patients
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.PatientID == id);
@@ -179,7 +173,6 @@ namespace INFP_Proj.Pages.Admin
             }
 
             record.DischargeDateTime = DateTime.UtcNow;
-            record.DischargeReason = dischargeReason;
             patient.Status = "Discharged";
 
             await _context.SaveChangesAsync();
@@ -234,7 +227,6 @@ namespace INFP_Proj.Pages.Admin
                 Status = patient.Status,
                 AdmissionDateTime = record?.AdmissionDateTime,
                 DischargeDateTime = record?.DischargeDateTime,
-                DischargeReason = record?.DischargeReason,
                 MedicationLists = medications.Select(m => new MedicationListEditItem
                 {
                     MedicationListID = m.MedicationListID,

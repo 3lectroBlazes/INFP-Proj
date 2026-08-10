@@ -62,12 +62,6 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
-builder.Services.AddScoped<VitalsAlertService>();
-
-builder.Services.AddScoped<VitalsAlertService>();
-
 WebApplication app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -84,11 +78,21 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
 
-// Seed the database
+// Seed the database. This must never take the whole app down: a transient DB
+// hiccup at cold start (or a misconfigured connection string) should surface
+// as a logged warning, not an ANCM 500.30 that stops the site from starting.
 using (IServiceScope scope = app.Services.CreateScope())
 {
     IServiceProvider services = scope.ServiceProvider;
-    await AppDbSeeder.SeedAsync(services);
+    try
+    {
+        await AppDbSeeder.SeedAsync(services);
+    }
+    catch (Exception ex)
+    {
+        ILogger<Program> startupLogger = services.GetRequiredService<ILogger<Program>>();
+        startupLogger.LogError(ex, "Database seeding failed at startup. The app will continue starting, but check the database connection string.");
+    }
 }
 
 app.Run();
