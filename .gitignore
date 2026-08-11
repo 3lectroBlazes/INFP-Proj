@@ -65,10 +65,10 @@ nunit-*.xml
 *.sln.docstates
 
 # Local config overrides (secrets)
-appsettings.*.local.json
-secrets.json
-appsettings.json
-appsettings.Development.json
+INFP-Proj/appsettings.*.local.json
+INFP-Proj/secrets.json
+INFP-Proj/appsettings.json
+INFP-Proj/appsettings.Development.json
 
 # Seed data (contains hardcoded accounts/credentials)
 INFP-Proj/Data/DbSeeder.cs
