@@ -72,6 +72,7 @@ INFP-Proj/appsettings.Development.json
 
 # Seed data (contains hardcoded accounts/credentials)
 INFP-Proj/Data/DbSeeder.cs
+INFP-Proj/Migrations
 
 # Publish profiles (deployment config; the .pubxml.user variant can carry
 # saved credentials/connection strings)
