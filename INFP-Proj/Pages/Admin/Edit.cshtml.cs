@@ -151,8 +151,32 @@ namespace INFP_Proj.Pages.Admin
             return RedirectToPage(new { id });
         }
 
-        public async Task<IActionResult> OnPostDischargeAsync(int id)
+        public async Task<IActionResult> OnPostDischargeAsync(int id, string dischargeReason)
         {
+            return await DischargeWithReasonAsync(id, dischargeReason);
+        }
+
+        public async Task<IActionResult> OnPostDischargeDeceasedAsync(int id)
+        {
+            if (!User.IsInRole("Doctor"))
+            {
+                TempData["Error"] = "Only a doctor can record a discharge as Deceased.";
+                return RedirectToPage(new { id });
+            }
+
+            return await DischargeWithReasonAsync(id, "Deceased");
+        }
+
+        private async Task<IActionResult> DischargeWithReasonAsync(int id, string reason)
+        {
+            // Defense in depth: even if this is somehow reached with "Deceased"
+            // via the wrong handler, block it here too.
+            if (reason == "Deceased" && !User.IsInRole("Doctor"))
+            {
+                TempData["Error"] = "Only a doctor can record a discharge as Deceased.";
+                return RedirectToPage(new { id });
+            }
+
             var patient = await _context.Patients
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.PatientID == id);
@@ -173,6 +197,7 @@ namespace INFP_Proj.Pages.Admin
             }
 
             record.DischargeDateTime = DateTime.UtcNow;
+            record.DischargeReason = reason;
             patient.Status = "Discharged";
 
             await _context.SaveChangesAsync();
@@ -182,7 +207,6 @@ namespace INFP_Proj.Pages.Admin
                 : $"patient #{id}";
             await _adminLogService.AddLogAsync($"{patientName} discharged");
 
-            // Changed from > 0 to !string.IsNullOrEmpty
             if (!string.IsNullOrEmpty(patient.UserID))
             {
                 await _adminLogService.AddLogAsync(
@@ -227,6 +251,7 @@ namespace INFP_Proj.Pages.Admin
                 Status = patient.Status,
                 AdmissionDateTime = record?.AdmissionDateTime,
                 DischargeDateTime = record?.DischargeDateTime,
+                DischargeReason = record?.DischargeReason,
                 MedicationLists = medications.Select(m => new MedicationListEditItem
                 {
                     MedicationListID = m.MedicationListID,
@@ -252,7 +277,6 @@ namespace INFP_Proj.Pages.Admin
                 .Select(p => p.UserID)
                 .FirstOrDefaultAsync();
 
-            // Changed from > 0 to !string.IsNullOrEmpty
             if (!string.IsNullOrEmpty(userId))
             {
                 await _adminLogService.AddLogAsync(message, userId: userId);

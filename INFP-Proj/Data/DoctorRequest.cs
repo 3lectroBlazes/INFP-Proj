@@ -11,6 +11,7 @@ namespace INFP_Proj.Data
         public DateTime RequestDate { get; set; } = DateTime.Now;
         public string? ReplyMessage { get; set; }
         public bool Completed { get; set; } = false;
+        public bool ByAdmin { get; set; } = false;
 
         [ForeignKey("PatientID")]
         public Patients? Patient { get; set; }

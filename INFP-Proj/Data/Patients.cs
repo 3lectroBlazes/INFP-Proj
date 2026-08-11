@@ -15,6 +15,7 @@ namespace INFP_Proj.Data
         public List<Relationships> Relationships { get; set; } = new();
         public Guid RelationCode { get; set; } = Guid.NewGuid();
         public string? Notes { get; set; }
+        public bool RequestHelp { get; set; } = false;
 
         [ForeignKey("UserID")]
         public AppUser? User { get; set; }

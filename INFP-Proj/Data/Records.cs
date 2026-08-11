@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
 namespace INFP_Proj.Data
 {
     public class Records
@@ -17,7 +16,8 @@ namespace INFP_Proj.Data
         public required string Description { get; set; }
         public required DateTime AdmissionDateTime { get; set; } = DateTime.UtcNow;
         public DateTime? DischargeDateTime { get; set; }
-
+        public string? DischargeReason { get; set; }
+        
         [ForeignKey("PatientID")]
         public Patients? Patients { get; set; }
         [ForeignKey("BedID")]
