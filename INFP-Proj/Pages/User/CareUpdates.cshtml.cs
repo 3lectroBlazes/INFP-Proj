@@ -750,14 +750,11 @@ namespace INFP_Proj.Pages.User
                     })
                     .ToList();
 
-            DoctorRequests =
+            DoctorRequests = 
                 await _context.DoctorRequests
                     .AsNoTracking()
-                    .Where(request =>
-                        request.PatientID ==
-                            patient.PatientID)
-                    .OrderByDescending(request =>
-                        request.RequestDate)
+                    .Where(dr => dr.PatientID == patient.PatientID && !dr.ByAdmin)
+                    .OrderByDescending(dr => dr.RequestDate)
                     .ToListAsync();
         }
 

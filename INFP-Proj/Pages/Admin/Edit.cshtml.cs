@@ -169,8 +169,6 @@ namespace INFP_Proj.Pages.Admin
 
         private async Task<IActionResult> DischargeWithReasonAsync(int id, string reason)
         {
-            // Defense in depth: even if this is somehow reached with "Deceased"
-            // via the wrong handler, block it here too.
             if (reason == "Deceased" && !User.IsInRole("Doctor"))
             {
                 TempData["Error"] = "Only a doctor can record a discharge as Deceased.";
@@ -180,6 +178,7 @@ namespace INFP_Proj.Pages.Admin
             var patient = await _context.Patients
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.PatientID == id);
+
             if (patient == null)
             {
                 return NotFound();
@@ -199,7 +198,6 @@ namespace INFP_Proj.Pages.Admin
             record.DischargeDateTime = DateTime.UtcNow;
             record.DischargeReason = reason;
             patient.Status = "Discharged";
-
             await _context.SaveChangesAsync();
 
             var patientName = patient.User != null
@@ -212,6 +210,13 @@ namespace INFP_Proj.Pages.Admin
                 await _adminLogService.AddLogAsync(
                     "You have been discharged from the hospital",
                     userId: patient.UserID);
+            }
+
+            // NEW: send the doctor to fill in the cause-of-death record instead of
+            // just bouncing back to the patient page.
+            if (reason == "Deceased")
+            {
+                return RedirectToPage("/Admin/DeclareDeath", new { patientId = id, recordId = record.RecordID });
             }
 
             TempData["Message"] = "Patient discharged successfully.";
@@ -286,7 +291,7 @@ namespace INFP_Proj.Pages.Admin
         {
             var request = await _context.DoctorRequests.FirstOrDefaultAsync(dr => dr.PatientID == id);
 
-            request = new DoctorRequest { PatientID = id, RequestMessage = Request.Form["RequestMessage"] };
+            request = new DoctorRequest { PatientID = id, RequestMessage = Request.Form["RequestMessage"], ByAdmin = true };
             _context.DoctorRequests.Add(request);
             TempData["Message"] = "Doctor request sent!";
             await _context.SaveChangesAsync();
