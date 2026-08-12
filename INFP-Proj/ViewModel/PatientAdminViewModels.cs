@@ -34,12 +34,11 @@ namespace INFP_Proj.ViewModel
         public string Status { get; set; } = string.Empty;
         public DateTime? AdmissionDateTime { get; set; }
         public DateTime? DischargeDateTime { get; set; }
+        public string? DischargeReason { get; set; }
         public bool IsDischarged => DischargeDateTime.HasValue;
         public List<MedicationListEditItem> MedicationLists { get; set; } = new();
-
         [Display(Name = "Medication")]
         public int? NewMedicationID { get; set; }
-
         [Display(Name = "Dosage")]
         public string? NewDosage { get; set; }
     }

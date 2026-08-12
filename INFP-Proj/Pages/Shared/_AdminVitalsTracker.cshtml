@@ -47,50 +47,49 @@
 
 @if (Model.SelectedPatientIds.Count == 1)
 {
-    <form id="vitals-simulator-antiforgery">@Html.AntiForgeryToken()</form>
-    <div class="vital-card mb-4" id="vitals-simulator" data-patient-id="@Model.SelectedPatientIds[0]" data-simulate-url="@Url.Page("/Admin/Tracker", "SimulateStep")">
-        <div class="card-body">
-            <div class="vital-header">
-                <h2 class="vital-title mb-1">Simulate vitals</h2>
-                <p class="text-muted small mb-0">
-                    Sends live spike/dip readings to the vitals table for 60 seconds, then stops automatically.
-                </p>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-6 col-lg-3">
-                    <div class="section-label mb-2">Heart rate</div>
-                    <div class="simulation-buttons">
-                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="HeartRate" data-direction="Spike" data-label="heart rate spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="HeartRate" data-direction="Dip" data-label="heart rate dip">Dip</button>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="section-label mb-2">Breathing rate</div>
-                    <div class="simulation-buttons">
-                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="RespiratoryRate" data-direction="Spike" data-label="breathing rate spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="RespiratoryRate" data-direction="Dip" data-label="breathing rate dip">Dip</button>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="section-label mb-2">Systolic pressure</div>
-                    <div class="simulation-buttons">
-                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="SystolicBloodPressure" data-direction="Spike" data-label="blood pressure spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="SystolicBloodPressure" data-direction="Dip" data-label="blood pressure dip">Dip</button>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="section-label mb-2">Diastolic pressure</div>
-                    <div class="simulation-buttons">
-                        <button type="button" class="btn btn-outline-danger btn-sm sim-btn" data-vital="DiastolicBloodPressure" data-direction="Spike" data-label="blood pressure spike">Spike</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm sim-btn" data-vital="DiastolicBloodPressure" data-direction="Dip" data-label="blood pressure dip">Dip</button>
-                    </div>
-                </div>
-            </div>
-            <div id="simulation-status" class="small text-muted mt-3" hidden>
-                <span id="simulation-status-text"></span>
-                <button type="button" id="simulation-stop" class="btn btn-link btn-sm p-0 ms-2">Stop</button>
-            </div>
+    var simulationVitals = new[]
+    {
+        new { Title = "Heart rate", Vital = "HeartRate" },
+        new { Title = "Breathing rate", Vital = "RespiratoryRate" },
+        new { Title = "Systolic pressure", Vital = "SystolicBloodPressure" },
+        new { Title = "Diastolic pressure", Vital = "DiastolicBloodPressure" }
+    };
+
+    <div class="simulation-note mb-4">
+        <strong>Test controls</strong>
+        <div class="small text-muted mt-1">
+            Spike creates a reading above the safe range. Dip creates a reading below the safe range.
+            Stable creates a reading within the safe range. Spike and Dip also create an emergency log and
+            attempt to notify linked caretakers.
         </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        @foreach (var simulationVital in simulationVitals)
+        {
+            <div class="col-md-6 col-xl-3">
+                <div class="vital-card h-100">
+                    <div class="card-body">
+                        <div class="vital-header">
+                            <h2 class="vital-title">@simulationVital.Title</h2>
+                        </div>
+
+                        <div class="small fw-semibold mb-2">Create test reading</div>
+
+                        <form method="post" asp-page-handler="SimulateVital">
+                            <input type="hidden" name="patientId" value="@Model.SelectedPatientIds[0]" />
+                            <input type="hidden" name="vital" value="@simulationVital.Vital" />
+
+                            <div class="simulation-buttons">
+                                <button type="submit" name="direction" value="Spike" class="btn btn-outline-danger">Spike</button>
+                                <button type="submit" name="direction" value="Dip" class="btn btn-outline-warning">Dip</button>
+                                <button type="submit" name="direction" value="Stable" class="btn btn-outline-success">Stable</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 }
 else if (Model.Patients.Count > 0)

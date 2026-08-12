@@ -91,7 +91,7 @@ namespace INFP_Proj.Pages.User
                 .ToListAsync();
 
             var latestDoctorRequest = await _context.DoctorRequests
-                .Where(dr => dr.PatientID == patient.PatientID)
+                .Where(dr => dr.PatientID == patient.PatientID && !dr.ByAdmin)
                 .OrderByDescending(dr => dr.RequestDate)
                 .FirstOrDefaultAsync();
 

@@ -23,15 +23,20 @@ namespace INFP_Proj.Pages.Admin
             ChartData = await _vitalsChartService.BuildAdminMultiPatientChartAsync(patientIds);
         }
 
-        public async Task<IActionResult> OnPostSimulateStepAsync([FromForm] int patientId, [FromForm] string vital, [FromForm] string direction)
+        public async Task<IActionResult> OnPostSimulateVitalAsync(int patientId, string vital, string direction)
         {
-            var reading = await _simulationService.RecordSimulatedReadingAsync(patientId, vital, direction);
-            if (reading == null)
+            VitalsSimulationOutcome outcome = await _simulationService.SimulateVitalAsync(patientId, vital, direction);
+
+            if (outcome.IsError)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = outcome.Message;
+            }
+            else
+            {
+                TempData["Message"] = outcome.Message;
             }
 
-            return new JsonResult(new { success = true, recordedAt = reading.RecordedAt });
+            return RedirectToPage(new { patientIds = new List<int> { patientId } });
         }
     }
 }
