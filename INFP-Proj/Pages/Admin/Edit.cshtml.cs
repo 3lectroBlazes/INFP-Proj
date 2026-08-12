@@ -178,7 +178,6 @@ namespace INFP_Proj.Pages.Admin
             var patient = await _context.Patients
                 .Include(p => p.User)
                 .FirstOrDefaultAsync(p => p.PatientID == id);
-
             if (patient == null)
             {
                 return NotFound();
@@ -195,9 +194,15 @@ namespace INFP_Proj.Pages.Admin
                 return RedirectToPage(new { id });
             }
 
+            if (reason == "Deceased")
+            {
+                return RedirectToPage("/Admin/DeclareDeath", new { patientId = id, recordId = record.RecordID });
+            }
+
             record.DischargeDateTime = DateTime.UtcNow;
             record.DischargeReason = reason;
             patient.Status = "Discharged";
+
             await _context.SaveChangesAsync();
 
             var patientName = patient.User != null
@@ -210,13 +215,6 @@ namespace INFP_Proj.Pages.Admin
                 await _adminLogService.AddLogAsync(
                     "You have been discharged from the hospital",
                     userId: patient.UserID);
-            }
-
-            // NEW: send the doctor to fill in the cause-of-death record instead of
-            // just bouncing back to the patient page.
-            if (reason == "Deceased")
-            {
-                return RedirectToPage("/Admin/DeclareDeath", new { patientId = id, recordId = record.RecordID });
             }
 
             TempData["Message"] = "Patient discharged successfully.";

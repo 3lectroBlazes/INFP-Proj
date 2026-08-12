@@ -1,0 +1,72 @@
+﻿@page
+@model INFP_Proj.Pages.Admin.DownloadModel
+@{
+    ViewData["Title"] = "Death Certificates";
+}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Death Certificates</h1>
+        <p class="page-subtitle text-muted">All generated death certificate records.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
+    </div>
+</div>
+
+<div class="app-card card mb-4">
+    <div class="card-header">Generated Certificates</div>
+    <div class="card-body p-0">
+
+        <div class="p-3 border-bottom">
+            <form method="get" class="d-flex gap-2">
+                <input type="text"
+                       name="search"
+                       value="@Model.Search"
+                       class="form-control"
+                       placeholder="Search by patient name..." />
+                <button type="submit" class="btn btn-outline-primary">Search</button>
+                @if (!string.IsNullOrWhiteSpace(Model.Search))
+                {
+                    <a class="btn btn-outline-secondary" asp-page="/Admin/Download">Clear</a>
+                }
+            </form>
+        </div>
+
+        @if (Model.Certificates.Any())
+        {
+            <table class="table mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Patient Name</th>
+                        <th>File Name</th>
+                        <th>Recorded By</th>
+                        <th>Created</th>
+                        <th class="text-end">Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var cert in Model.Certificates)
+                    {
+                        <tr>
+                            <td>@cert.PatientName</td>
+                            <td>@cert.FileName</td>
+                            <td>@cert.RecordedBy</td>
+                            <td>@cert.CreatedAt.ToString("dd-MM-yyyy HH:mm")</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-primary"
+                                   asp-page-handler="Download"
+                                   asp-route-id="@cert.DeathCertID">
+                                    Download
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="p-3 text-muted">No death certificates have been recorded yet.</div>
+        }
+    </div>
+</div>

@@ -21,8 +21,8 @@
     <header>
         <nav class="navbar navbar-light navbar-expand-xl app-navbar">
             <div class="container">
-                <a class="nav-link" asp-area="" asp-page="@(User.FindFirst("IsAdmin")?.Value == "True" ? "/Admin/Index" : "/User/Index")">
-                    <img src="~/js/images/logo.png" alt="Home Logo" class="img-fluid" style="max-height: 32px;" />
+                <a asp-area="" asp-page="@(User.FindFirst("IsAdmin")?.Value == "True" ? "/Admin/Index" : "/User/Index")">
+                    <img src="~/js/images/logo.png" alt="Home Logo" class="img-fluid" style="max-height: 56px;" />
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
                         aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,13 +56,15 @@
                                         <a class="nav-link dropdown-toggle" href="#" id="navWards" role="button" data-bs-toggle="dropdown" aria-expanded="false">Reception</a>
                                         <ul class="dropdown-menu" aria-labelledby="navWards">
                                             <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/WardBedChange">Wards and Beds</a></li>
-                                            <li>
-                                                <a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/Notifications">Send Notifications</a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/AdminManagement">Admin Management</a>
-                                            </li>
+                                            <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/Notifications">Send Notifications</a></li>
+                                            <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Reception/AdminManagement">Admin Management</a></li>
                                         </ul>
+                                    </li>
+                                }
+                                @if (!User.IsInRole("Nurse"))
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-area="" asp-page="/Admin/Download">Death Certificates</a>
                                     </li>
                                 }
                                 <li class="nav-item">
