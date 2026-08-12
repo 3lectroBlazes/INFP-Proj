@@ -47,15 +47,13 @@
 
 @if (Model.SelectedPatientIds.Count == 1)
 {
-    @{
-        var simulationVitals = new[]
-        {
-            new { Title = "Heart rate", Vital = "HeartRate" },
-            new { Title = "Breathing rate", Vital = "RespiratoryRate" },
-            new { Title = "Systolic pressure", Vital = "SystolicBloodPressure" },
-            new { Title = "Diastolic pressure", Vital = "DiastolicBloodPressure" }
-        };
-    }
+    var simulationVitals = new[]
+    {
+        new { Title = "Heart rate", Vital = "HeartRate" },
+        new { Title = "Breathing rate", Vital = "RespiratoryRate" },
+        new { Title = "Systolic pressure", Vital = "SystolicBloodPressure" },
+        new { Title = "Diastolic pressure", Vital = "DiastolicBloodPressure" }
+    };
 
     <div class="simulation-note mb-4">
         <strong>Test controls</strong>
