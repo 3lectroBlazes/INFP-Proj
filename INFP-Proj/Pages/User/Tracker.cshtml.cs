@@ -46,131 +46,54 @@ namespace INFP_Proj.Pages.User
             _emailService = emailService;
         }
 
-        public VitalsChartViewModel ChartData { get; set; } =
-            new();
+        public VitalsChartViewModel ChartData { get; set; } = new();
 
         public bool HasPatientRecord { get; set; }
-        public bool HasAttention { get; set; }
 
         public float? LatestHeartRate { get; set; }
-
-        public float? LatestSystolicBloodPressure
-        {
-            get;
-            set;
-        }
-
-        public float? LatestDiastolicBloodPressure
-        {
-            get;
-            set;
-        }
-
+        public float? LatestSystolicBloodPressure { get; set; }
+        public float? LatestDiastolicBloodPressure { get; set; }
         public float? LatestRespiration { get; set; }
-
         public DateTime? LatestUpdatedAt { get; set; }
 
-        public string HeartRateStatus { get; set; } =
-            "No data";
+        public string HeartRateStatus { get; set; } = "No data";
+        public string SystolicStatus { get; set; } = "No data";
+        public string DiastolicStatus { get; set; } = "No data";
+        public string RespirationStatus { get; set; } = "No data";
 
-        public string SystolicStatus { get; set; } =
-            "No data";
+        public bool HasAttention { get; set; }
 
-        public string DiastolicStatus { get; set; } =
-            "No data";
-
-        public string RespirationStatus { get; set; } =
-            "No data";
-
+        // Heart-rate baseline and calculated range.
         public float HeartRateBaseline { get; set; }
+        public float HeartRateLowerThreshold { get; set; }
+        public float HeartRateUpperThreshold { get; set; }
+        public float HeartRateLowerPercentage { get; set; }
+        public float HeartRateUpperPercentage { get; set; }
 
-        public float HeartRateLowerThreshold
-        {
-            get;
-            set;
-        }
+        // Respiratory baseline and calculated range.
+        public float RespiratoryRateBaseline { get; set; }
+        public float RespiratoryRateLowerThreshold { get; set; }
+        public float RespiratoryRateUpperThreshold { get; set; }
+        public float RespiratoryRateUpperPercentage { get; set; }
 
-        public float HeartRateUpperThreshold
-        {
-            get;
-            set;
-        }
-
-        public float HeartRateLowerPercentage
-        {
-            get;
-            set;
-        }
-
-        public float HeartRateUpperPercentage
-        {
-            get;
-            set;
-        }
-
-        public float RespiratoryRateBaseline
-        {
-            get;
-            set;
-        }
-
-        public float RespiratoryRateLowerThreshold
-        {
-            get;
-            set;
-        }
-
-        public float RespiratoryRateUpperThreshold
-        {
-            get;
-            set;
-        }
-
-        public float RespiratoryRateUpperPercentage
-        {
-            get;
-            set;
-        }
-
-        public float SystolicLowerThreshold
-        {
-            get;
-            set;
-        }
-
-        public float SystolicUpperThreshold
-        {
-            get;
-            set;
-        }
-
-        public float DiastolicLowerThreshold
-        {
-            get;
-            set;
-        }
-
-        public float DiastolicUpperThreshold
-        {
-            get;
-            set;
-        }
+        // Fixed blood-pressure ranges.
+        public float SystolicLowerThreshold { get; set; }
+        public float SystolicUpperThreshold { get; set; }
+        public float DiastolicLowerThreshold { get; set; }
+        public float DiastolicUpperThreshold { get; set; }
 
         public async Task OnGetAsync()
         {
-            string? currentUserId =
-                _userManager.GetUserId(User);
+            string? currentUserId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(
-                currentUserId))
+            if (string.IsNullOrWhiteSpace(currentUserId))
             {
                 HasPatientRecord = false;
                 return;
             }
 
             Patients? patient =
-                await GetLinkedPatientAsync(
-                    currentUserId);
+                await GetLinkedPatientAsync(currentUserId);
 
             if (patient == null)
             {
@@ -192,8 +115,8 @@ namespace INFP_Proj.Pages.User
                 recentVitals.FirstOrDefault();
 
             /*
-             * Do not include the newest reading in its
-             * own baseline calculation.
+             * Exclude the latest reading when calculating its baseline.
+             * This prevents the reading from influencing its own range.
              */
             List<Vitals> baselineReadings =
                 recentVitals
@@ -213,45 +136,36 @@ namespace INFP_Proj.Pages.User
                 latestVitals,
                 thresholds);
 
-            await LoadHourlyAverageChartAsync(
-                patient);
+            await LoadHourlyAverageChartAsync(patient);
         }
 
         /*
-         * Called every 30 seconds by the page.
-         * This reads data only and does not insert
-         * another vital record.
+         * The browser calls this every 30 seconds.
+         * It only reads the latest values. It does not create new rows.
          */
-        public async Task<IActionResult>
-            OnGetLatestVitalsAsync()
+        public async Task<IActionResult> OnGetLatestVitalsAsync()
         {
-            string? currentUserId =
-                _userManager.GetUserId(User);
+            string? currentUserId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(
-                currentUserId))
+            if (string.IsNullOrWhiteSpace(currentUserId))
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message =
-                        "User is not logged in."
+                    message = "User is not logged in."
                 });
             }
 
             Patients? patient =
-                await GetLinkedPatientAsync(
-                    currentUserId);
+                await GetLinkedPatientAsync(currentUserId);
 
             if (patient == null)
             {
                 return new JsonResult(new
                 {
                     success = false,
-
                     message =
-                        "No patient record is linked " +
-                        "to this account."
+                        "No patient record is linked to this account."
                 });
             }
 
@@ -266,24 +180,27 @@ namespace INFP_Proj.Pages.User
             Vitals? latestVitals =
                 recentVitals.FirstOrDefault();
 
+            List<Vitals> baselineReadings =
+                recentVitals
+                    .Skip(1)
+                    .Take(10)
+                    .ToList();
+
             PatientThresholdState thresholds =
                 BuildPatientThresholdState(
                     configuration,
+                    baselineReadings);
 
-                    recentVitals
-                        .Skip(1)
-                        .Take(10));
+            BraceletRelation? braceletRelation =
+                await _context.BraceletRelations
+                    .AsNoTracking()
+                    .Include(br => br.Bracelet)
+                    .FirstOrDefaultAsync(
+                        br => br.PatientID ==
+                              patient.PatientID);
 
             Bracelet? bracelet =
-                await _context
-                    .BraceletRelations
-                    .AsNoTracking()
-                    .Where(br =>
-                        br.PatientID ==
-                        patient.PatientID)
-                    .Select(br =>
-                        br.Bracelet)
-                    .FirstOrDefaultAsync();
+                braceletRelation?.Bracelet;
 
             float? heartRate =
                 latestVitals?.HeartRate ??
@@ -293,17 +210,13 @@ namespace INFP_Proj.Pages.User
                 latestVitals?.RespiratoryRate ??
                 bracelet?.RespiratoryRate;
 
-            float? systolic =
-                latestVitals
-                    ?.SystolicBloodPressure ??
-                bracelet
-                    ?.SystolicBloodPressure;
+            float? systolicBloodPressure =
+                latestVitals?.SystolicBloodPressure ??
+                bracelet?.SystolicBloodPressure;
 
-            float? diastolic =
-                latestVitals
-                    ?.DiastolicBloodPressure ??
-                bracelet
-                    ?.DiastolicBloodPressure;
+            float? diastolicBloodPressure =
+                latestVitals?.DiastolicBloodPressure ??
+                bracelet?.DiastolicBloodPressure;
 
             string heartRateStatus =
                 GetVitalStatus(
@@ -317,55 +230,42 @@ namespace INFP_Proj.Pages.User
 
             string systolicStatus =
                 GetVitalStatus(
-                    systolic,
+                    systolicBloodPressure,
                     thresholds.Systolic);
 
             string diastolicStatus =
                 GetVitalStatus(
-                    diastolic,
+                    diastolicBloodPressure,
                     thresholds.Diastolic);
 
             bool hasAttention =
-                IsAbnormalStatus(
-                    heartRateStatus) ||
-
-                IsAbnormalStatus(
-                    respirationStatus) ||
-
-                IsAbnormalStatus(
-                    systolicStatus) ||
-
-                IsAbnormalStatus(
-                    diastolicStatus);
+                IsAbnormalStatus(heartRateStatus) ||
+                IsAbnormalStatus(respirationStatus) ||
+                IsAbnormalStatus(systolicStatus) ||
+                IsAbnormalStatus(diastolicStatus);
 
             return new JsonResult(new
             {
                 success = true,
 
                 heartRate =
-                    heartRate?.ToString("0")
-                    ?? "N/A",
+                    heartRate?.ToString("0") ?? "N/A",
 
                 respiration =
-                    respiratoryRate?.ToString("0")
-                    ?? "N/A",
+                    respiratoryRate?.ToString("0") ?? "N/A",
 
                 systolicBloodPressure =
-                    systolic?.ToString("0")
-                    ?? "N/A",
+                    systolicBloodPressure?.ToString("0") ?? "N/A",
 
                 diastolicBloodPressure =
-                    diastolic?.ToString("0")
-                    ?? "N/A",
+                    diastolicBloodPressure?.ToString("0") ?? "N/A",
 
-                updatedAt =
-                    latestVitals == null
-                        ? "N/A"
-                        : ToSingaporeTime(
-                                latestVitals.RecordedAt)
-                            .ToString(
-                                "dd MMM yyyy, " +
-                                "hh:mm:ss tt"),
+                updatedAt = latestVitals == null
+                    ? "N/A"
+                    : ToSingaporeTime(
+                            latestVitals.RecordedAt)
+                        .ToString(
+                            "dd MMM yyyy, hh:mm:ss tt"),
 
                 heartRateStatus,
                 respirationStatus,
@@ -374,62 +274,34 @@ namespace INFP_Proj.Pages.User
                 hasAttention,
 
                 heartRateBaseline =
-                    thresholds
-                        .HeartRateBaseline
-                        .ToString("0.#"),
+                    thresholds.HeartRateBaseline.ToString("0.#"),
 
                 heartRateLower =
-                    thresholds
-                        .HeartRate
-                        .Lower
-                        .ToString("0.#"),
+                    thresholds.HeartRate.Lower.ToString("0.#"),
 
                 heartRateUpper =
-                    thresholds
-                        .HeartRate
-                        .Upper
-                        .ToString("0.#"),
+                    thresholds.HeartRate.Upper.ToString("0.#"),
 
                 respiratoryBaseline =
-                    thresholds
-                        .RespiratoryBaseline
-                        .ToString("0.#"),
+                    thresholds.RespiratoryBaseline.ToString("0.#"),
 
                 respiratoryLower =
-                    thresholds
-                        .Respiratory
-                        .Lower
-                        .ToString("0.#"),
+                    thresholds.Respiratory.Lower.ToString("0.#"),
 
                 respiratoryUpper =
-                    thresholds
-                        .Respiratory
-                        .Upper
-                        .ToString("0.#"),
+                    thresholds.Respiratory.Upper.ToString("0.#"),
 
                 systolicLower =
-                    thresholds
-                        .Systolic
-                        .Lower
-                        .ToString("0.#"),
+                    thresholds.Systolic.Lower.ToString("0.#"),
 
                 systolicUpper =
-                    thresholds
-                        .Systolic
-                        .Upper
-                        .ToString("0.#"),
+                    thresholds.Systolic.Upper.ToString("0.#"),
 
                 diastolicLower =
-                    thresholds
-                        .Diastolic
-                        .Lower
-                        .ToString("0.#"),
+                    thresholds.Diastolic.Lower.ToString("0.#"),
 
                 diastolicUpper =
-                    thresholds
-                        .Diastolic
-                        .Upper
-                        .ToString("0.#")
+                    thresholds.Diastolic.Upper.ToString("0.#")
             });
         }
 
@@ -438,39 +310,31 @@ namespace INFP_Proj.Pages.User
                 string vital,
                 string direction)
         {
-            string? currentUserId =
-                _userManager.GetUserId(User);
+            string? currentUserId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(
-                currentUserId))
+            if (string.IsNullOrWhiteSpace(currentUserId))
             {
-                return RedirectToPage(
-                    "/Login");
+                return RedirectToPage("/Login");
             }
 
-            if (
-                string.IsNullOrWhiteSpace(vital) ||
+            if (string.IsNullOrWhiteSpace(vital) ||
                 string.IsNullOrWhiteSpace(direction) ||
                 !AllowedVitals.Contains(vital) ||
-                !AllowedDirections.Contains(direction)
-            )
+                !AllowedDirections.Contains(direction))
             {
                 TempData["ErrorMessage"] =
-                    "The selected vital simulation " +
-                    "option is invalid.";
+                    "The selected vital simulation option is invalid.";
 
                 return RedirectToPage();
             }
 
             Patients? patient =
-                await GetLinkedPatientAsync(
-                    currentUserId);
+                await GetLinkedPatientAsync(currentUserId);
 
             if (patient == null)
             {
                 TempData["ErrorMessage"] =
-                    "No patient record is linked " +
-                    "to this account.";
+                    "No patient record is linked to this account.";
 
                 return RedirectToPage();
             }
@@ -479,8 +343,8 @@ namespace INFP_Proj.Pages.User
                 await LoadThresholdConfigurationAsync();
 
             /*
-             * Use the previous ten readings before
-             * inserting the new simulated reading.
+             * Existing readings are used as the baseline before
+             * the new simulated reading is inserted.
              */
             List<Vitals> baselineReadings =
                 await GetRecentVitalsAsync(
@@ -522,73 +386,70 @@ namespace INFP_Proj.Pages.User
                 if (alertResult.CaretakerCount == 0)
                 {
                     TempData["ErrorMessage"] =
-                        $"{direction} reading recorded " +
-                        $"for {readableVital}. An " +
-                        "emergency log was created, " +
-                        "but no linked caretaker email " +
+                        $"{direction} reading recorded for " +
+                        $"{readableVital}. An emergency log was " +
+                        "created, but no linked caretaker email " +
                         "was found.";
                 }
                 else if (alertResult.EmailsSent == 0)
                 {
                     TempData["ErrorMessage"] =
-                        $"{direction} reading recorded " +
-                        $"for {readableVital}. An " +
-                        "emergency log was created, " +
-                        "but the caretaker email could " +
+                        $"{direction} reading recorded for " +
+                        $"{readableVital}. An emergency log was " +
+                        "created, but the caretaker email could " +
                         "not be sent.";
                 }
-                else if (
-                    alertResult.EmailsSent <
-                    alertResult.CaretakerCount
-                )
+                else if (alertResult.EmailsSent <
+                         alertResult.CaretakerCount)
                 {
                     TempData["ErrorMessage"] =
-                        $"{direction} reading recorded " +
-                        $"for {readableVital}. An " +
-                        "emergency log was created and " +
-                        $"{alertResult.EmailsSent} of " +
-                        $"{alertResult.CaretakerCount} " +
-                        "caretaker emails were sent.";
+                        $"{direction} reading recorded for " +
+                        $"{readableVital}. The emergency log was " +
+                        $"created, but only {alertResult.EmailsSent} " +
+                        $"of {alertResult.CaretakerCount} caretaker " +
+                        "email(s) were sent.";
                 }
                 else
                 {
                     TempData["Message"] =
-                        $"{direction} reading recorded " +
-                        $"for {readableVital}. An " +
-                        "emergency log was created and " +
-                        $"{alertResult.EmailsSent} " +
-                        "caretaker email(s) were sent.";
+                        $"{direction} reading recorded for " +
+                        $"{readableVital}. The emergency log was " +
+                        "created and all linked caretakers were " +
+                        "notified by email.";
                 }
             }
             else if (alertResult.CooldownActive)
             {
                 TempData["Message"] =
-                    $"{direction} reading recorded " +
-                    $"for {readableVital}. A recent " +
-                    "unresolved alert already exists, " +
-                    "so another email was not sent.";
+                    $"{direction} reading recorded for " +
+                    $"{readableVital}. A recent unresolved alert " +
+                    "already exists, so another email was not sent.";
             }
             else
             {
                 TempData["Message"] =
-                    $"{direction} reading recorded " +
-                    $"for {readableVital}.";
+                    $"{direction} reading recorded for " +
+                    $"{readableVital}.";
             }
 
             return RedirectToPage();
         }
 
+        /*
+         * Reads the database with explicit CAST statements.
+         * This supports databases where the columns were created as int
+         * even though the C# model currently uses float.
+         */
         private async Task<ThresholdConfiguration>
             LoadThresholdConfigurationAsync()
         {
             DbConnection connection =
                 _context.Database.GetDbConnection();
 
-            bool closeWhenFinished =
-                connection.State !=
-                ConnectionState.Open;
+            bool shouldCloseConnection =
+                connection.State != ConnectionState.Open;
 
-            if (closeWhenFinished)
+            if (shouldCloseConnection)
             {
                 await connection.OpenAsync();
             }
@@ -600,25 +461,17 @@ namespace INFP_Proj.Pages.User
 
                 command.CommandText = """
                     SELECT TOP (1)
-                        CAST(
-                            SBPLowerThreshold
-                            AS real
-                        ) AS SBPLowerThreshold,
+                        CAST(SBPLowerThreshold AS real)
+                            AS SBPLowerThreshold,
 
-                        CAST(
-                            SBPUpperThreshold
-                            AS real
-                        ) AS SBPUpperThreshold,
+                        CAST(SBPUpperThreshold AS real)
+                            AS SBPUpperThreshold,
 
-                        CAST(
-                            DBPLowerThreshold
-                            AS real
-                        ) AS DBPLowerThreshold,
+                        CAST(DBPLowerThreshold AS real)
+                            AS DBPLowerThreshold,
 
-                        CAST(
-                            DBPUpperThreshold
-                            AS real
-                        ) AS DBPUpperThreshold,
+                        CAST(DBPUpperThreshold AS real)
+                            AS DBPUpperThreshold,
 
                         CAST(
                             HeartRateLowerPercentageThreshold
@@ -649,82 +502,63 @@ namespace INFP_Proj.Pages.User
 
                 if (!await reader.ReadAsync())
                 {
-                    return
-                        CreateFallbackConfiguration();
+                    return CreateFallbackConfiguration();
                 }
 
                 return new ThresholdConfiguration
                 {
-                    Systolic =
-                        CreateFixedRange(
-                            ReadNullableFloat(
-                                reader,
-                                "SBPLowerThreshold"),
+                    Systolic = CreateFixedRange(
+                        ReadNullableFloat(
+                            reader,
+                            "SBPLowerThreshold"),
+                        ReadNullableFloat(
+                            reader,
+                            "SBPUpperThreshold"),
+                        90f,
+                        120f),
 
-                            ReadNullableFloat(
-                                reader,
-                                "SBPUpperThreshold"),
-
-                            90f,
-                            120f),
-
-                    Diastolic =
-                        CreateFixedRange(
-                            ReadNullableFloat(
-                                reader,
-                                "DBPLowerThreshold"),
-
-                            ReadNullableFloat(
-                                reader,
-                                "DBPUpperThreshold"),
-
-                            60f,
-                            80f),
+                    Diastolic = CreateFixedRange(
+                        ReadNullableFloat(
+                            reader,
+                            "DBPLowerThreshold"),
+                        ReadNullableFloat(
+                            reader,
+                            "DBPUpperThreshold"),
+                        60f,
+                        80f),
 
                     HeartRateLowerPercentage =
                         ValidatePercentage(
                             ReadNullableFloat(
                                 reader,
-
-                                "HeartRateLower" +
-                                "PercentageThreshold"),
-
+                                "HeartRateLowerPercentageThreshold"),
                             20f),
 
                     HeartRateUpperPercentage =
                         ValidatePercentage(
                             ReadNullableFloat(
                                 reader,
-
-                                "HeartRateUpper" +
-                                "PercentageThreshold"),
-
+                                "HeartRateUpperPercentageThreshold"),
                             20f),
 
                     RespiratoryLowerThreshold =
                         ReadPositiveValueOrFallback(
                             ReadNullableFloat(
                                 reader,
-
-                                "RespiratoryRate" +
-                                "LowerThreshold"),
-
+                                "RespiratoryRateLowerThreshold"),
                             12f),
 
                     RespiratoryUpperPercentage =
                         ValidatePercentage(
                             ReadNullableFloat(
                                 reader,
-
-                                "RespiratoryRateUpper" +
-                                "PercentageThreshold"),
-
+                                "RespiratoryRateUpperPercentageThreshold"),
                             25f)
                 };
             }
             finally
             {
-                if (closeWhenFinished)
+                if (shouldCloseConnection)
                 {
                     await connection.CloseAsync();
                 }
@@ -760,61 +594,54 @@ namespace INFP_Proj.Pages.User
             DbDataReader reader,
             string columnName)
         {
-            int index =
+            int columnIndex =
                 reader.GetOrdinal(columnName);
 
-            if (reader.IsDBNull(index))
+            if (reader.IsDBNull(columnIndex))
             {
                 return null;
             }
 
             return Convert.ToSingle(
-                reader.GetValue(index));
+                reader.GetValue(columnIndex));
         }
 
         private static float ValidatePercentage(
-            float? value,
+            float? configuredValue,
             float fallback)
         {
-            if (
-                !value.HasValue ||
-                value.Value <= 0 ||
-                value.Value >= 100
-            )
+            if (!configuredValue.HasValue ||
+                configuredValue.Value <= 0 ||
+                configuredValue.Value >= 100)
             {
                 return fallback;
             }
 
-            return value.Value;
+            return configuredValue.Value;
         }
 
-        private static float
-            ReadPositiveValueOrFallback(
-                float? value,
-                float fallback)
+        private static float ReadPositiveValueOrFallback(
+            float? configuredValue,
+            float fallback)
         {
-            if (
-                !value.HasValue ||
-                value.Value <= 0
-            )
+            if (!configuredValue.HasValue ||
+                configuredValue.Value <= 0)
             {
                 return fallback;
             }
 
-            return value.Value;
+            return configuredValue.Value;
         }
 
         private static VitalRange CreateFixedRange(
-            float? lower,
-            float? upper,
+            float? configuredLower,
+            float? configuredUpper,
             float fallbackLower,
             float fallbackUpper)
         {
-            if (
-                !lower.HasValue ||
-                !upper.HasValue ||
-                lower.Value >= upper.Value
-            )
+            if (!configuredLower.HasValue ||
+                !configuredUpper.HasValue ||
+                configuredLower.Value >= configuredUpper.Value)
             {
                 return new VitalRange
                 {
@@ -825,8 +652,8 @@ namespace INFP_Proj.Pages.User
 
             return new VitalRange
             {
-                Lower = lower.Value,
-                Upper = upper.Value
+                Lower = configuredLower.Value,
+                Upper = configuredUpper.Value
             };
         }
 
@@ -838,65 +665,55 @@ namespace INFP_Proj.Pages.User
             List<Vitals> readings =
                 baselineReadings.ToList();
 
-            float heartBaseline =
+            float heartRateBaseline =
                 CalculateAverageBaseline(
-                    readings.Select(v =>
-                        v.HeartRate),
-
+                    readings.Select(v => v.HeartRate),
                     75f);
 
             float respiratoryBaseline =
                 CalculateAverageBaseline(
-                    readings.Select(v =>
-                        v.RespiratoryRate),
-
+                    readings.Select(v => v.RespiratoryRate),
                     16f);
+
+            float heartRateLower =
+                heartRateBaseline *
+                (1f -
+                 configuration
+                     .HeartRateLowerPercentage / 100f);
+
+            float heartRateUpper =
+                heartRateBaseline *
+                (1f +
+                 configuration
+                     .HeartRateUpperPercentage / 100f);
 
             float respiratoryUpper =
                 respiratoryBaseline *
-                (
-                    1f +
-                    configuration
-                        .RespiratoryUpperPercentage /
-                    100f
-                );
+                (1f +
+                 configuration
+                     .RespiratoryUpperPercentage / 100f);
 
+            /*
+             * Ensure the calculated upper range remains above
+             * the fixed lower respiratory threshold.
+             */
             respiratoryUpper = Math.Max(
-                configuration
-                    .RespiratoryLowerThreshold +
-                1f,
-
+                configuration.RespiratoryLowerThreshold + 1f,
                 respiratoryUpper);
 
             return new PatientThresholdState
             {
                 Configuration = configuration,
 
-                HeartRateBaseline =
-                    heartBaseline,
+                HeartRateBaseline = heartRateBaseline,
 
                 RespiratoryBaseline =
                     respiratoryBaseline,
 
                 HeartRate = new VitalRange
                 {
-                    Lower =
-                        heartBaseline *
-                        (
-                            1f -
-                            configuration
-                                .HeartRateLowerPercentage /
-                            100f
-                        ),
-
-                    Upper =
-                        heartBaseline *
-                        (
-                            1f +
-                            configuration
-                                .HeartRateUpperPercentage /
-                            100f
-                        )
+                    Lower = heartRateLower,
+                    Upper = heartRateUpper
                 },
 
                 Respiratory = new VitalRange
@@ -905,32 +722,25 @@ namespace INFP_Proj.Pages.User
                         configuration
                             .RespiratoryLowerThreshold,
 
-                    Upper =
-                        respiratoryUpper
+                    Upper = respiratoryUpper
                 },
 
-                Systolic =
-                    configuration.Systolic,
-
-                Diastolic =
-                    configuration.Diastolic
+                Systolic = configuration.Systolic,
+                Diastolic = configuration.Diastolic
             };
         }
 
-        private static float
-            CalculateAverageBaseline(
-                IEnumerable<float?> values,
-                float fallback)
+        private static float CalculateAverageBaseline(
+            IEnumerable<float?> values,
+            float fallback)
         {
             List<float> validValues =
                 values
                     .Where(value =>
                         value.HasValue &&
                         value.Value > 0)
-
                     .Select(value =>
                         value!.Value)
-
                     .ToList();
 
             if (validValues.Count == 0)
@@ -1015,16 +825,15 @@ namespace INFP_Proj.Pages.User
             };
         }
 
-        private static void
-            ApplySimulationDirection(
-                Vitals reading,
-                string vital,
-                string direction,
-                PatientThresholdState thresholds)
+        private static void ApplySimulationDirection(
+            Vitals reading,
+            string vital,
+            string direction,
+            PatientThresholdState thresholds)
         {
             if (vital.Equals(
-                "HeartRate",
-                StringComparison.OrdinalIgnoreCase))
+                    "HeartRate",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 reading.HeartRate =
                     GenerateByDirection(
@@ -1035,8 +844,8 @@ namespace INFP_Proj.Pages.User
             }
 
             if (vital.Equals(
-                "RespiratoryRate",
-                StringComparison.OrdinalIgnoreCase))
+                    "RespiratoryRate",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 reading.RespiratoryRate =
                     GenerateByDirection(
@@ -1047,8 +856,8 @@ namespace INFP_Proj.Pages.User
             }
 
             if (vital.Equals(
-                "SystolicBloodPressure",
-                StringComparison.OrdinalIgnoreCase))
+                    "SystolicBloodPressure",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 reading.SystolicBloodPressure =
                     GenerateByDirection(
@@ -1059,8 +868,8 @@ namespace INFP_Proj.Pages.User
             }
 
             if (vital.Equals(
-                "DiastolicBloodPressure",
-                StringComparison.OrdinalIgnoreCase))
+                    "DiastolicBloodPressure",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 reading.DiastolicBloodPressure =
                     GenerateByDirection(
@@ -1074,15 +883,15 @@ namespace INFP_Proj.Pages.User
             string direction)
         {
             if (direction.Equals(
-                "Spike",
-                StringComparison.OrdinalIgnoreCase))
+                    "Spike",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return GenerateSpikeValue(range);
             }
 
             if (direction.Equals(
-                "Dip",
-                StringComparison.OrdinalIgnoreCase))
+                    "Dip",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return GenerateDipValue(range);
             }
@@ -1093,16 +902,14 @@ namespace INFP_Proj.Pages.User
         private static float GenerateStableValue(
             VitalRange range)
         {
-            float width =
+            float totalRange =
                 range.Upper - range.Lower;
 
             float safeLower =
-                range.Lower +
-                width * 0.20f;
+                range.Lower + totalRange * 0.20f;
 
             float safeUpper =
-                range.Upper -
-                width * 0.20f;
+                range.Upper - totalRange * 0.20f;
 
             return RandomBetween(
                 safeLower,
@@ -1112,40 +919,45 @@ namespace INFP_Proj.Pages.User
         private static float GenerateSpikeValue(
             VitalRange range)
         {
-            float width = Math.Max(
+            float totalRange = Math.Max(
                 range.Upper - range.Lower,
                 5f);
 
-            return range.Upper +
-                RandomBetween(
-                    Math.Max(
-                        1f,
-                        width * 0.10f),
+            float minimumIncrease = Math.Max(
+                1f,
+                totalRange * 0.10f);
 
-                    Math.Max(
-                        3f,
-                        width * 0.30f));
+            float maximumIncrease = Math.Max(
+                3f,
+                totalRange * 0.30f);
+
+            return range.Upper +
+                   RandomBetween(
+                       minimumIncrease,
+                       maximumIncrease);
         }
 
         private static float GenerateDipValue(
             VitalRange range)
         {
-            float width = Math.Max(
+            float totalRange = Math.Max(
                 range.Upper - range.Lower,
                 5f);
 
+            float minimumDecrease = Math.Max(
+                1f,
+                totalRange * 0.10f);
+
+            float maximumDecrease = Math.Max(
+                3f,
+                totalRange * 0.30f);
+
             return Math.Max(
                 1f,
-
                 range.Lower -
                 RandomBetween(
-                    Math.Max(
-                        1f,
-                        width * 0.10f),
-
-                    Math.Max(
-                        3f,
-                        width * 0.30f)));
+                    minimumDecrease,
+                    maximumDecrease));
         }
 
         private static float RandomBetween(
@@ -1158,8 +970,8 @@ namespace INFP_Proj.Pages.User
             }
 
             return minimum +
-                (float)Random.Shared.NextDouble() *
-                (maximum - minimum);
+                   (float)Random.Shared.NextDouble() *
+                   (maximum - minimum);
         }
 
         private async Task
@@ -1167,40 +979,32 @@ namespace INFP_Proj.Pages.User
                 int patientId,
                 Vitals reading)
         {
-            BraceletRelation? relation =
-                await _context
-                    .BraceletRelations
-                    .Include(br =>
-                        br.Bracelet)
+            BraceletRelation? braceletRelation =
+                await _context.BraceletRelations
+                    .Include(br => br.Bracelet)
+                    .FirstOrDefaultAsync(
+                        br => br.PatientID == patientId);
 
-                    .FirstOrDefaultAsync(br =>
-                        br.PatientID ==
-                        patientId);
-
-            if (relation?.Bracelet != null)
+            if (braceletRelation?.Bracelet != null)
             {
-                relation.Bracelet.HeartRate =
+                Bracelet bracelet =
+                    braceletRelation.Bracelet;
+
+                bracelet.HeartRate =
                     reading.HeartRate;
 
-                relation.Bracelet.RespiratoryRate =
+                bracelet.RespiratoryRate =
                     reading.RespiratoryRate;
 
-                relation.Bracelet
-                    .SystolicBloodPressure =
+                bracelet.SystolicBloodPressure =
                     reading.SystolicBloodPressure;
 
-                relation.Bracelet
-                    .DiastolicBloodPressure =
+                bracelet.DiastolicBloodPressure =
                     reading.DiastolicBloodPressure;
 
-                relation.Bracelet.Battery =
-                    Math.Max(
-                        0f,
-
-                        (
-                            relation.Bracelet.Battery
-                            ?? 100f
-                        ) - 0.1f);
+                bracelet.Battery = Math.Max(
+                    0f,
+                    (bracelet.Battery ?? 100f) - 0.1f);
             }
 
             _context.Vitals.Add(reading);
@@ -1227,27 +1031,18 @@ namespace INFP_Proj.Pages.User
             }
 
             string eventPrefix =
-                $"Vital alert - " +
-                $"{alert.DisplayName}:";
+                $"Vital alert - {alert.DisplayName}:";
 
             DateTime cooldownStart =
-                DateTime.UtcNow
-                    .AddMinutes(-30);
+                DateTime.UtcNow.AddMinutes(-30);
 
             bool recentAlertExists =
                 await _context.Logs.AnyAsync(log =>
-                    log.PatientID ==
-                        patient.PatientID &&
-
+                    log.PatientID == patient.PatientID &&
                     log.Emergency &&
-
                     !log.Resolved &&
-
-                    log.Timestamp >=
-                        cooldownStart &&
-
-                    log.Event.StartsWith(
-                        eventPrefix));
+                    log.Timestamp >= cooldownStart &&
+                    log.Event.StartsWith(eventPrefix));
 
             if (recentAlertExists)
             {
@@ -1257,95 +1052,78 @@ namespace INFP_Proj.Pages.User
                 };
             }
 
-            string comparison =
+            string comparisonDescription =
                 alert.Direction == "Dip"
-
-                    ? $"below the lower limit " +
-                      $"of {alert.Range.Lower:0.#} " +
+                    ? $"below the lower limit of " +
+                      $"{alert.Range.Lower:0.#} " +
                       $"{alert.Unit}"
-
-                    : $"above the upper limit " +
-                      $"of {alert.Range.Upper:0.#} " +
+                    : $"above the upper limit of " +
+                      $"{alert.Range.Upper:0.#} " +
                       $"{alert.Unit}";
 
-            _context.Logs.Add(
-                new Log
-                {
-                    UserID = patient.UserID,
+            var emergencyLog = new Log
+            {
+                UserID = patient.UserID,
+                PatientID = patient.PatientID,
 
-                    PatientID =
-                        patient.PatientID,
+                Event =
+                    $"{eventPrefix} {alert.Direction}. " +
+                    $"Reading {alert.Value:0.#} " +
+                    $"{alert.Unit} was " +
+                    $"{comparisonDescription}.",
 
-                    Event =
-                        $"{eventPrefix} " +
-                        $"{alert.Direction}. " +
-                        $"Reading " +
-                        $"{alert.Value:0.#} " +
-                        $"{alert.Unit} was " +
-                        $"{comparison}.",
+                Emergency = true,
+                Resolved = false,
+                selfAcknowledged = false,
+                relativeAcknowledged = false,
+                Timestamp = DateTime.UtcNow
+            };
 
-                    Emergency = true,
-                    Resolved = false,
-
-                    selfAcknowledged = false,
-
-                    relativeAcknowledged =
-                        false,
-
-                    Timestamp = DateTime.UtcNow
-                });
-
+            _context.Logs.Add(emergencyLog);
             await _context.SaveChangesAsync();
 
             List<string> caretakerEmails =
                 await GetCaretakerEmailsAsync(
                     patient.PatientID,
                     patient.UserID);
-
             string patientName =
                 patient.User == null
-
-                    ? $"Patient " +
-                      $"#{patient.PatientID}"
-
-                    : $"{patient.User.FirstName} " +
-                      $"{patient.User.LastName}"
+                    ? $"Patient #{patient.PatientID}"
+                    : ($"{patient.User.FirstName} " +
+                       $"{patient.User.LastName}")
                         .Trim();
 
             DateTime recordedAtSingapore =
-                ToSingaporeTime(
-                    reading.RecordedAt);
+                ToSingaporeTime(reading.RecordedAt);
 
             string subject =
                 $"Hospital Portal Alert - {alert.DisplayName} - " +
                 $"{recordedAtSingapore:yyyyMMdd-HHmmss}";
 
-            string body =
-                "Hospital Portal vital notification\n\n" +
+            string emailBody =
+                $"Hospital Portal vital notification\n\n" +
                 $"Patient: {patientName}\n" +
                 $"Vital: {alert.DisplayName}\n" +
                 $"Condition: {alert.Direction}\n" +
                 $"Reading: {alert.Value:0.#} {alert.Unit}\n" +
-                $"Safe range: {alert.Range.Lower:0.#}-" +
+                $"Calculated range: " +
+                $"{alert.Range.Lower:0.#}-" +
                 $"{alert.Range.Upper:0.#} {alert.Unit}\n" +
-                $"Recorded at: {recordedAtSingapore:dd MMM yyyy, hh:mm tt}\n\n" +
+                $"Recorded at: " +
+                $"{recordedAtSingapore:dd MMM yyyy, hh:mm tt}\n\n" +
                 "Please sign in to the Hospital Portal to review " +
                 "and acknowledge the alert.\n\n" +
                 "This is an automated notification.";
 
             int emailsSent = 0;
 
-            foreach (
-                string caretakerEmail
-                in caretakerEmails
-            )
+            foreach (string caretakerEmail in caretakerEmails)
             {
                 bool sent =
-                    await _emailService
-                        .SendEmailAsync(
-                            caretakerEmail,
-                            subject,
-                            body);
+                    await _emailService.SendEmailAsync(
+                        caretakerEmail,
+                        subject,
+                        emailBody);
 
                 if (sent)
                 {
@@ -1356,12 +1134,8 @@ namespace INFP_Proj.Pages.User
             return new AlertResult
             {
                 AlertCreated = true,
-
-                CaretakerCount =
-                    caretakerEmails.Count,
-
-                EmailsSent =
-                    emailsSent
+                CaretakerCount = caretakerEmails.Count,
+                EmailsSent = emailsSent
             };
         }
 
@@ -1370,37 +1144,23 @@ namespace INFP_Proj.Pages.User
                 int patientId,
                 string patientUserId)
         {
-            List<string?> emails =
+            List<string?> databaseEmails =
                 await _context.Relationships
-
                     .Where(relationship =>
-                        relationship.PatientID ==
-                            patientId &&
-
-                        relationship.UserID !=
-                            patientUserId)
+                        relationship.PatientID == patientId &&
+                        relationship.UserID != patientUserId)
 
                     .Join(
                         _context.Users,
-
-                        relationship =>
-                            relationship.UserID,
-
-                        user =>
-                            user.Id,
-
-                        (
-                            relationship,
-                            user
-                        ) =>
-                            user.Email)
+                        relationship => relationship.UserID,
+                        user => user.Id,
+                        (relationship, user) => user.Email)
 
                     .ToListAsync();
 
-            return emails
+            return databaseEmails
                 .Where(email =>
-                    !string.IsNullOrWhiteSpace(
-                        email))
+                    !string.IsNullOrWhiteSpace(email))
 
                 .Select(email =>
                     email!.Trim())
@@ -1418,8 +1178,8 @@ namespace INFP_Proj.Pages.User
                 PatientThresholdState thresholds)
         {
             if (vital.Equals(
-                "HeartRate",
-                StringComparison.OrdinalIgnoreCase))
+                    "HeartRate",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return BuildAlertDetails(
                     "Heart Rate",
@@ -1429,8 +1189,8 @@ namespace INFP_Proj.Pages.User
             }
 
             if (vital.Equals(
-                "RespiratoryRate",
-                StringComparison.OrdinalIgnoreCase))
+                    "RespiratoryRate",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return BuildAlertDetails(
                     "Breathing Rate",
@@ -1440,30 +1200,24 @@ namespace INFP_Proj.Pages.User
             }
 
             if (vital.Equals(
-                "SystolicBloodPressure",
-                StringComparison.OrdinalIgnoreCase))
+                    "SystolicBloodPressure",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return BuildAlertDetails(
                     "Systolic Blood Pressure",
                     "mmHg",
-
-                    reading
-                        .SystolicBloodPressure,
-
+                    reading.SystolicBloodPressure,
                     thresholds.Systolic);
             }
 
             if (vital.Equals(
-                "DiastolicBloodPressure",
-                StringComparison.OrdinalIgnoreCase))
+                    "DiastolicBloodPressure",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return BuildAlertDetails(
                     "Diastolic Blood Pressure",
                     "mmHg",
-
-                    reading
-                        .DiastolicBloodPressure,
-
+                    reading.DiastolicBloodPressure,
                     thresholds.Diastolic);
             }
 
@@ -1486,9 +1240,7 @@ namespace INFP_Proj.Pages.User
             {
                 return new VitalAlertDetails
                 {
-                    DisplayName =
-                        displayName,
-
+                    DisplayName = displayName,
                     Unit = unit,
                     Value = value.Value,
                     Direction = "Dip",
@@ -1500,9 +1252,7 @@ namespace INFP_Proj.Pages.User
             {
                 return new VitalAlertDetails
                 {
-                    DisplayName =
-                        displayName,
-
+                    DisplayName = displayName,
                     Unit = unit,
                     Value = value.Value,
                     Direction = "Spike",
@@ -1518,19 +1268,15 @@ namespace INFP_Proj.Pages.User
             Vitals? latestVitals,
             PatientThresholdState thresholds)
         {
-            Bracelet? bracelet =
-                await _context
-                    .BraceletRelations
+            BraceletRelation? braceletRelation =
+                await _context.BraceletRelations
                     .AsNoTracking()
+                    .Include(br => br.Bracelet)
+                    .FirstOrDefaultAsync(
+                        br => br.PatientID == patientId);
 
-                    .Where(br =>
-                        br.PatientID ==
-                        patientId)
-
-                    .Select(br =>
-                        br.Bracelet)
-
-                    .FirstOrDefaultAsync();
+            Bracelet? bracelet =
+                braceletRelation?.Bracelet;
 
             LatestHeartRate =
                 latestVitals?.HeartRate ??
@@ -1541,24 +1287,17 @@ namespace INFP_Proj.Pages.User
                 bracelet?.RespiratoryRate;
 
             LatestSystolicBloodPressure =
-                latestVitals
-                    ?.SystolicBloodPressure ??
-                bracelet
-                    ?.SystolicBloodPressure;
+                latestVitals?.SystolicBloodPressure ??
+                bracelet?.SystolicBloodPressure;
 
             LatestDiastolicBloodPressure =
-                latestVitals
-                    ?.DiastolicBloodPressure ??
-                bracelet
-                    ?.DiastolicBloodPressure;
+                latestVitals?.DiastolicBloodPressure ??
+                bracelet?.DiastolicBloodPressure;
 
-            LatestUpdatedAt =
-                latestVitals == null
-
-                    ? null
-
-                    : ToSingaporeTime(
-                        latestVitals.RecordedAt);
+            LatestUpdatedAt = latestVitals == null
+                ? null
+                : ToSingaporeTime(
+                    latestVitals.RecordedAt);
 
             HeartRateStatus =
                 GetVitalStatus(
@@ -1581,203 +1320,175 @@ namespace INFP_Proj.Pages.User
                     thresholds.Diastolic);
 
             HasAttention =
-                IsAbnormalStatus(
-                    HeartRateStatus) ||
-
-                IsAbnormalStatus(
-                    RespirationStatus) ||
-
-                IsAbnormalStatus(
-                    SystolicStatus) ||
-
-                IsAbnormalStatus(
-                    DiastolicStatus);
+                IsAbnormalStatus(HeartRateStatus) ||
+                IsAbnormalStatus(RespirationStatus) ||
+                IsAbnormalStatus(SystolicStatus) ||
+                IsAbnormalStatus(DiastolicStatus);
         }
 
         private async Task<List<Vitals>>
             GetRecentVitalsAsync(
                 int patientId,
-                int count)
+                int numberOfReadings)
         {
             return await _context.Vitals
-
                 .AsNoTracking()
-
                 .Where(v =>
-                    v.PatientID ==
-                    patientId)
-
+                    v.PatientID == patientId)
                 .OrderByDescending(v =>
                     v.RecordedAt)
-
-                .Take(count)
-
+                .Take(numberOfReadings)
                 .ToListAsync();
         }
 
-        private async Task
-            LoadHourlyAverageChartAsync(
-                Patients patient)
+        private async Task LoadHourlyAverageChartAsync(
+            Patients patient)
         {
             List<Vitals> vitals =
                 await _context.Vitals
-
                     .AsNoTracking()
-
                     .Where(v =>
-                        v.PatientID ==
-                        patient.PatientID)
-
+                        v.PatientID == patient.PatientID)
                     .OrderBy(v =>
                         v.RecordedAt)
-
                     .ToListAsync();
 
-            var hourlyVitals =
-                vitals
-
-                    .GroupBy(v =>
-                        GetUtcHour(
-                            v.RecordedAt))
-
-                    .OrderBy(group =>
-                        group.Key)
-
-                    .Select(group => new
-                    {
-                        HourUtc =
-                            group.Key,
-
-                        HeartRate =
-                            Average(
-                                group.Select(v =>
-                                    v.HeartRate)),
-
-                        RespiratoryRate =
-                            Average(
-                                group.Select(v =>
-                                    v.RespiratoryRate)),
-
-                        SystolicBloodPressure =
-                            Average(
-                                group.Select(v =>
-                                    v.SystolicBloodPressure)),
-
-                        DiastolicBloodPressure =
-                            Average(
-                                group.Select(v =>
-                                    v.DiastolicBloodPressure))
-                    })
-
-                    .ToList();
-
-            ChartData =
-                new VitalsChartViewModel
+            var hourlyVitals = vitals
+                .GroupBy(v =>
+                    GetUtcHour(v.RecordedAt))
+                .OrderBy(group =>
+                    group.Key)
+                .Select(group => new
                 {
-                    PatientId =
-                        patient.PatientID,
+                    HourUtc = group.Key,
 
-                    PatientName =
-                        patient.User == null
+                    HeartRate = Average(
+                        group.Select(v =>
+                            v.HeartRate)),
 
-                            ? $"Patient " +
-                              $"#{patient.PatientID}"
+                    RespiratoryRate = Average(
+                        group.Select(v =>
+                            v.RespiratoryRate)),
 
-                            : $"{patient.User.FirstName} " +
-                              $"{patient.User.LastName}"
-                                .Trim(),
+                    SystolicBloodPressure = Average(
+                        group.Select(v =>
+                            v.SystolicBloodPressure)),
 
-                    Labels =
-                        hourlyVitals
+                    DiastolicBloodPressure = Average(
+                        group.Select(v =>
+                            v.DiastolicBloodPressure))
+                })
+                .ToList();
 
-                            .Select(v =>
-                                ToSingaporeTime(
-                                    v.HourUtc)
+            ChartData = new VitalsChartViewModel
+            {
+                PatientId = patient.PatientID,
 
-                                .ToString(
-                                    "MMM d, HH:00"))
+                PatientName =
+                    patient.User == null
+                        ? $"Patient #{patient.PatientID}"
+                        : ($"{patient.User.FirstName} " +
+                           $"{patient.User.LastName}")
+                            .Trim(),
 
-                            .ToList(),
+                Labels = hourlyVitals
+                    .Select(v =>
+                        ToSingaporeTime(v.HourUtc)
+                            .ToString("MMM d, HH:00"))
+                    .ToList(),
 
-                    HeartRate =
-                        hourlyVitals
+                HeartRate = hourlyVitals
+                    .Select(v => v.HeartRate)
+                    .ToList(),
 
-                            .Select(v =>
-                                v.HeartRate)
+                RespiratoryRate = hourlyVitals
+                    .Select(v => v.RespiratoryRate)
+                    .ToList(),
 
-                            .ToList(),
+                SystolicBloodPressure = hourlyVitals
+                    .Select(v =>
+                        v.SystolicBloodPressure)
+                    .ToList(),
 
-                    RespiratoryRate =
-                        hourlyVitals
-
-                            .Select(v =>
-                                v.RespiratoryRate)
-
-                            .ToList(),
-
-                    SystolicBloodPressure =
-                        hourlyVitals
-
-                            .Select(v =>
-                                v.SystolicBloodPressure)
-
-                            .ToList(),
-
-                    DiastolicBloodPressure =
-                        hourlyVitals
-
-                            .Select(v =>
-                                v.DiastolicBloodPressure)
-
-                            .ToList()
-                };
+                DiastolicBloodPressure = hourlyVitals
+                    .Select(v =>
+                        v.DiastolicBloodPressure)
+                    .ToList()
+            };
         }
 
         private async Task<Patients?>
             GetLinkedPatientAsync(
                 string currentUserId)
         {
-            Patients? patient =
+            const string selectedPatientSessionKey =
+                "SelectedPatientId";
+
+            int? selectedPatientId =
+                HttpContext.Session.GetInt32(
+                    selectedPatientSessionKey);
+
+            if (selectedPatientId.HasValue)
+            {
+                bool isOwner =
+                    await _context.Patients
+                        .AsNoTracking()
+                        .AnyAsync(patient =>
+                            patient.PatientID ==
+                                selectedPatientId.Value &&
+                            patient.UserID ==
+                                currentUserId);
+
+                if (isOwner)
+                {
+                    return await _context.Patients
+                        .Include(patient => patient.User)
+                        .FirstOrDefaultAsync(patient =>
+                            patient.PatientID ==
+                                selectedPatientId.Value);
+                }
+
+                bool isRelated =
+                    await _context.Relationships
+                        .AsNoTracking()
+                        .AnyAsync(relationship =>
+                            relationship.PatientID ==
+                                selectedPatientId.Value &&
+                            relationship.UserID ==
+                                currentUserId);
+
+                if (isRelated)
+                {
+                    return await _context.Patients
+                        .Include(patient => patient.User)
+                        .FirstOrDefaultAsync(patient =>
+                            patient.PatientID ==
+                                selectedPatientId.Value);
+                }
+
+                HttpContext.Session.Remove(
+                    selectedPatientSessionKey);
+            }
+
+            // If this account is the patient, use its own record.
+            Patients? ownPatient =
                 await _context.Patients
+                    .Include(patient => patient.User)
+                    .FirstOrDefaultAsync(patient =>
+                        patient.UserID == currentUserId);
 
-                    .Include(p =>
-                        p.User)
-
-                    .FirstOrDefaultAsync(p =>
-                        p.UserID ==
-                        currentUserId);
-
-            if (patient != null)
+            if (ownPatient != null)
             {
-                return patient;
+                HttpContext.Session.SetInt32(
+                    selectedPatientSessionKey,
+                    ownPatient.PatientID);
+
+                return ownPatient;
             }
 
-            int? linkedPatientId =
-                await _context.Relationships
-
-                    .Where(relationship =>
-                        relationship.UserID ==
-                        currentUserId)
-
-                    .Select(relationship =>
-                        (int?)
-                        relationship.PatientID)
-
-                    .FirstOrDefaultAsync();
-
-            if (!linkedPatientId.HasValue)
-            {
-                return null;
-            }
-
-            return await _context.Patients
-
-                .Include(p =>
-                    p.User)
-
-                .FirstOrDefaultAsync(p =>
-                    p.PatientID ==
-                    linkedPatientId.Value);
+            // A relative/caregiver must select a patient
+            // from the Dashboard before opening the tracker.
+            return null;
         }
 
         private static string GetVitalStatus(
@@ -1805,13 +1516,12 @@ namespace INFP_Proj.Pages.User
         private static bool IsAbnormalStatus(
             string status)
         {
-            return status is
-                "Dip" or "Spike";
+            return status == "Dip" ||
+                   status == "Spike";
         }
 
-        private static string
-            GetReadableVitalName(
-                string vital)
+        private static string GetReadableVitalName(
+            string vital)
         {
             return vital switch
             {
@@ -1834,27 +1544,32 @@ namespace INFP_Proj.Pages.User
         private static DateTime GetUtcHour(
             DateTime recordedAt)
         {
-            DateTime utc =
-                recordedAt.Kind switch
-                {
-                    DateTimeKind.Utc =>
+            DateTime utcTime;
+
+            if (recordedAt.Kind ==
+                DateTimeKind.Utc)
+            {
+                utcTime = recordedAt;
+            }
+            else if (recordedAt.Kind ==
+                     DateTimeKind.Local)
+            {
+                utcTime =
+                    recordedAt.ToUniversalTime();
+            }
+            else
+            {
+                utcTime =
+                    DateTime.SpecifyKind(
                         recordedAt,
-
-                    DateTimeKind.Local =>
-                        recordedAt
-                            .ToUniversalTime(),
-
-                    _ =>
-                        DateTime.SpecifyKind(
-                            recordedAt,
-                            DateTimeKind.Utc)
-                };
+                        DateTimeKind.Utc);
+            }
 
             return new DateTime(
-                utc.Year,
-                utc.Month,
-                utc.Day,
-                utc.Hour,
+                utcTime.Year,
+                utcTime.Month,
+                utcTime.Day,
+                utcTime.Hour,
                 0,
                 0,
                 DateTimeKind.Utc);
@@ -1863,12 +1578,10 @@ namespace INFP_Proj.Pages.User
         private static DateTime ToSingaporeTime(
             DateTime utcDateTime)
         {
-            DateTime utc =
+            DateTime utcTime =
                 utcDateTime.Kind ==
                 DateTimeKind.Utc
-
                     ? utcDateTime
-
                     : DateTime.SpecifyKind(
                         utcDateTime,
                         DateTimeKind.Utc);
@@ -1878,22 +1591,19 @@ namespace INFP_Proj.Pages.User
             try
             {
                 singaporeTimeZone =
-                    TimeZoneInfo
-                        .FindSystemTimeZoneById(
-                            "Singapore Standard Time");
+                    TimeZoneInfo.FindSystemTimeZoneById(
+                        "Singapore Standard Time");
             }
             catch (TimeZoneNotFoundException)
             {
                 singaporeTimeZone =
-                    TimeZoneInfo
-                        .FindSystemTimeZoneById(
-                            "Asia/Singapore");
+                    TimeZoneInfo.FindSystemTimeZoneById(
+                        "Asia/Singapore");
             }
 
-            return TimeZoneInfo
-                .ConvertTimeFromUtc(
-                    utc,
-                    singaporeTimeZone);
+            return TimeZoneInfo.ConvertTimeFromUtc(
+                utcTime,
+                singaporeTimeZone);
         }
 
         private static float? Average(
@@ -1901,21 +1611,15 @@ namespace INFP_Proj.Pages.User
         {
             List<float> validValues =
                 values
-
                     .Where(value =>
                         value.HasValue)
-
                     .Select(value =>
                         value!.Value)
-
                     .ToList();
 
-            if (validValues.Count == 0)
-            {
-                return null;
-            }
-
-            return validValues.Average();
+            return validValues.Count == 0
+                ? null
+                : validValues.Average();
         }
 
         private sealed class VitalRange
@@ -1926,146 +1630,53 @@ namespace INFP_Proj.Pages.User
 
         private sealed class ThresholdConfiguration
         {
-            public VitalRange Systolic
-            {
-                get;
-                set;
-            } = new();
+            public VitalRange Systolic { get; set; } = new();
+            public VitalRange Diastolic { get; set; } = new();
 
-            public VitalRange Diastolic
-            {
-                get;
-                set;
-            } = new();
+            public float HeartRateLowerPercentage { get; set; }
+            public float HeartRateUpperPercentage { get; set; }
 
-            public float HeartRateLowerPercentage
-            {
-                get;
-                set;
-            }
-
-            public float HeartRateUpperPercentage
-            {
-                get;
-                set;
-            }
-
-            public float RespiratoryLowerThreshold
-            {
-                get;
-                set;
-            }
-
-            public float RespiratoryUpperPercentage
-            {
-                get;
-                set;
-            }
+            public float RespiratoryLowerThreshold { get; set; }
+            public float RespiratoryUpperPercentage { get; set; }
         }
 
         private sealed class PatientThresholdState
         {
-            public ThresholdConfiguration Configuration
-            {
-                get;
-                set;
-            } = new();
+            public ThresholdConfiguration Configuration { get; set; }
+                = new();
 
-            public float HeartRateBaseline
-            {
-                get;
-                set;
-            }
+            public float HeartRateBaseline { get; set; }
+            public float RespiratoryBaseline { get; set; }
 
-            public float RespiratoryBaseline
-            {
-                get;
-                set;
-            }
-
-            public VitalRange HeartRate
-            {
-                get;
-                set;
-            } = new();
-
-            public VitalRange Respiratory
-            {
-                get;
-                set;
-            } = new();
-
-            public VitalRange Systolic
-            {
-                get;
-                set;
-            } = new();
-
-            public VitalRange Diastolic
-            {
-                get;
-                set;
-            } = new();
+            public VitalRange HeartRate { get; set; } = new();
+            public VitalRange Respiratory { get; set; } = new();
+            public VitalRange Systolic { get; set; } = new();
+            public VitalRange Diastolic { get; set; } = new();
         }
 
         private sealed class VitalAlertDetails
         {
-            public string DisplayName
-            {
-                get;
-                set;
-            } = string.Empty;
+            public string DisplayName { get; set; }
+                = string.Empty;
 
-            public string Unit
-            {
-                get;
-                set;
-            } = string.Empty;
+            public string Unit { get; set; }
+                = string.Empty;
 
-            public float Value
-            {
-                get;
-                set;
-            }
+            public float Value { get; set; }
 
-            public string Direction
-            {
-                get;
-                set;
-            } = string.Empty;
+            public string Direction { get; set; }
+                = string.Empty;
 
-            public VitalRange Range
-            {
-                get;
-                set;
-            } = new();
+            public VitalRange Range { get; set; }
+                = new();
         }
 
         private sealed class AlertResult
         {
-            public bool AlertCreated
-            {
-                get;
-                set;
-            }
-
-            public bool CooldownActive
-            {
-                get;
-                set;
-            }
-
-            public int CaretakerCount
-            {
-                get;
-                set;
-            }
-
-            public int EmailsSent
-            {
-                get;
-                set;
-            }
+            public bool AlertCreated { get; set; }
+            public bool CooldownActive { get; set; }
+            public int CaretakerCount { get; set; }
+            public int EmailsSent { get; set; }
         }
     }
 }

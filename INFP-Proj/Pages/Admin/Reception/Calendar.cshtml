@@ -76,6 +76,20 @@
             </div>
             <div class="modal-body py-4">
                 <p class="text-muted small mb-4">Choose an action for this appointment.</p>
+
+                <!-- ADDED: Show patient request information -->
+                <div id="patientRequestInfo" class="alert alert-warning small" style="display:none;"></div>
+
+                <!-- ADDED: Accept/Reject patient request -->
+                <div id="patientRequestActions" style="display:none;">
+                    <button type="button" class="btn btn-success w-100 mb-2" id="btnAcceptAppointment">
+                        Accept
+                    </button>
+                    <button type="button" class="btn btn-outline-danger w-100 mb-2" id="btnRejectAppointment">
+                        Reject
+                    </button>
+                </div>
+
                 <button type="button" class="btn btn-primary w-100 mb-2" id="btnGoToUpdate">
                     <i class="bi bi-pencil-square me-2"></i> Update Form
                 </button>
@@ -233,11 +247,11 @@
                     if (isBooked || isPastTime) {
                         opt.hidden = true;
                         opt.disabled = true;
-                        opt.style.display = 'none'; 
+                        opt.style.display = 'none';
                     } else {
                         opt.hidden = false;
                         opt.disabled = false;
-                        opt.style.display = '';   
+                        opt.style.display = '';
                     }
                 }
 
@@ -289,6 +303,19 @@
                 events: '?handler=FetchAppointments',
                 selectable: true,
 
+                // ADDED: Highlight patient appointment and reschedule requests
+                eventDidMount: function(info) {
+                    let p = info.event.extendedProps;
+
+                    if (p.hasPendingChange) {
+                        info.el.style.backgroundColor = '#fd7e14';
+                    }
+                    else if (!p.docAcknowledged && p.patientAcknowledged && p.status === "Pending") {
+                        info.el.style.backgroundColor = '#ffc107';
+                        info.el.style.color = '#000';
+                    }
+                },
+
                 dateClick: function(info) {
                     let now = new Date();
 
@@ -324,6 +351,28 @@
 
                 eventClick: function(info) {
                     currentEventData = info.event;
+
+                    // ADDED: Show approval buttons for patient request/reschedule
+                    let p = currentEventData.extendedProps;
+                    let patientRequest = !p.docAcknowledged && p.patientAcknowledged && p.status === "Pending";
+                    let needsAction = patientRequest || p.hasPendingChange;
+
+                    document.getElementById('patientRequestActions').style.display = needsAction ? 'block' : 'none';
+
+                    let infoBox = document.getElementById('patientRequestInfo');
+
+                    if (p.hasPendingChange) {
+                        infoBox.innerText = "Requested new date: " + new Date(p.requestedDateTime).toLocaleString();
+                        infoBox.style.display = 'block';
+                    }
+                    else if (patientRequest) {
+                        infoBox.innerText = "Patient-created appointment request";
+                        infoBox.style.display = 'block';
+                    }
+                    else {
+                        infoBox.style.display = 'none';
+                    }
+
                     actionModal.show();
                 }
             });
@@ -433,6 +482,44 @@
                 }).catch(err => {
                     console.error(err);
                     alert('A network error occurred.');
+                });
+            });
+
+            // ADDED: Reception accepts patient appointment/reschedule
+            document.getElementById('btnAcceptAppointment').addEventListener('click', function() {
+                let id = parseInt(currentEventData.id);
+
+                fetch('?handler=Accept', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify(id)
+                }).then(res => res.json()).then(data => {
+                    if(data.success) {
+                        actionModal.hide();
+                        calendar.refetchEvents();
+                    } else {
+                        alert(data.message || 'Error accepting request.');
+                    }
+                });
+            });
+
+            // ADDED: Reception rejects patient appointment/reschedule
+            document.getElementById('btnRejectAppointment').addEventListener('click', function() {
+                if(!confirm("Reject this request?")) return;
+
+                let id = parseInt(currentEventData.id);
+
+                fetch('?handler=Reject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify(id)
+                }).then(res => res.json()).then(data => {
+                    if(data.success) {
+                        actionModal.hide();
+                        calendar.refetchEvents();
+                    } else {
+                        alert(data.message || 'Error rejecting request.');
+                    }
                 });
             });
 

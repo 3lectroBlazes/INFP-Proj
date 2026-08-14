@@ -33,16 +33,16 @@ namespace INFP_Proj.Pages.Admin.Reception
                       })
                 .ToListAsync();
 
-            int startHour = 9;  
-            int endHour = 17;  
+            int startHour = 9;
+            int endHour = 17;
 
             for (int i = startHour; i <= endHour; i++)
             {
                 DateTime time = DateTime.Today.AddHours(i);
                 TimeSlots.Add(new SelectListItem
                 {
-                    Value = time.ToString("HH:mm"),  
-                    Text = time.ToString("hh:mm tt") 
+                    Value = time.ToString("HH:mm"),
+                    Text = time.ToString("hh:mm tt")
                 });
             }
         }
@@ -59,7 +59,20 @@ namespace INFP_Proj.Pages.Admin.Reception
                     {
                         patientId = a.PatientID,
                         urgency = a.Urgency,
-                        status = a.Status
+                        status = a.Status,
+
+                        // ADDED: Used to identify patient/reception acknowledgement state
+                        docAcknowledged = a.DocAcknowledged,
+                        patientAcknowledged = a.PatientAcknowledged,
+
+                        // ADDED: Used to identify pending patient reschedule requests
+                        hasPendingChange = _context.AppointmentChangeRequests
+                            .Any(r => r.AppointmentRequestID == a.AppointmentRequestID && r.Status == "Pending"),
+
+                        requestedDateTime = _context.AppointmentChangeRequests
+                            .Where(r => r.AppointmentRequestID == a.AppointmentRequestID && r.Status == "Pending")
+                            .Select(r => (DateTime?)r.RequestedDateTime)
+                            .FirstOrDefault()
                     }
                 })
                 .ToListAsync();
@@ -90,6 +103,11 @@ namespace INFP_Proj.Pages.Admin.Reception
                 Reason = dto.Reason,
                 Urgency = dto.Urgency ?? "Normal",
                 Status = "Pending",
+
+                // ADDED: Reception-created appointment = D1P0
+                DocAcknowledged = true,
+                PatientAcknowledged = false,
+
                 DateTime = dto.DateTime,
                 RequestedAt = DateTime.Now
             };
@@ -125,7 +143,75 @@ namespace INFP_Proj.Pages.Admin.Reception
             appt.Urgency = dto.Urgency ?? "Normal";
             appt.DateTime = dto.DateTime;
 
+            // ADDED: Reception reschedule = D1P0
+            appt.DocAcknowledged = true;
+            appt.PatientAcknowledged = false;
+            appt.Status = "Pending";
+
             await _context.SaveChangesAsync();
+            return new JsonResult(new { success = true });
+        }
+
+        // ADDED: Reception accepts patient appointment or patient reschedule request
+        public async Task<IActionResult> OnPostAcceptAsync([FromBody] int id)
+        {
+            var appt = await _context.Appointments.FindAsync(id);
+            if (appt == null) return NotFound();
+
+            var change = await _context.AppointmentChangeRequests
+                .FirstOrDefaultAsync(r => r.AppointmentRequestID == id && r.Status == "Pending");
+
+            if (change != null)
+            {
+                bool isDoubleBooked = await _context.Appointments
+                    .AnyAsync(a => a.DateTime == change.RequestedDateTime && a.AppointmentRequestID != id);
+
+                if (isDoubleBooked)
+                {
+                    return new JsonResult(new { success = false, message = "The requested time is already booked." });
+                }
+
+                // ADDED: Apply patient's requested new date
+                appt.DateTime = change.RequestedDateTime;
+                change.Status = "Approved";
+                change.ReviewedAt = DateTime.Now;
+            }
+
+            appt.DocAcknowledged = true;
+            appt.PatientAcknowledged = true;
+            appt.Status = "Scheduled";
+
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true });
+        }
+
+        // ADDED: Reception rejects patient appointment or patient reschedule request
+        public async Task<IActionResult> OnPostRejectAsync([FromBody] int id)
+        {
+            var appt = await _context.Appointments.FindAsync(id);
+            if (appt == null) return NotFound();
+
+            var change = await _context.AppointmentChangeRequests
+                .FirstOrDefaultAsync(r => r.AppointmentRequestID == id && r.Status == "Pending");
+
+            if (change != null)
+            {
+                // ADDED: Reject requested date but keep original appointment
+                change.Status = "Rejected";
+                change.ReviewedAt = DateTime.Now;
+
+                appt.DocAcknowledged = true;
+                appt.PatientAcknowledged = false;
+                appt.Status = "Pending";
+            }
+            else
+            {
+                appt.Status = "Rejected";
+            }
+
+            await _context.SaveChangesAsync();
+
             return new JsonResult(new { success = true });
         }
 
