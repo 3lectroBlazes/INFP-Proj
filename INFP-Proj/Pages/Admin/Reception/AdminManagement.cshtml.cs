@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Identity;
@@ -11,6 +12,7 @@ using INFP_Proj.Services;
 
 namespace INFP_Proj.Pages.Admin.Reception
 {
+    [Authorize(Roles = "Reception")]
     public class AdminManagementModel : PageModel
     {
         private readonly UserManager<AppUser> _userManager;

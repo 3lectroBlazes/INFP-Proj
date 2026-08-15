@@ -82,16 +82,14 @@ namespace INFP_Proj.Pages
                     return Page();
                 }
 
-                // Lockout window has passed: reset the counter and the lockout flag.
+                // Lockout window has passed: reset the counter so a fresh attempt starts clean.
                 await userManager.ResetAccessFailedCountAsync(user);
                 await userManager.SetLockoutEndDateAsync(user, null);
-                await userManager.SetLockoutEnabledAsync(user, false);
             }
 
             var checkResult = await signInManager.CheckPasswordSignInAsync(user, LModel.Password, lockoutOnFailure: true);
             if (checkResult.IsLockedOut)
             {
-                await userManager.SetLockoutEnabledAsync(user, true);
                 DateTimeOffset? newLockoutEnd = await userManager.GetLockoutEndDateAsync(user);
                 TimeSpan remaining = newLockoutEnd.HasValue ? newLockoutEnd.Value - DateTimeOffset.UtcNow : TimeSpan.FromMinutes(5);
                 ModelState.AddModelError("", $"Too many failed attempts. This account is locked. Try again in {FormatRemaining(remaining)}.");
