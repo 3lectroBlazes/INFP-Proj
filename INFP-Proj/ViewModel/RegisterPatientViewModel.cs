@@ -1,21 +1,24 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace INFP_Proj.ViewModel
 {
     public class RegisterPatientViewModel
     {
-        [Required(ErrorMessage = "First Name is required.")]
+        [Display(Name = "Registration Mode")]
+        public string Mode { get; set; } = "New";
+
         [Display(Name = "First Name")]
-        public string FirstName { get; set; } = string.Empty;
+        public string? FirstName { get; set; }
 
-        [Required(ErrorMessage = "Last Name is required.")]
         [Display(Name = "Last Name")]
-        public string LastName { get; set; } = string.Empty;
+        public string? LastName { get; set; }
 
-        [Required]
         [EmailAddress]
         [Display(Name = "Patient Email")]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
+
+        [Display(Name = "Registered User")]
+        public string? ExistingUserId { get; set; }
 
         [Required(ErrorMessage = "Please select an available bracelet.")]
         [Display(Name = "Assigned Bracelet")]
@@ -25,8 +28,12 @@ namespace INFP_Proj.ViewModel
         [Display(Name = "Assigned Bed")]
         public int BedID { get; set; }
 
-        [Required(ErrorMessage = "Reason for admission is required.")]
-        [Display(Name = "Reason for Admission")]
-        public string Description { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Please select a diagnosis.")]
+        [Display(Name = "Diagnosis")]
+        public int DiagnosisID { get; set; }
+
+        [Required(ErrorMessage = "Admission notes are required.")]
+        [Display(Name = "Admission Notes")]
+        public string AdmissionNotes { get; set; } = string.Empty;
     }
 }

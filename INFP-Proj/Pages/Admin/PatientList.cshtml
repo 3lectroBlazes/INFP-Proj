@@ -165,7 +165,6 @@
     <div class="page-actions">
         <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
         <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/History">See admission history</a>
-        <a class="btn btn-primary btn-sm" asp-page="Create">Add patient</a>
     </div>
 </div>
 
@@ -190,8 +189,7 @@
 @if (Model.Patients.Count == 0)
 {
     <div class="empty-panel">
-        <p class="text-muted mb-3">No patients match this filter.</p>
-        <a class="btn btn-primary" asp-page="Create">Add new patient</a>
+        <p class="text-muted mb-0">No patients match this filter.</p>
     </div>
 }
 else

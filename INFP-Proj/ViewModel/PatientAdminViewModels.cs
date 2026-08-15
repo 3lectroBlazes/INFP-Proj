@@ -44,32 +44,4 @@ namespace INFP_Proj.ViewModel
         public string? NewDosage { get; set; }
         public bool RequestHelp { get; set; }
     }
-
-    public class PatientAdmissionInput
-    {
-        [Required(ErrorMessage = "Please select a user to admit.")]
-        [Display(Name = "User")]
-        public string? UserId { get; set; }
-
-        [Display(Name = "Bracelet")]
-        public int? BraceletID { get; set; }
-
-        [Required(ErrorMessage = "Please select a bed.")]
-        [Display(Name = "Bed")]
-        public int BedID { get; set; }
-
-        [Required(ErrorMessage = "Please select a ward.")]
-        [Display(Name = "Ward")]
-        public int WardID { get; set; }
-
-        [Required(ErrorMessage = "Please select a diagnosis.")]
-        [Display(Name = "Diagnosis")]
-        public int DiagnosisID { get; set; }
-
-        [Display(Name = "Medications")]
-        public List<int> MedicationIDs { get; set; } = new();
-
-        [Display(Name = "Admission notes")]
-        public string? Description { get; set; }
-    }
 }
