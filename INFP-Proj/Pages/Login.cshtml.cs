@@ -118,8 +118,7 @@ namespace INFP_Proj.Pages
                 return Page();
             }
 
-            await signInManager.SignInAsync(user, LModel.RememberMe);
-            return RedirectToRoleHome();
+            return await ProcessSuccessfulLoginAsync(user, LModel.RememberMe);
         }
 
         public async Task<IActionResult> OnPostResendAsync()
@@ -195,7 +194,22 @@ namespace INFP_Proj.Pages
             bool rememberMe = bool.TryParse(HttpContext.Session.GetString(PendingRememberMeKey), out bool remember) && remember;
             ClearPending();
 
-            await signInManager.SignInAsync(user, LModel.RememberMe);
+            return await ProcessSuccessfulLoginAsync(user, rememberMe);
+        }
+
+        private async Task<IActionResult> ProcessSuccessfulLoginAsync(AppUser user, bool rememberMe)
+        {
+            if (user.RequiresPasswordReset)
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+                HttpContext.Session.SetString("ForcedResetEmail", user.Email);
+                HttpContext.Session.SetString("ForcedResetToken", token);
+
+                return RedirectToPage("/ResetPassword");
+            }
+
+            await signInManager.SignInAsync(user, rememberMe);
             return RedirectToRoleHome();
         }
 

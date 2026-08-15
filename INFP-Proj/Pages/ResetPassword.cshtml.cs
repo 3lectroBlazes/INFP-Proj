@@ -34,18 +34,14 @@ namespace INFP_Proj.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!HasPendingReset())
-            {
-                return RedirectToPage("/ForgotPassword");
-            }
+            if (!HasPendingReset()) return RedirectToPage("/ForgotPassword");
+            if (!ModelState.IsValid) return Page();
 
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            string email = otpService.GetPendingEmail(HttpContext.Session, ForgotPasswordModel.Purpose)
+                           ?? HttpContext.Session.GetString("ForcedResetEmail")!;
 
-            string email = otpService.GetPendingEmail(HttpContext.Session, ForgotPasswordModel.Purpose)!;
-            string token = HttpContext.Session.GetString(ForgotPasswordModel.ResetTokenSessionKey)!;
+            string token = HttpContext.Session.GetString(ForgotPasswordModel.ResetTokenSessionKey)
+                           ?? HttpContext.Session.GetString("ForcedResetToken")!;
 
             var user = await userManager.FindByEmailAsync(email);
             if (user == null)
@@ -64,20 +60,33 @@ namespace INFP_Proj.Pages
                 return Page();
             }
 
+            if (user.RequiresPasswordReset)
+            {
+                user.RequiresPasswordReset = false;
+                await userManager.UpdateAsync(user);
+            }
+
             ClearSession();
             return RedirectToPage("/Login");
         }
 
         private bool HasPendingReset()
         {
-            return !string.IsNullOrEmpty(otpService.GetPendingEmail(HttpContext.Session, ForgotPasswordModel.Purpose)) &&
-                   !string.IsNullOrEmpty(HttpContext.Session.GetString(ForgotPasswordModel.ResetTokenSessionKey));
+            bool hasOtpReset = !string.IsNullOrEmpty(otpService.GetPendingEmail(HttpContext.Session, ForgotPasswordModel.Purpose)) &&
+                               !string.IsNullOrEmpty(HttpContext.Session.GetString(ForgotPasswordModel.ResetTokenSessionKey));
+
+            bool hasForcedReset = !string.IsNullOrEmpty(HttpContext.Session.GetString("ForcedResetEmail")) &&
+                                  !string.IsNullOrEmpty(HttpContext.Session.GetString("ForcedResetToken"));
+
+            return hasOtpReset || hasForcedReset;
         }
 
         private void ClearSession()
         {
             otpService.Clear(HttpContext.Session, ForgotPasswordModel.Purpose);
             HttpContext.Session.Remove(ForgotPasswordModel.ResetTokenSessionKey);
+            HttpContext.Session.Remove("ForcedResetEmail");
+            HttpContext.Session.Remove("ForcedResetToken");
         }
     }
 }

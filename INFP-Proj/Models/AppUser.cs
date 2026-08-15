@@ -7,5 +7,7 @@ namespace INFP_Proj.Models
         public string FirstName { get; set; }
         public string? MiddleName { get; set; }
         public string LastName { get; set; }
+
+        public bool RequiresPasswordReset { get; set; } = false;
     }
 }
