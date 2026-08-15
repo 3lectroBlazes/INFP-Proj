@@ -2,24 +2,29 @@ using INFP_Proj.Data;
 using INFP_Proj.Services;
 using iText.Forms;
 using iText.Kernel.Pdf;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using System.Globalization;
+using System.Security.Claims;
+using INFP_Proj.Models;
 
-namespace INFP_Proj.Pages.Admin
+namespace INFP_Proj.Pages.Admin.Doctor
 {
     public class DeclareDeath : PageModel
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly AdminLogService _adminLogService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public DeclareDeath(AppDbContext context, IWebHostEnvironment env, AdminLogService adminLogService)
+        public DeclareDeath(AppDbContext context, IWebHostEnvironment env, AdminLogService adminLogService, UserManager<AppUser> userManager)
         {
             _context = context;
             _env = env;
+            _adminLogService = adminLogService;
+            _userManager = userManager;
             _adminLogService = adminLogService;
         }
 
@@ -190,6 +195,7 @@ namespace INFP_Proj.Pages.Admin
                 var deathCert = new DeathCerts
                 {
                     PatientID = patient.PatientID,
+                    DoctorID = _userManager.GetUserId(User),
                     RecordID = record.RecordID,
                     PatientName = loggedPatientName,
                     FileName = fileName,

@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using INFP_Proj.Models;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace INFP_Proj.Data
 {
@@ -8,6 +10,7 @@ namespace INFP_Proj.Data
         public int DeathCertID { get; set; }
 
         public int PatientID { get; set; }
+        public string DoctorID { get; set; }
         public int RecordID { get; set; }
 
         [Required]
@@ -25,5 +28,11 @@ namespace INFP_Proj.Data
         public string? RecordedBy { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        [ForeignKey("PatientID")]
+        public Patients? Patient { get; set; }
+        [ForeignKey("DoctorID")]
+        public AppUser? User { get; set; }
+
     }
 }

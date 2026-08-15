@@ -24,7 +24,7 @@ namespace INFP_Proj.Pages
 
         public async Task<IActionResult> OnPostDontLogoutAsync()
         {
-            return RedirectToPage("Login");
+            return RedirectToPage("./Index");
         }
     }
 }

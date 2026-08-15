@@ -200,7 +200,7 @@ namespace INFP_Proj.Pages.Admin
 
             if (reason == "Deceased")
             {
-                return RedirectToPage("/Admin/DeclareDeath", new { patientId = id, recordId = record.RecordID });
+                return RedirectToPage("/Admin/Doctor/DeclareDeath", new { patientId = id, recordId = record.RecordID });
             }
 
             record.DischargeDateTime = DateTime.UtcNow;

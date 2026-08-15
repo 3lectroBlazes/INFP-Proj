@@ -39,6 +39,12 @@ namespace INFP_Proj.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<DeathCerts>()
+                .HasOne(d => d.Patient)
+                .WithOne()
+                .HasForeignKey<DeathCerts>(d => d.PatientID)
+                .OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<LogAcknowledgement>(entity =>
             {
                 entity.ToTable("LogAcknowledgements");

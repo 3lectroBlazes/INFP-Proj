@@ -4,128 +4,201 @@
     ViewData["Title"] = "My Appointments";
 }
 
-<div class="container mt-4">
-    <h2 class="mb-4"><i class="bi bi-calendar-medical"></i> My Appointments</h2>
+<style>
+    .dashboard-hero {
+        background: linear-gradient(135deg, #087f73, #0a9b8c);
+        color: white;
+        border-radius: 18px;
+        padding: 1.75rem;
+    }
+
+        .dashboard-hero p {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+    .dashboard-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+        .dashboard-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            font-weight: 700;
+            padding: 1rem 1.15rem;
+        }
+
+    .empty-panel {
+        background: #f8faf9;
+        border: 1px dashed #cbd9d6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        margin: 1rem;
+    }
+
+    .staff-table thead th {
+        background: #f1f8f7;
+        border-bottom: 1px solid #d8e7e4;
+        color: #47615d;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.035em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    @@media (max-width: 767.98px) {
+        .dashboard-hero {
+            padding: 1.25rem;
+        }
+    }
+</style>
+
+    <div class="container mt-4">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Handle Appointments</h1>
+            <p class="page-subtitle text-muted">View upcoming and current Appointments</p>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
+        </div>
+    </div>
 
     <!-- Pending Acknowledgments -->
-    <div class="card shadow-sm mb-5 border-top border-warning border-4">
-        <div class="card-header bg-white">
-            <h4 class="mb-0 text-warning"><i class="bi bi-exclamation-circle"></i> Action Required</h4>
+    <div class="dashboard-card mb-4" style="border-top: 4px solid #dc3545;">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2" style="color:#dc3545;">
+            <span><i class="bi bi-exclamation-circle"></i> Action required</span>
+            <span class="badge bg-danger rounded-pill">@Model.PendingAppointments.Count pending</span>
         </div>
         <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Patient</th>
-                        <th>Reason</th>
-                        <th>Urgency</th>
-                        <th class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.PendingAppointments.Any())
-                    {
-                        <tr><td colspan="5" class="text-center text-muted py-4">You have no pending appointments to acknowledge.</td></tr>
-                    }
-                    @foreach (var appt in Model.PendingAppointments)
-                    {
-                        <tr>
-                            <td class="align-middle fw-bold">@appt.DateTime.ToString("MMM dd, yyyy - hh:mm tt")</td>
-                            <td class="align-middle">@appt.PatientName</td>
-                            <td class="align-middle">@appt.Reason</td>
-                            <td class="align-middle">
-                                @if (appt.Urgency == "Emergency")
-                                {
-                                    <span class="badge bg-danger">Emergency</span>
-                                }
-                                else if (appt.Urgency == "Urgent")
-                                {
-
-                                    <span class="badge bg-warning text-dark">Urgent</span>
-                                }
-                                else
-                                {
-
-                                    <span class="badge bg-secondary">Normal</span>
-                                }
-                            </td>
-                            <td class="align-middle text-center">
-                                <form method="post" class="d-inline">
-                                    <button type="submit" asp-page-handler="Acknowledge" asp-route-id="@appt.AppointmentRequestID" class="btn btn-sm btn-success fw-bold me-1 shadow-sm">
-                                        <i class="bi bi-check-lg"></i> Acknowledge
-                                    </button>
-                                </form>
-                                <form method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to reject this appointment?');">
-                                    <button type="submit" asp-page-handler="Reject" asp-route-id="@appt.AppointmentRequestID" class="btn btn-sm btn-outline-danger shadow-sm">
-                                        <i class="bi bi-x-lg"></i> Reject
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            @if (!Model.PendingAppointments.Any())
+            {
+                <div class="empty-panel">
+                    <p class="text-muted mb-0">You have no pending appointments to acknowledge.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table staff-table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date &amp; time</th>
+                                <th>Patient</th>
+                                <th>Reason</th>
+                                <th>Urgency</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var appt in Model.PendingAppointments)
+                            {
+                                <tr>
+                                    <td class="fw-medium">@appt.DateTime.ToString("MMM dd, yyyy - hh:mm tt")</td>
+                                    <td>@appt.PatientName</td>
+                                    <td class="text-muted">@appt.Reason</td>
+                                    <td>
+                                        @if (appt.Urgency == "Emergency")
+                                        {
+                                            <span class="badge bg-danger">Emergency</span>
+                                        }
+                                        else if (appt.Urgency == "Urgent")
+                                        {
+                                            <span class="badge bg-warning text-dark">Urgent</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Normal</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <form method="post" class="d-inline">
+                                            <button type="submit" asp-page-handler="Acknowledge" asp-route-id="@appt.AppointmentRequestID" class="btn btn-sm btn-success fw-bold me-1 shadow-sm">
+                                                <i class="bi bi-check-lg"></i> Acknowledge
+                                            </button>
+                                        </form>
+                                        <form method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to reject this appointment?');">
+                                            <button type="submit" asp-page-handler="Reject" asp-route-id="@appt.AppointmentRequestID" class="btn btn-sm btn-outline-danger shadow-sm">
+                                                <i class="bi bi-x-lg"></i> Reject
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 
     <!-- Upcoming Schedule -->
-    <div class="card shadow-sm border-top border-primary border-4">
-        <div class="card-header bg-white">
-            <h4 class="mb-0 text-primary"><i class="bi bi-calendar-check"></i> Upcoming Schedule</h4>
+    <div class="dashboard-card mb-4" style="border-top: 4px solid #0a9b8c;">
+        <div class="card-header" style="color:#006a72;">
+            <i class="bi bi-calendar-check"></i> Upcoming schedule
         </div>
         <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Patient</th>
-                        <th>Reason</th>
-                        <th>Urgency</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.UpcomingAppointments.Any())
-                    {
-                        <tr><td colspan="5" class="text-center text-muted py-4">No upcoming appointments scheduled.</td></tr>
-                    }
-                    @foreach (var appt in Model.UpcomingAppointments)
-                    {
-                        <tr>
-                            <td class="align-middle fw-bold">@appt.DateTime.ToString("MMM dd, yyyy - hh:mm tt")</td>
-                            <td class="align-middle">@appt.PatientName</td>
-                            <td class="align-middle">@appt.Reason</td>
-                            <td class="align-middle">
-                                @if (appt.Urgency == "Emergency")
-                                {
-                                    <span class="badge bg-danger">Emergency</span>
-                                }
-                                else if (appt.Urgency == "Urgent")
-                                {
-
-                                    <span class="badge bg-warning text-dark">Urgent</span>
-                                }
-                                else
-                                {
-
-                                    <span class="badge bg-secondary">Normal</span>
-                                }
-                            </td>
-                            <td class="align-middle">
-                                @if (appt.Status == "Scheduled")
-                                {
-                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Scheduled</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-info text-dark"><i class="bi bi-hourglass-split"></i> Awaiting Patient</span>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+            @if (!Model.UpcomingAppointments.Any())
+            {
+                <div class="empty-panel">
+                    <p class="text-muted mb-0">No upcoming appointments scheduled.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table staff-table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date &amp; time</th>
+                                <th>Patient</th>
+                                <th>Reason</th>
+                                <th>Urgency</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var appt in Model.UpcomingAppointments)
+                            {
+                                <tr>
+                                    <td class="fw-medium">@appt.DateTime.ToString("MMM dd, yyyy - hh:mm tt")</td>
+                                    <td>@appt.PatientName</td>
+                                    <td class="text-muted">@appt.Reason</td>
+                                    <td>
+                                        @if (appt.Urgency == "Emergency")
+                                        {
+                                            <span class="badge bg-danger">Emergency</span>
+                                        }
+                                        else if (appt.Urgency == "Urgent")
+                                        {
+                                            <span class="badge bg-warning text-dark">Urgent</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Normal</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (appt.Status == "Scheduled")
+                                        {
+                                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Scheduled</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-info text-dark"><i class="bi bi-hourglass-split"></i> Awaiting patient</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
+
 </div>

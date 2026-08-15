@@ -50,6 +50,16 @@
                                         }
                                     </ul>
                                 </li>
+                                @if (User.IsInRole("Doctor"))
+                                {
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="navDoctor" role="button" data-bs-toggle="dropdown" aria-expanded="false">Doctor</a>
+                                        <ul class="dropdown-menu" aria-labelledby="navDoctor">
+                                            <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Doctor/Appointments">My Appointments</a></li>
+                                            <li><a class="dropdown-item" asp-area="" asp-page="/Admin/Doctor/CreateMedication">Register Medication</a></li>
+                                        </ul>
+                                    </li>
+                                }
                                 @if (User.IsInRole("Reception"))
                                 {
                                     <li class="nav-item dropdown">
@@ -70,14 +80,6 @@
                                 <li class="nav-item">
                                     <a class="nav-link" asp-area="" asp-page="/Admin/Logs">Activity Log</a>
                                 </li>
-                                @if (User.IsInRole("Doctor"))
-                                {
-                                    <li class="nav-item">
-                                        <a class="nav-link" asp-area="" asp-page="/Admin/Doctor/Appointments">
-                                            <i class="bi bi-calendar-medical"></i> My Appointments
-                                        </a>
-                                    </li>
-                                }
                             }
                             else
                             {
