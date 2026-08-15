@@ -9,7 +9,6 @@ namespace INFP_Proj.Data
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MedicationID { get; set; }
         public required string MedicationName { get; set; }
-        public bool Approval { get; set; } = false;
         public required TimeOnly ConsumptionTime { get; set; }
     }
 }

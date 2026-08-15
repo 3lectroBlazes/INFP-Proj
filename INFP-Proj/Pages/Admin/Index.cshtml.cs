@@ -114,7 +114,8 @@ namespace INFP_Proj.Pages.Admin
                     Status = p.Status,
                     MedicationsSummary = medSummary,
                     AdmissionDateTime = latestRecord?.AdmissionDateTime,
-                    DischargeDateTime = latestRecord?.DischargeDateTime
+                    DischargeDateTime = latestRecord?.DischargeDateTime,
+                    RequestHelp = p.RequestHelp
                 };
             }).ToList();
         }

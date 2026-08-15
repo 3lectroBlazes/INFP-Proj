@@ -68,6 +68,45 @@
         text-align: center;
     }
 
+    .ward-group {
+        border: 1px solid #dfe9e7;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .ward-group-header {
+        background: #f1f8f7;
+        border: none;
+        width: 100%;
+        text-align: left;
+        padding: 0.9rem 1.2rem;
+        font-weight: 700;
+        color: #006a72;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .ward-group-header .chevron {
+            transition: transform 0.2s ease;
+        }
+
+        .ward-group-header[aria-expanded="true"] .chevron {
+            transform: rotate(90deg);
+        }
+
+    .ward-capacity {
+        font-weight: 400;
+        font-size: 0.82rem;
+        color: #6c757d;
+    }
+
+        .ward-capacity.ward-full {
+            color: #b91c1c;
+            font-weight: 600;
+        }
+
     @@media (max-width: 767.98px) {
         .log-table thead {
             display: none;
@@ -112,8 +151,8 @@
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">Patient list</h1>
-        <p class="page-subtitle text-muted">All registered patients and admission status.</p>
+        <h1 class="page-title">All Patients</h1>
+        <p class="page-subtitle text-muted">All registered patients and admission status, grouped by ward.</p>
     </div>
     <div class="page-actions">
         <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
@@ -130,64 +169,99 @@
     </div>
 }
 
+<form method="get" class="row g-2 align-items-center mb-3">
+    <div class="col-auto">
+        <label class="col-form-label fw-semibold">Patient status</label>
+    </div>
+    <div class="col-auto">
+        <select name="StatusFilter" class="form-select form-select-sm" onchange="this.form.submit()" asp-items="Model.StatusOptions" asp-for="StatusFilter">
+        </select>
+    </div>
+</form>
+
 @if (Model.Patients.Count == 0)
 {
     <div class="empty-panel">
-        <p class="text-muted mb-3">No patients registered yet.</p>
+        <p class="text-muted mb-3">No patients match this filter.</p>
         <a class="btn btn-primary" asp-page="Create">Add new patient</a>
     </div>
 }
 else
 {
-    <div class="log-card app-card card">
-        <div class="card-header d-flex justify-content-between align-items-center gap-2">
-            <span>All patients</span>
-            <span class="small text-muted fw-normal">@Model.Patients.Count total</span>
-        </div>
+    @foreach (var wardGroup in Model.PatientsByWard)
+    {
+        var isUnassigned = wardGroup.Key == -1;
+        var wardName = !isUnassigned && Model.WardsById.TryGetValue(wardGroup.Key, out var wardLookup)
+            ? wardLookup.WardName
+            : "Unassigned";
+        var collapseId = "ward-" + (isUnassigned ? "unassigned" : wardGroup.Key.ToString());
 
-        <div class="table-responsive">
-            <table class="table log-table align-middle">
-                <thead>
-                    <tr>
-                        <th>Patient</th>
-                        <th>Status</th>
-                        <th>Medications</th>
-                        <th>Admitted</th>
-                        <th>Discharged</th>
-                        <th>Nurse Call</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var patient in Model.Patients)
+        <div class="ward-group app-card">
+            <button class="ward-group-header" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#@collapseId" aria-expanded="true" aria-controls="@collapseId">
+                <span>
+                    @wardName
+                    @if (!isUnassigned && Model.WardsById.TryGetValue(wardGroup.Key, out var ward))
                     {
-                        <tr class="@(patient.IsDischarged ? "patient-discharged" : "patient-admitted")">
-                            <td data-label="Patient" class="fw-medium">@patient.PatientName</td>
-                            <td data-label="Status">
-                                <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
-                                    @patient.Status
-                                </span>
-                            </td>
-                            <td data-label="Medications" class="text-muted small">@patient.MedicationsSummary</td>
-                            <td data-label="Admitted">@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
-                            <td data-label="Discharged">@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
-                            <td data-label="Nurse Call">
-                                @if (patient.NurseCall)
-                                {
-                                    <span class="badge bg-success">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">Inactive</span>
-                                }
-                            </td>
-                            <td data-label="Actions" class="text-end">
-                                <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
-                            </td>
-                        </tr>
+                        var isFull = ward.CurrentOccupancy >= ward.MaxCapacity;
+                        <span class="ward-capacity @(isFull ? "ward-full" : "")">
+                            (@ward.CurrentOccupancy/@ward.MaxCapacity beds@(isFull ? " — full" : ""))
+                        </span>
                     }
-                </tbody>
-            </table>
+                    else
+                    {
+                        <span class="ward-capacity">(@wardGroup.Count() patients)</span>
+                    }
+                </span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </button>
+
+            <div class="collapse show" id="@collapseId">
+                <div class="table-responsive">
+                    <table class="table log-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Status</th>
+                                <th>Medications</th>
+                                <th>Admitted</th>
+                                <th>Discharged</th>
+                                <th>Nurse Call</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var patient in wardGroup)
+                            {
+                                <tr class="@(patient.IsDischarged ? "patient-discharged" : "patient-admitted")">
+                                    <td data-label="Patient" class="fw-medium">@patient.PatientName</td>
+                                    <td data-label="Status">
+                                        <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
+                                            @patient.Status
+                                        </span>
+                                    </td>
+                                    <td data-label="Medications" class="text-muted small">@patient.MedicationsSummary</td>
+                                    <td data-label="Admitted">@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                                    <td data-label="Discharged">@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                                    <td data-label="Nurse Call">
+                                        @if (patient.RequestHelp)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Inactive</span>
+                                        }
+                                    </td>
+                                    <td data-label="Actions" class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
+    }
 }

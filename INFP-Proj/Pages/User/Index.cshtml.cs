@@ -434,7 +434,7 @@ namespace INFP_Proj.Pages.User
                     DischargeDateTime = latestRecord?.DischargeDateTime,
 
                     // Nurse call status shown in patient list.
-                    NurseCall = p.RequestHelp
+                    RequestHelp = p.RequestHelp
                 };
             }).ToList();
         }

@@ -11,7 +11,8 @@ namespace INFP_Proj.ViewModel
         public DateTime? AdmissionDateTime { get; set; }
         public DateTime? DischargeDateTime { get; set; }
         public bool IsDischarged => DischargeDateTime.HasValue;
-        public bool NurseCall { get; set; } = false;
+        public bool RequestHelp { get; set; }
+        public int WardId { get; set; }
     }
 
     public class MedicationListEditItem
@@ -41,6 +42,7 @@ namespace INFP_Proj.ViewModel
         public int? NewMedicationID { get; set; }
         [Display(Name = "Dosage")]
         public string? NewDosage { get; set; }
+        public bool RequestHelp { get; set; }
     }
 
     public class PatientAdmissionInput

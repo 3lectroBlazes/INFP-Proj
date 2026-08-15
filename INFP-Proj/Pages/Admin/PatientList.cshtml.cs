@@ -1,5 +1,7 @@
 ﻿using INFP_Proj.Data;
 using INFP_Proj.ViewModel;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,14 +9,28 @@ namespace INFP_Proj.Pages.Admin
 {
     public class IndexModel : PageModel
     {
-        private readonly AppDbContext _context;
+        private const int UnassignedWardId = -1;
 
+        private readonly AppDbContext _context;
         public IndexModel(AppDbContext context)
         {
             _context = context;
         }
 
         public IList<PatientListItem> Patients { get; set; } = new List<PatientListItem>();
+        public List<IGrouping<int, PatientListItem>> PatientsByWard { get; set; } = new();
+        public Dictionary<int, Wards> WardsById { get; set; } = new();
+
+        [BindProperty(SupportsGet = true)]
+        public string? StatusFilter { get; set; }
+
+        public List<SelectListItem> StatusOptions { get; set; } = new()
+        {
+            new SelectListItem("All statuses", ""),
+            new SelectListItem("Admitted", "Admitted"),
+            new SelectListItem("Observed", "Observed"),
+            new SelectListItem("Discharged", "Discharged")
+        };
 
         public async Task OnGetAsync()
         {
@@ -31,8 +47,12 @@ namespace INFP_Proj.Pages.Admin
                 .ToListAsync();
 
             var records = await _context.Records
+                .Include(r => r.Wards)
                 .Where(r => patientIds.Contains(r.PatientID))
                 .ToListAsync();
+
+            var wards = await _context.Wards.ToListAsync();
+            WardsById = wards.ToDictionary(w => w.WardID, w => w);
 
             Patients = patients.Select(p =>
             {
@@ -41,8 +61,6 @@ namespace INFP_Proj.Pages.Admin
                     .OrderByDescending(r => r.AdmissionDateTime)
                     .FirstOrDefault();
 
-                // Only show medications for the current admission (medications attached to,
-                // or added after, the latest record's medication list).
                 var patientMeds = medicationLists
                     .Where(m => m.PatientID == p.PatientID
                         && (latestRecord == null || m.MedicationListID >= latestRecord.MedicationListID))
@@ -62,9 +80,21 @@ namespace INFP_Proj.Pages.Admin
                     Status = p.Status,
                     MedicationsSummary = medSummary,
                     AdmissionDateTime = latestRecord?.AdmissionDateTime,
-                    DischargeDateTime = latestRecord?.DischargeDateTime
+                    DischargeDateTime = latestRecord?.DischargeDateTime,
+                    RequestHelp = p.RequestHelp,
+                    WardId = latestRecord?.WardID ?? UnassignedWardId
                 };
-            }).ToList();
+            })
+            .Where(p => string.IsNullOrEmpty(StatusFilter)
+                || string.Equals(p.Status, StatusFilter, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => WardsById.TryGetValue(p.WardId, out var w) ? w.WardName : "Unassigned")
+            .ThenBy(p => p.PatientName)
+            .ToList();
+
+            PatientsByWard = Patients
+                .GroupBy(p => p.WardId)
+                .OrderBy(g => g.Key == UnassignedWardId ? int.MaxValue : g.Key)
+                .ToList();
         }
     }
 }

@@ -112,28 +112,10 @@ namespace INFP_Proj.Pages.Admin
             {
                 PatientID = id,
                 MedicationID = Patient.NewMedicationID.Value,
-                Dosage = Patient.NewDosage.Trim(),
-                Approved = !medication.Approval
+                Dosage = Patient.NewDosage.Trim()
             };
             _context.MedicationLists.Add(newMedicationList);
             await _context.SaveChangesAsync();
-
-            if (!medication.Approval)
-            {
-                await _adminLogService.AddLogAsync(
-                    $"Medication requested for patient #{id}",
-                    true,
-                    null,
-                    id,
-                    newMedicationList.MedicationListID);
-                TempData["Message"] = "Medication Requested.";
-            }
-            else
-            {
-                await _adminLogService.AddLogAsync($"Medication added for patient #{id}");
-                await AddPatientLogIfLinkedAsync(id, "A new medication was added to your schedule");
-                TempData["Message"] = "Medication added.";
-            }
 
             return RedirectToPage(new { id });
         }
@@ -255,6 +237,7 @@ namespace INFP_Proj.Pages.Admin
                 AdmissionDateTime = record?.AdmissionDateTime,
                 DischargeDateTime = record?.DischargeDateTime,
                 DischargeReason = record?.DischargeReason,
+                RequestHelp = patient.RequestHelp,   // <-- add this
                 MedicationLists = medications.Select(m => new MedicationListEditItem
                 {
                     MedicationListID = m.MedicationListID,
@@ -306,6 +289,24 @@ namespace INFP_Proj.Pages.Admin
 
             await _context.SaveChangesAsync();
             TempData["Message"] = "Reply sent!";
+            return RedirectToPage(new { id });
+        }
+        public async Task<IActionResult> OnPostAnswerNurseCallAsync(int id)
+        {
+            var patient = await _context.Patients.FirstOrDefaultAsync(p => p.PatientID == id);
+            if (patient == null) return NotFound();
+
+            if (!patient.RequestHelp)
+            {
+                TempData["Message"] = "There is no active nurse call.";
+                return RedirectToPage(new { id });
+            }
+
+            patient.RequestHelp = false;
+            await _context.SaveChangesAsync();
+            await _adminLogService.AddLogAsync($"Nurse call answered for patient #{id}");
+
+            TempData["Message"] = "Nurse call answered.";
             return RedirectToPage(new { id });
         }
     }

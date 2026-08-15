@@ -119,6 +119,29 @@
             <span class="detail-label">Discharged</span>
             <span class="detail-value">@(Model.Patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</span>
         </div>
+        <div class="detail-row">
+            <span class="detail-label">Nurse Call</span>
+            <span class="detail-value">
+                @if (Model.Patient.RequestHelp)
+                {
+                    <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                        <span class="badge bg-danger">Active</span>
+                        @if (!User.IsInRole("Reception"))
+                        {
+                        <form method="post" asp-page-handler="AnswerNurseCall" asp-route-id="@Model.Patient.PatientId" class="m-0">
+                            <button type="submit" class="btn btn-danger btn-sm fw-bold">
+                                <i class="bi bi-check-circle me-1"></i> Answer Nurse Call
+                            </button>
+                        </form>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Inactive</span>
+                }
+            </span>
+        </div>
     </div>
 </div>
 
