@@ -87,7 +87,6 @@ namespace INFP_Proj.Pages.Admin
                     Emergency = l.Emergency,
                     Resolved = l.Resolved,
                     Timestamp = l.Timestamp,
-                    IsMedicationRequest = l.MedicationListID.HasValue,
                     SelfAcknowledged = l.selfAcknowledged,
                     RelativeAcknowledged = l.relativeAcknowledged,
                     PatientName = l.Patient != null && l.Patient.User != null
@@ -102,25 +101,7 @@ namespace INFP_Proj.Pages.Admin
             var log = await _context.Logs.FirstOrDefaultAsync(l => l.LogID == id);
             if (log != null && log.Emergency && !log.Resolved)
             {
-                if (log.MedicationListID.HasValue)
-                {
-                    log.Resolved = true;
-
-                    var medicationList = await _context.MedicationLists
-                        .FirstOrDefaultAsync(m => m.MedicationListID == log.MedicationListID.Value);
-
-                    if (medicationList != null)
-                    {
-                        medicationList.Approved = true;
-                    }
-
-                    log.Event = $"Medication added for patient #{log.PatientID.Value}";
-                    await _context.SaveChangesAsync();
-
-                    await AddPatientLogIfLinkedAsync(log.PatientID.Value, "A new medication was added to your schedule");
-                    TempData["Message"] = "Medication added.";
-                }
-                else if (log.selfAcknowledged || log.relativeAcknowledged)
+                if (log.selfAcknowledged || log.relativeAcknowledged)
                 {
                     log.Resolved = true;
                     await _context.SaveChangesAsync();
@@ -142,7 +123,7 @@ namespace INFP_Proj.Pages.Admin
             }
 
             var log = await _context.Logs.FirstOrDefaultAsync(l => l.LogID == id);
-            if (log != null && log.Emergency && !log.MedicationListID.HasValue && !log.Resolved && !log.selfAcknowledged)
+            if (log != null && log.Emergency && !log.Resolved && !log.selfAcknowledged)
             {
                 log.selfAcknowledged = true;
                 await _context.SaveChangesAsync();

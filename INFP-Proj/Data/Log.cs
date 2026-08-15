@@ -23,7 +23,5 @@ namespace INFP_Proj.Data
         public AppUser? User { get; set; }
         [ForeignKey("PatientID")]
         public Patients? Patient { get; set; }
-        [ForeignKey("MedicationListID")]
-        public MedicationList? MedicationList { get; set; }
     }
 }

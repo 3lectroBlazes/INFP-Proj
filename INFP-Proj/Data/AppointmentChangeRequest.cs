@@ -1,6 +1,4 @@
-﻿using INFP_Proj.Data;
-
-namespace INFP_Proj.Models
+﻿namespace INFP_Proj.Data
 {
     public class AppointmentChangeRequest
     {
