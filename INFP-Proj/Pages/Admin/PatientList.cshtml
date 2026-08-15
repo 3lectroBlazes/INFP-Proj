@@ -225,9 +225,10 @@ else
                                     @wardName
                                     @if (!isUnassigned && Model.WardsById.TryGetValue(wardGroup.Key, out var ward))
                                     {
-                                        var isFull = ward.CurrentOccupancy >= ward.MaxCapacity;
+                                        var occupied = Model.OccupancyByWard.TryGetValue(wardGroup.Key, out var count) ? count : 0;
+                                        var isFull = occupied >= ward.MaxCapacity;
                                         <span class="ward-capacity @(isFull ? "ward-full" : "")">
-                                            (@ward.CurrentOccupancy/@ward.MaxCapacity beds@(isFull ? " — full" : ""))
+                                            (@occupied/@ward.MaxCapacity beds@(isFull ? " — full" : ""))
                                         </span>
                                     }
                                     else

@@ -20,6 +20,7 @@ namespace INFP_Proj.Pages.Admin
         public IList<PatientListItem> Patients { get; set; } = new List<PatientListItem>();
         public List<IGrouping<int, PatientListItem>> PatientsByWard { get; set; } = new();
         public Dictionary<int, Wards> WardsById { get; set; } = new();
+        public Dictionary<int, int> OccupancyByWard { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
         public string? StatusFilter { get; set; }
@@ -28,6 +29,7 @@ namespace INFP_Proj.Pages.Admin
         {
             new SelectListItem("All statuses", ""),
             new SelectListItem("Admitted", "Admitted"),
+            new SelectListItem("Observed", "Observed"),
             new SelectListItem("Discharged", "Discharged")
         };
 
@@ -52,6 +54,13 @@ namespace INFP_Proj.Pages.Admin
 
             var wards = await _context.Wards.ToListAsync();
             WardsById = wards.ToDictionary(w => w.WardID, w => w);
+
+            // Occupancy comes from actual bed assignments, same logic as the Reception ward/bed dashboard.
+            var allBeds = await _context.Beds.ToListAsync();
+            OccupancyByWard = allBeds
+                .Where(b => b.PatientID != null)
+                .GroupBy(b => b.WardID)
+                .ToDictionary(g => g.Key, g => g.Count());
 
             Patients = patients.Select(p =>
             {

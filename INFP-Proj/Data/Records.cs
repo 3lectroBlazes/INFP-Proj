@@ -13,7 +13,7 @@ namespace INFP_Proj.Data
         public int HospitalID { get; set; }
         public int DiagnosisID { get; set; }
         public int? MedicationListID { get; set; } = null;
-        public required string Description { get; set; }
+        public string? Description { get; set; }
         public required DateTime AdmissionDateTime { get; set; } = DateTime.UtcNow;
         public DateTime? DischargeDateTime { get; set; }
         public string? DischargeReason { get; set; }
