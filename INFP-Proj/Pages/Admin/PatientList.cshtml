@@ -68,15 +68,14 @@
         text-align: center;
     }
 
-    .ward-group {
-        border: 1px solid #dfe9e7;
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 1rem;
+    .ward-header-row td {
+        background: #f1f8f7 !important;
+        border-bottom: 1px solid #d8e7e4 !important;
+        padding: 0 !important;
     }
 
     .ward-group-header {
-        background: #f1f8f7;
+        background: transparent;
         border: none;
         width: 100%;
         text-align: left;
@@ -86,6 +85,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        cursor: pointer;
     }
 
         .ward-group-header .chevron {
@@ -106,6 +106,10 @@
             color: #b91c1c;
             font-weight: 600;
         }
+
+    .ward-collapsed {
+        display: none;
+    }
 
     @@media (max-width: 767.98px) {
         .log-table thead {
@@ -145,6 +149,10 @@
             .log-table tbody tr.patient-admitted td:first-child,
             .log-table tbody tr.patient-discharged td:first-child {
                 border-left-width: 4px;
+            }
+
+            .ward-group-header {
+                padding: 0.9rem 1rem;
             }
     }
 </style>
@@ -188,80 +196,92 @@
 }
 else
 {
-    @foreach (var wardGroup in Model.PatientsByWard)
-    {
-        var isUnassigned = wardGroup.Key == -1;
-        var wardName = !isUnassigned && Model.WardsById.TryGetValue(wardGroup.Key, out var wardLookup)
-            ? wardLookup.WardName
-            : "Unassigned";
-        var collapseId = "ward-" + (isUnassigned ? "unassigned" : wardGroup.Key.ToString());
+    <div class="table-responsive">
+        <table class="table log-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Status</th>
+                    <th>Medications</th>
+                    <th>Admitted</th>
+                    <th>Discharged</th>
+                    <th>Nurse Call</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            @foreach (var wardGroup in Model.PatientsByWard)
+            {
+                var isUnassigned = wardGroup.Key == -1;
+                var wardName = !isUnassigned && Model.WardsById.TryGetValue(wardGroup.Key, out var wardLookup)
+                    ? wardLookup.WardName
+                    : "Unassigned";
+                var bodyId = "ward-body-" + (isUnassigned ? "unassigned" : wardGroup.Key.ToString());
 
-        <div class="ward-group app-card">
-            <button class="ward-group-header" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#@collapseId" aria-expanded="true" aria-controls="@collapseId">
-                <span>
-                    @wardName
-                    @if (!isUnassigned && Model.WardsById.TryGetValue(wardGroup.Key, out var ward))
-                    {
-                        var isFull = ward.CurrentOccupancy >= ward.MaxCapacity;
-                        <span class="ward-capacity @(isFull ? "ward-full" : "")">
-                            (@ward.CurrentOccupancy/@ward.MaxCapacity beds@(isFull ? " — full" : ""))
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="ward-capacity">(@wardGroup.Count() patients)</span>
-                    }
-                </span>
-                <i class="bi bi-chevron-right chevron"></i>
-            </button>
-
-            <div class="collapse show" id="@collapseId">
-                <div class="table-responsive">
-                    <table class="table log-table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Patient</th>
-                                <th>Status</th>
-                                <th>Medications</th>
-                                <th>Admitted</th>
-                                <th>Discharged</th>
-                                <th>Nurse Call</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var patient in wardGroup)
-                            {
-                                <tr class="@(patient.IsDischarged ? "patient-discharged" : "patient-admitted")">
-                                    <td data-label="Patient" class="fw-medium">@patient.PatientName</td>
-                                    <td data-label="Status">
-                                        <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
-                                            @patient.Status
+                <tbody>
+                    <tr class="ward-header-row">
+                        <td colspan="7">
+                            <button class="ward-group-header" type="button"
+                                    aria-expanded="true" aria-controls="@bodyId"
+                                    onclick="INFP.toggleWard(this, '@bodyId')">
+                                <span>
+                                    @wardName
+                                    @if (!isUnassigned && Model.WardsById.TryGetValue(wardGroup.Key, out var ward))
+                                    {
+                                        var isFull = ward.CurrentOccupancy >= ward.MaxCapacity;
+                                        <span class="ward-capacity @(isFull ? "ward-full" : "")">
+                                            (@ward.CurrentOccupancy/@ward.MaxCapacity beds@(isFull ? " — full" : ""))
                                         </span>
-                                    </td>
-                                    <td data-label="Medications" class="text-muted small">@patient.MedicationsSummary</td>
-                                    <td data-label="Admitted">@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
-                                    <td data-label="Discharged">@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
-                                    <td data-label="Nurse Call">
-                                        @if (patient.RequestHelp)
-                                        {
-                                            <span class="badge bg-success">Active</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">Inactive</span>
-                                        }
-                                    </td>
-                                    <td data-label="Actions" class="text-end">
-                                        <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    }
+                                    }
+                                    else
+                                    {
+                                        <span class="ward-capacity">(@wardGroup.Count() patients)</span>
+                                    }
+                                </span>
+                                <i class="bi bi-chevron-right chevron"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    @foreach (var patient in wardGroup)
+                    {
+                        <tr id="@bodyId" class="@(patient.IsDischarged ? "patient-discharged" : "patient-admitted")">
+                            <td data-label="Patient" class="fw-medium">@patient.PatientName</td>
+                            <td data-label="Status">
+                                <span class="badge @(patient.IsDischarged ? "bg-secondary" : "bg-success")">
+                                    @patient.Status
+                                </span>
+                            </td>
+                            <td data-label="Medications" class="text-muted small">@patient.MedicationsSummary</td>
+                            <td data-label="Admitted">@(patient.AdmissionDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                            <td data-label="Discharged">@(patient.DischargeDateTime?.ToLocalTime().ToString("g") ?? "—")</td>
+                            <td data-label="Nurse Call">
+                                @if (patient.RequestHelp)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Inactive</span>
+                                }
+                            </td>
+                            <td data-label="Actions" class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-page="Edit" asp-route-id="@patient.PatientId">Edit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            }
+        </table>
+    </div>
 }
+
+<script>
+    window.INFP = window.INFP || {};
+    INFP.toggleWard = function (headerBtn, bodyId) {
+        var expanded = headerBtn.getAttribute('aria-expanded') === 'true';
+        var rows = document.querySelectorAll('tr#' + CSS.escape(bodyId));
+        rows.forEach(function (row) {
+            row.classList.toggle('ward-collapsed', expanded);
+        });
+        headerBtn.setAttribute('aria-expanded', String(!expanded));
+    };
+</script>

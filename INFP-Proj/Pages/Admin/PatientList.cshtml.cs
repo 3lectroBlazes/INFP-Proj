@@ -28,7 +28,6 @@ namespace INFP_Proj.Pages.Admin
         {
             new SelectListItem("All statuses", ""),
             new SelectListItem("Admitted", "Admitted"),
-            new SelectListItem("Observed", "Observed"),
             new SelectListItem("Discharged", "Discharged")
         };
 
