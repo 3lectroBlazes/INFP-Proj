@@ -165,13 +165,20 @@
     }
 </style>
 
+
 <div class="tracker-shell">
 
+    <!-- ===================================================== -->
+    <!-- HEADER                                                -->
+    <!-- ===================================================== -->
+
     <section class="tracker-header">
+
         <div class="d-flex flex-column flex-lg-row
                     justify-content-between align-items-lg-center gap-3">
 
             <div>
+
                 <div class="eyebrow mb-2">
                     Patient monitoring
                 </div>
@@ -183,7 +190,9 @@
                 <p class="text-muted mb-0">
                     View the latest readings and safe range for each vital.
                 </p>
+
             </div>
+
 
             <a asp-page="/User/Dashboard"
                class="btn btn-outline-secondary btn-sm">
@@ -191,11 +200,18 @@
             </a>
 
         </div>
+
     </section>
 
+
+    <!-- ===================================================== -->
+    <!-- SUCCESS MESSAGE                                       -->
+    <!-- ===================================================== -->
     @if (TempData["Message"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show">
+        <div class="alert alert-success alert-dismissible fade show"
+             role="alert">
+
             @TempData["Message"]
 
             <button type="button"
@@ -203,12 +219,19 @@
                     data-bs-dismiss="alert"
                     aria-label="Close">
             </button>
+
         </div>
     }
 
+
+    <!-- ===================================================== -->
+    <!-- ERROR MESSAGE                                         -->
+    <!-- ===================================================== -->
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show">
+        <div class="alert alert-danger alert-dismissible fade show"
+             role="alert">
+
             @TempData["ErrorMessage"]
 
             <button type="button"
@@ -216,13 +239,32 @@
                     data-bs-dismiss="alert"
                     aria-label="Close">
             </button>
+
         </div>
     }
 
+
+    <!-- ===================================================== -->
+    <!-- NO PATIENT SELECTED                                   -->
+    <!-- ===================================================== -->
     @if (!Model.HasPatientRecord)
     {
         <div class="alert alert-info">
-            No patient record is linked to this account.
+
+            <strong>No patient selected.</strong>
+
+            Select a patient from the dashboard first before
+            viewing the vitals tracker.
+
+            <div class="mt-3">
+
+                <a asp-page="/User/Dashboard"
+                   class="btn btn-primary btn-sm">
+                    Go to dashboard
+                </a>
+
+            </div>
+
         </div>
     }
     else
@@ -232,18 +274,31 @@
         new
         {
         Title = "Heart rate",
-        ValueId = "heartRateValue",
-        StatusId = "heartRateStatus",
-        DescriptionId = "heartRateDescription",
-        RangeId = "heartRateRangeValue",
-        Vital = "HeartRate",
+
+        ValueId =
+        "heartRateValue",
+
+        StatusId =
+        "heartRateStatus",
+
+        DescriptionId =
+        "heartRateDescription",
+
+        RangeId =
+        "heartRateRangeValue",
+
+        Vital =
+        "HeartRate",
 
         Value =
         Model.LatestHeartRate?.ToString("0")
         ?? "N/A",
 
-        Unit = "bpm",
-        Status = Model.HeartRateStatus,
+        Unit =
+        "bpm",
+
+        Status =
+        Model.HeartRateStatus,
 
         Range =
         $"{Model.HeartRateLowerThreshold:0.#}" +
@@ -253,18 +308,31 @@
         new
         {
         Title = "Breathing rate",
-        ValueId = "respirationValue",
-        StatusId = "respirationStatus",
-        DescriptionId = "respirationDescription",
-        RangeId = "respiratoryRangeValue",
-        Vital = "RespiratoryRate",
+
+        ValueId =
+        "respirationValue",
+
+        StatusId =
+        "respirationStatus",
+
+        DescriptionId =
+        "respirationDescription",
+
+        RangeId =
+        "respiratoryRangeValue",
+
+        Vital =
+        "RespiratoryRate",
 
         Value =
         Model.LatestRespiration?.ToString("0")
         ?? "N/A",
 
-        Unit = "breaths/min",
-        Status = Model.RespirationStatus,
+        Unit =
+        "breaths/min",
+
+        Status =
+        Model.RespirationStatus,
 
         Range =
         $"{Model.RespiratoryRateLowerThreshold:0.#}" +
@@ -274,18 +342,31 @@
         new
         {
         Title = "Systolic pressure",
-        ValueId = "SystolicbloodPressureValue",
-        StatusId = "SystolicbloodPressureStatus",
-        DescriptionId = "systolicDescription",
-        RangeId = "systolicRangeValue",
-        Vital = "SystolicBloodPressure",
+
+        ValueId =
+        "SystolicbloodPressureValue",
+
+        StatusId =
+        "SystolicbloodPressureStatus",
+
+        DescriptionId =
+        "systolicDescription",
+
+        RangeId =
+        "systolicRangeValue",
+
+        Vital =
+        "SystolicBloodPressure",
 
         Value =
         Model.LatestSystolicBloodPressure?.ToString("0")
         ?? "N/A",
 
-        Unit = "mmHg",
-        Status = Model.SystolicStatus,
+        Unit =
+        "mmHg",
+
+        Status =
+        Model.SystolicStatus,
 
         Range =
         $"{Model.SystolicLowerThreshold:0.#}" +
@@ -295,18 +376,31 @@
         new
         {
         Title = "Diastolic pressure",
-        ValueId = "DiastolicbloodPressureValue",
-        StatusId = "DiastolicbloodPressureStatus",
-        DescriptionId = "diastolicDescription",
-        RangeId = "diastolicRangeValue",
-        Vital = "DiastolicBloodPressure",
+
+        ValueId =
+        "DiastolicbloodPressureValue",
+
+        StatusId =
+        "DiastolicbloodPressureStatus",
+
+        DescriptionId =
+        "diastolicDescription",
+
+        RangeId =
+        "diastolicRangeValue",
+
+        Vital =
+        "DiastolicBloodPressure",
 
         Value =
         Model.LatestDiastolicBloodPressure?.ToString("0")
         ?? "N/A",
 
-        Unit = "mmHg",
-        Status = Model.DiastolicStatus,
+        Unit =
+        "mmHg",
+
+        Status =
+        Model.DiastolicStatus,
 
         Range =
         $"{Model.DiastolicLowerThreshold:0.#}" +
@@ -314,11 +408,18 @@
         }
         };
 
+
+        <!-- ================================================= -->
+        <!-- PATIENT SUMMARY                                   -->
+        <!-- ================================================= -->
+
         <section class="patient-summary">
+
             <div class="d-flex flex-column flex-lg-row
                             justify-content-between align-items-lg-center gap-3">
 
                 <div>
+
                     <div class="eyebrow mb-1">
                         Patient being monitored
                     </div>
@@ -327,19 +428,26 @@
                         @Model.ChartData.PatientName
                     </h2>
 
+
                     <div class="text-muted">
+
                         Latest reading:
 
                         <strong id="latestUpdatedValue"
                                 class="text-dark">
 
                             @(Model.LatestUpdatedAt.HasValue
-                                                    ? Model.LatestUpdatedAt.Value.ToString(
+                                                    ? Model.LatestUpdatedAt.Value
+                                                    .ToString(
                                                     "dd MMM yyyy, hh:mm:ss tt")
                                                     : "No reading recorded")
-                                                                        </strong>
-                                                                    </div>
-                                                                </div>
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
 
                 <span id="overallStatusBadge"
                       class="badge rounded-pill px-3 py-2
@@ -350,10 +458,17 @@
                     @(Model.HasAttention
                                     ? "Attention required"
                                     : "Patient stable")
-                                                   </span>
+
+                </span>
 
             </div>
+
         </section>
+
+
+        <!-- ================================================= -->
+        <!-- OVERALL STATUS                                    -->
+        <!-- ================================================= -->
 
         <div id="patientStatusAlert"
              class="status-banner alert
@@ -364,7 +479,9 @@
 
         @if (Model.HasAttention)
             {
-                <strong>Attention required.</strong>
+                <strong>
+                    Attention required.
+                </strong>
 
                 <span>
                     One or more readings are outside their safe ranges.
@@ -372,25 +489,46 @@
             }
             else
             {
-                <strong>Latest readings are stable.</strong>
+                <strong>
+                    Latest readings are stable.
+                </strong>
 
                 <span>
                     All readings are within their safe ranges.
                 </span>
             }
+
         </div>
+
+
+        <!-- ================================================= -->
+        <!-- TEST CONTROL EXPLANATION                          -->
+        <!-- ================================================= -->
 
         <div class="simulation-note mb-4">
-            <strong>Test controls</strong>
+
+            <strong>
+                Test controls
+            </strong>
 
             <div class="small text-muted mt-1">
-                Spike creates a reading above the safe range.
-                Dip creates a reading below the safe range.
-                Stable creates a reading within the safe range.
-                Spike and Dip also create an emergency log and attempt
-                to notify linked caretakers.
+
+                Spike creates a simulated reading above the safe range.
+
+                Dip creates a simulated reading below the safe range.
+
+                Stable creates a simulated reading within the safe range.
+
+                These controls are for testing vital readings only.
+
             </div>
+
         </div>
+
+
+        <!-- ================================================= -->
+        <!-- VITAL CARDS                                       -->
+        <!-- ================================================= -->
 
         <div class="row g-4 mb-5">
 
@@ -399,13 +537,25 @@
                 <div class="col-md-6 col-xl-3">
 
                     <article class="vital-card card">
+
                         <div class="card-body">
 
+                            <!-- ================================= -->
+                            <!-- TITLE                             -->
+                            <!-- ================================= -->
+
                             <header class="vital-header">
+
                                 <h2 class="vital-title">
                                     @card.Title
                                 </h2>
+
                             </header>
+
+
+                            <!-- ================================= -->
+                            <!-- CURRENT READING                   -->
+                            <!-- ================================= -->
 
                             <div class="reading-block">
 
@@ -413,7 +563,9 @@
                                     Current reading
                                 </div>
 
+
                                 <div class="mt-1">
+
                                     <span id="@card.ValueId"
                                           class="vital-reading">
                                         @card.Value
@@ -422,28 +574,42 @@
                                     <span class="vital-unit">
                                         @card.Unit
                                     </span>
+
                                 </div>
+
 
                                 <div class="mt-3">
 
                                     <span id="@card.StatusId"
                                           class="badge @BadgeClass(card.Status)">
+
                                         @card.Status
+
                                     </span>
+
 
                                     <span id="@card.DescriptionId"
                                           class="status-description">
+
                                         @StatusText(card.Status)
+
                                     </span>
 
                                 </div>
+
                             </div>
+
+
+                            <!-- ================================= -->
+                            <!-- SAFE RANGE                        -->
+                            <!-- ================================= -->
 
                             <div class="safe-range">
 
                                 <div class="section-label">
                                     Safe range
                                 </div>
+
 
                                 <div class="safe-range-value">
 
@@ -452,14 +618,22 @@
                                     </span>
 
                                     @card.Unit
+
                                 </div>
+
                             </div>
+
+
+                            <!-- ================================= -->
+                            <!-- SIMULATION BUTTONS                -->
+                            <!-- ================================= -->
 
                             <div class="simulation-panel">
 
                                 <div class="small fw-semibold mb-2">
                                     Create test reading
                                 </div>
+
 
                                 <form method="post"
                                       asp-page-handler="SimulateVital">
@@ -468,34 +642,46 @@
                                            name="vital"
                                            value="@card.Vital" />
 
+
                                     <div class="simulation-buttons">
 
                                         <button type="submit"
                                                 name="direction"
                                                 value="Spike"
                                                 class="btn btn-outline-danger">
+
                                             Spike
+
                                         </button>
+
 
                                         <button type="submit"
                                                 name="direction"
                                                 value="Dip"
                                                 class="btn btn-outline-warning">
+
                                             Dip
+
                                         </button>
+
 
                                         <button type="submit"
                                                 name="direction"
                                                 value="Stable"
                                                 class="btn btn-outline-success">
+
                                             Stable
+
                                         </button>
 
                                     </div>
+
                                 </form>
+
                             </div>
 
                         </div>
+
                     </article>
 
                 </div>
@@ -503,22 +689,34 @@
 
         </div>
 
+
+        <!-- ================================================= -->
+        <!-- HOURLY CHARTS                                     -->
+        <!-- ================================================= -->
+
         <section>
+
             <h2 class="h4">
                 Hourly trends
             </h2>
 
+
             <p class="text-muted">
-                Each chart point shows the average readings recorded
-                during that hour.
+
+                Each chart point shows the average readings
+                recorded during that hour.
+
             </p>
+
 
             <partial name="_VitalsTracker"
                      model="Model.ChartData" />
+
         </section>
     }
 
 </div>
+
 
 @section Scripts {
 
@@ -529,223 +727,323 @@
             asp-append-version="true">
     </script>
 
-    <script>
-        function setText(elementId, value) {
-            const element =
-                document.getElementById(elementId);
 
-            if (
-                element &&
-                value !== undefined &&
-                value !== null
-            ) {
-                element.textContent = value;
-            }
-        }
+    @if (Model.HasPatientRecord)
+    {
+        <script>
 
-        function getStatusText(status) {
-            if (status === 'Stable') {
-                return 'Within the safe range';
-            }
+            function setText(elementId, value) {
 
-            if (status === 'Dip') {
-                return 'Below the safe range';
+                const element =
+                    document.getElementById(elementId);
+
+                if (
+                    element &&
+                    value !== undefined &&
+                    value !== null
+                ) {
+                    element.textContent = value;
+                }
             }
 
-            if (status === 'Spike') {
-                return 'Above the safe range';
-            }
 
-            return 'No reading available';
-        }
-
-        function updateStatus(
-            badgeId,
-            descriptionId,
-            status
-        ) {
-            const badge =
-                document.getElementById(badgeId);
-
-            if (badge) {
-                badge.textContent = status;
-                badge.className = 'badge';
+            function getStatusText(status) {
 
                 if (status === 'Stable') {
-                    badge.classList.add('bg-success');
+                    return 'Within the safe range';
                 }
-                else if (status === 'Dip') {
-                    badge.classList.add(
-                        'bg-warning',
-                        'text-dark'
-                    );
+
+                if (status === 'Dip') {
+                    return 'Below the safe range';
                 }
-                else if (status === 'Spike') {
-                    badge.classList.add('bg-danger');
+
+                if (status === 'Spike') {
+                    return 'Above the safe range';
                 }
-                else {
-                    badge.classList.add('bg-secondary');
-                }
+
+                return 'No reading available';
             }
 
-            setText(
+
+            function updateStatus(
+                badgeId,
                 descriptionId,
-                getStatusText(status)
-            );
-        }
+                status
+            ) {
 
-        function updatePatientStatus(hasAttention) {
-            const alertBox =
-                document.getElementById(
-                    'patientStatusAlert'
-                );
+                const badge =
+                    document.getElementById(badgeId);
 
-            const statusBadge =
-                document.getElementById(
-                    'overallStatusBadge'
-                );
+                if (badge) {
 
-            if (alertBox) {
-                alertBox.className =
-                    'status-banner alert mb-4 ' +
-                    (
-                        hasAttention
-                            ? 'alert-danger'
-                            : 'alert-success'
-                    );
+                    badge.textContent =
+                        status;
 
-                alertBox.innerHTML =
-                    hasAttention
-                        ? '<strong>Attention required.</strong> ' +
-                          'One or more readings are outside ' +
-                          'their safe ranges.'
-                        : '<strong>Latest readings are stable.</strong> ' +
-                          'All readings are within their safe ranges.';
-            }
+                    badge.className =
+                        'badge';
 
-            if (statusBadge) {
-                statusBadge.className =
-                    'badge rounded-pill px-3 py-2 ' +
-                    (
-                        hasAttention
-                            ? 'bg-danger'
-                            : 'bg-success'
-                    );
 
-                statusBadge.textContent =
-                    hasAttention
-                        ? 'Attention required'
-                        : 'Patient stable';
-            }
-        }
+                    if (status === 'Stable') {
 
-        async function refreshLatestVitals() {
-            try {
-                const response = await fetch(
-                    '/User/Tracker?handler=LatestVitals'
-                );
+                        badge.classList.add(
+                            'bg-success'
+                        );
 
-                const data = await response.json();
+                    }
+                    else if (status === 'Dip') {
 
-                if (!data.success) {
-                    console.log(data.message);
-                    return;
+                        badge.classList.add(
+                            'bg-warning',
+                            'text-dark'
+                        );
+
+                    }
+                    else if (status === 'Spike') {
+
+                        badge.classList.add(
+                            'bg-danger'
+                        );
+
+                    }
+                    else {
+
+                        badge.classList.add(
+                            'bg-secondary'
+                        );
+
+                    }
                 }
 
-                setText(
-                    'heartRateValue',
-                    data.heartRate
-                );
 
                 setText(
-                    'respirationValue',
-                    data.respiration
-                );
-
-                setText(
-                    'SystolicbloodPressureValue',
-                    data.systolicBloodPressure
-                );
-
-                setText(
-                    'DiastolicbloodPressureValue',
-                    data.diastolicBloodPressure
-                );
-
-                setText(
-                    'latestUpdatedValue',
-                    data.updatedAt
-                );
-
-                setText(
-                    'heartRateRangeValue',
-                    data.heartRateLower +
-                    '–' +
-                    data.heartRateUpper
-                );
-
-                setText(
-                    'respiratoryRangeValue',
-                    data.respiratoryLower +
-                    '–' +
-                    data.respiratoryUpper
-                );
-
-                setText(
-                    'systolicRangeValue',
-                    data.systolicLower +
-                    '–' +
-                    data.systolicUpper
-                );
-
-                setText(
-                    'diastolicRangeValue',
-                    data.diastolicLower +
-                    '–' +
-                    data.diastolicUpper
-                );
-
-                updateStatus(
-                    'heartRateStatus',
-                    'heartRateDescription',
-                    data.heartRateStatus
-                );
-
-                updateStatus(
-                    'respirationStatus',
-                    'respirationDescription',
-                    data.respirationStatus
-                );
-
-                updateStatus(
-                    'SystolicbloodPressureStatus',
-                    'systolicDescription',
-                    data.systolicStatus
-                );
-
-                updateStatus(
-                    'DiastolicbloodPressureStatus',
-                    'diastolicDescription',
-                    data.diastolicStatus
-                );
-
-                updatePatientStatus(
-                    data.hasAttention
+                    descriptionId,
+                    getStatusText(status)
                 );
             }
-            catch (error) {
-                console.error(
-                    'Unable to refresh latest vitals:',
-                    error
-                );
+
+
+            function updatePatientStatus(
+                hasAttention
+            ) {
+
+                const alertBox =
+                    document.getElementById(
+                        'patientStatusAlert'
+                    );
+
+                const statusBadge =
+                    document.getElementById(
+                        'overallStatusBadge'
+                    );
+
+
+                if (alertBox) {
+
+                    alertBox.className =
+                        'status-banner alert mb-4 ' +
+                        (
+                            hasAttention
+                                ? 'alert-danger'
+                                : 'alert-success'
+                        );
+
+
+                    alertBox.innerHTML =
+                        hasAttention
+                            ?
+                            '<strong>Attention required.</strong> ' +
+                            'One or more readings are outside ' +
+                            'their safe ranges.'
+                            :
+                            '<strong>Latest readings are stable.</strong> ' +
+                            'All readings are within their safe ranges.';
+
+                }
+
+
+                if (statusBadge) {
+
+                    statusBadge.className =
+                        'badge rounded-pill px-3 py-2 ' +
+                        (
+                            hasAttention
+                                ? 'bg-danger'
+                                : 'bg-success'
+                        );
+
+
+                    statusBadge.textContent =
+                        hasAttention
+                            ? 'Attention required'
+                            : 'Patient stable';
+
+                }
             }
-        }
 
-        refreshLatestVitals();
 
-        setInterval(
-            refreshLatestVitals,
-            30000
-        );
-    </script>
+            async function refreshLatestVitals() {
+
+                try {
+
+                    /*
+                     * READ ONLY.
+                     *
+                     * This does not create a new vital reading.
+                     */
+                    const response =
+                        await fetch(
+                            '?handler=LatestVitals',
+                            {
+                                cache: 'no-store'
+                            }
+                        );
+
+
+                    if (!response.ok) {
+
+                        console.log(
+                            'Unable to refresh latest vitals.'
+                        );
+
+                        return;
+                    }
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!data.success) {
+
+                        console.log(
+                            data.message
+                        );
+
+                        return;
+                    }
+
+
+                    setText(
+                        'heartRateValue',
+                        data.heartRate
+                    );
+
+
+                    setText(
+                        'respirationValue',
+                        data.respiration
+                    );
+
+
+                    setText(
+                        'SystolicbloodPressureValue',
+                        data.systolicBloodPressure
+                    );
+
+
+                    setText(
+                        'DiastolicbloodPressureValue',
+                        data.diastolicBloodPressure
+                    );
+
+
+                    setText(
+                        'latestUpdatedValue',
+                        data.updatedAt
+                    );
+
+
+                    setText(
+                        'heartRateRangeValue',
+                        data.heartRateLower +
+                        '–' +
+                        data.heartRateUpper
+                    );
+
+
+                    setText(
+                        'respiratoryRangeValue',
+                        data.respiratoryLower +
+                        '–' +
+                        data.respiratoryUpper
+                    );
+
+
+                    setText(
+                        'systolicRangeValue',
+                        data.systolicLower +
+                        '–' +
+                        data.systolicUpper
+                    );
+
+
+                    setText(
+                        'diastolicRangeValue',
+                        data.diastolicLower +
+                        '–' +
+                        data.diastolicUpper
+                    );
+
+
+                    updateStatus(
+                        'heartRateStatus',
+                        'heartRateDescription',
+                        data.heartRateStatus
+                    );
+
+
+                    updateStatus(
+                        'respirationStatus',
+                        'respirationDescription',
+                        data.respirationStatus
+                    );
+
+
+                    updateStatus(
+                        'SystolicbloodPressureStatus',
+                        'systolicDescription',
+                        data.systolicStatus
+                    );
+
+
+                    updateStatus(
+                        'DiastolicbloodPressureStatus',
+                        'diastolicDescription',
+                        data.diastolicStatus
+                    );
+
+
+                    updatePatientStatus(
+                        data.hasAttention
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        'Unable to refresh latest vitals:',
+                        error
+                    );
+
+                }
+            }
+
+
+            /*
+             * Refresh once when the page loads,
+             * then every 30 seconds.
+             *
+             * This ONLY reads the newest saved reading.
+             */
+            refreshLatestVitals();
+
+
+            setInterval(
+                refreshLatestVitals,
+                30000
+            );
+
+        </script>
+    }
+
 }

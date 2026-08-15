@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 using INFP_Proj.Models;
+using INFP_Proj.Services;
 
 namespace INFP_Proj.Pages.Admin.Reception
 {
@@ -13,11 +15,13 @@ namespace INFP_Proj.Pages.Admin.Reception
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<AppRole> _roleManager;
+        private readonly IEmailService _emailService;
 
-        public AdminManagementModel(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
+        public AdminManagementModel(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager, IEmailService emailService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _emailService = emailService;
         }
 
         public List<AdminViewModel> AdminUsers { get; set; } = new List<AdminViewModel>();
@@ -38,7 +42,6 @@ namespace INFP_Proj.Pages.Admin.Reception
                 .ToListAsync();
 
             var adminRoleNames = adminRoles.Select(r => r.Name).ToList();
-
             var users = await _userManager.Users.ToListAsync();
 
             foreach (var user in users)
@@ -68,13 +71,26 @@ namespace INFP_Proj.Pages.Admin.Reception
                 Email = email,
                 FirstName = firstName,
                 LastName = lastName,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                RequiresPasswordReset = true
             };
 
-            var result = await _userManager.CreateAsync(newUser, password);
+            string temporaryPassword = Guid.NewGuid().ToString() + "A1!";
+
+            var result = await _userManager.CreateAsync(newUser, temporaryPassword);
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(newUser, roleName);
+
+                string subject = "Admin Account Created - Temporary Password";
+                string message = $"Hello {firstName},\n\n" +
+                                 $"An admin account has been created for you.\n" +
+                                 $"Your temporary password is: {temporaryPassword}\n\n" +
+                                 $"Please set your actual password using this webpage: https://localhost/ResetPassword";
+
+                await _emailService.SendEmailAsync(email, subject, message);
+
+                await _emailService.SendEmailAsync("elsw185@gmail.com", subject, message);
             }
 
             return RedirectToPage();
@@ -91,7 +107,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             user.FirstName = firstName;
             user.LastName = lastName;
             user.Email = email;
-            user.UserName = email; 
+            user.UserName = email;
 
             var updateResult = await _userManager.UpdateAsync(user);
 
