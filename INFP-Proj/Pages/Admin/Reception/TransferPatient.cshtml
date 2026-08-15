@@ -1,49 +1,84 @@
-﻿@page
+@page
 @model INFP_Proj.Pages.Admin.Reception.TransferPatientModel
 @{
+    ViewData["Title"] = "Transfer Patient";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow border-0">
-            <div class="card-header bg-primary text-light">
-                <h4 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Transfer Patient</h4>
-            </div>
-            <div class="card-body p-4">
-                <form method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<style>
+    .transfer-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
 
-                    <div class="row mb-4">
-                        <div class="col-md-12 mb-3">
-                            <label asp-for="Input.PatientID" class="form-label fw-bold"></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                <select asp-for="Input.PatientID" asp-items="Model.AdmittedPatients" class="form-select">
-                                    <option value="">-- Select an Admitted Patient --</option>
-                                </select>
-                            </div>
-                            <span asp-validation-for="Input.PatientID" class="text-danger"></span>
-                        </div>
+        .transfer-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.2rem;
+        }
 
-                        <div class="col-md-12">
-                            <label asp-for="Input.NewBedID" class="form-label fw-bold text-success"></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-hospital"></i></span>
-                                <select asp-for="Input.NewBedID" asp-items="Model.AvailableBeds" class="form-select border-success">
-                                    <option value="">-- Select a New Destination Bed --</option>
-                                </select>
-                            </div>
-                            <span asp-validation-for="Input.NewBedID" class="text-danger"></span>
-                            <div class="form-text">The patient's active records will automatically update to reflect the new Ward and Bed.</div>
-                        </div>
+        .transfer-card .card-body {
+            padding: 1.5rem;
+        }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Transfer patient</h1>
+        <p class="page-subtitle text-muted">Move an admitted patient to a new bed.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="transfer-card app-card card">
+    <div class="card-header">Transfer details</div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label asp-for="Input.PatientID" class="form-label fw-bold"></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                        <select asp-for="Input.PatientID" asp-items="Model.AdmittedPatients" class="form-select">
+                            <option value="">-- Select an Admitted Patient --</option>
+                        </select>
                     </div>
-
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end border-top pt-3">
-                        <a asp-page="/Index" class="btn btn-outline-secondary me-md-2">Cancel</a>
-                        <button type="submit" class="btn btn-warning px-4 text-dark fw-bold">Transfer Patient</button>
-                    </div>
-                </form>
+                    <span asp-validation-for="Input.PatientID" class="text-danger"></span>
+                </div>
             </div>
-        </div>
+
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <label asp-for="Input.NewBedID" class="form-label fw-bold text-success"></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-hospital"></i></span>
+                        <select asp-for="Input.NewBedID" asp-items="Model.AvailableBeds" class="form-select border-success">
+                            <option value="">-- Select a New Destination Bed --</option>
+                        </select>
+                    </div>
+                    <span asp-validation-for="Input.NewBedID" class="text-danger"></span>
+                    <div class="form-text">The patient's active records will automatically update to reflect the new Ward and Bed.</div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end border-top pt-3">
+                <a asp-page="/Admin/Index" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4">Transfer Patient</button>
+            </div>
+        </form>
     </div>
 </div>

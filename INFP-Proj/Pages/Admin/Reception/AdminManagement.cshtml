@@ -1,51 +1,97 @@
-﻿@page
+@page
 @model INFP_Proj.Pages.Admin.Reception.AdminManagementModel
 @{
     ViewData["Title"] = "Admin Management";
 }
 
-<div class="container mt-4">
-    <h2>Manage Admins</h2>
+<style>
+    .mgmt-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
 
-    <hr />
+        .mgmt-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 1rem 1.2rem;
+        }
 
-    <div class="card mb-4">
-        <div class="card-header">Create New Admin</div>
-        <div class="card-body">
-            <form method="post" asp-page-handler="Create">
-                <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <input type="text" name="firstName" class="form-control" placeholder="First Name" required />
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <input type="text" name="lastName" class="form-control" placeholder="Last Name" required />
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <input type="email" name="email" class="form-control" placeholder="Email" required />
-                    </div>
+    .mgmt-table {
+        margin-bottom: 0;
+    }
 
-                    <div class="col-md-6 mb-2">
-                        <select name="roleName" class="form-select" required>
-                            <option value="">Select Role...</option>
-                            <option value="Doctor">Doctor</option>
-                            <option value="Nurse">Nurse</option>
-                            <option value="Reception">Reception</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                        <button type="submit" class="btn btn-success w-100">Create Admin</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+        .mgmt-table thead th {
+            background: #f1f8f7;
+            border-bottom: 1px solid #d8e7e4;
+            color: #47615d;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.035em;
+            padding: 0.9rem 1rem;
+            text-transform: uppercase;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .mgmt-table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Admin management</h1>
+        <p class="page-subtitle text-muted">Create and manage staff accounts.</p>
     </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
+    </div>
+</div>
 
-    <div class="row mb-3">
-        <div class="col-md-8">
-            <input type="text" id="searchInput" placeholder="Search by name or email..." class="form-control" />
-        </div>
-        <div class="col-md-4">
-            <select id="roleFilter" class="form-select">
+<div class="mgmt-card app-card card mb-4">
+    <div class="card-header">Create new admin</div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="Create">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">First Name</label>
+                    <input type="text" name="firstName" class="form-control" placeholder="First Name" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Last Name</label>
+                    <input type="text" name="lastName" class="form-control" placeholder="Last Name" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="Email" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Role</label>
+                    <select name="roleName" class="form-select" required>
+                        <option value="">Select Role...</option>
+                        <option value="Doctor">Doctor</option>
+                        <option value="Nurse">Nurse</option>
+                        <option value="Reception">Reception</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Create Admin</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mgmt-card app-card card">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>Admin accounts</span>
+        <div class="d-flex flex-wrap gap-2">
+            <input type="text" id="searchInput" placeholder="Search by name or email..." class="form-control form-control-sm" style="min-width: 220px;" />
+            <select id="roleFilter" class="form-select form-select-sm" style="min-width: 140px;">
                 <option value="">All Roles</option>
                 <option value="Doctor">Doctor</option>
                 <option value="Nurse">Nurse</option>
@@ -54,39 +100,41 @@
         </div>
     </div>
 
-    <table class="table table-striped" id="adminTable">
-        <thead>
-            <tr>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var admin in Model.AdminUsers)
-            {
+    <div class="table-responsive">
+        <table class="table mgmt-table align-middle" id="adminTable">
+            <thead>
                 <tr>
-                    <td>@admin.FirstName</td>
-                    <td>@admin.LastName</td>
-                    <td>@admin.Email</td>
-                    <td>@admin.Role</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editAdminModal"
-                                onclick="populateEditModal('@admin.Id', '@admin.FirstName', '@admin.LastName', '@admin.Email', '@admin.Role')">
-                            Edit
-                        </button>
-
-                        <form method="post" asp-page-handler="Delete" style="display:inline;">
-                            <input type="hidden" name="id" value="@admin.Id" />
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this admin?');">Delete</button>
-                        </form>
-                    </td>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th class="text-end">Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var admin in Model.AdminUsers)
+                {
+                    <tr>
+                        <td>@admin.FirstName</td>
+                        <td>@admin.LastName</td>
+                        <td>@admin.Email</td>
+                        <td>@admin.Role</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editAdminModal"
+                                    onclick="populateEditModal('@admin.Id', '@admin.FirstName', '@admin.LastName', '@admin.Email', '@admin.Role')">
+                                Edit
+                            </button>
+
+                            <form method="post" asp-page-handler="Delete" style="display:inline;">
+                                <input type="hidden" name="id" value="@admin.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this admin?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">

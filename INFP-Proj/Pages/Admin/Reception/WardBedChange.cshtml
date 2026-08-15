@@ -1,100 +1,170 @@
-﻿@page
+@page
 @model INFP_Proj.Pages.Admin.Reception.WardBedChangeModel
 @{
     ViewData["Title"] = "Manage Wards & Beds";
 }
 
-<div class="container mt-4 mb-5">
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+<style>
+    .stat-tile {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
     }
 
-    <h3 class="mb-3 text-secondary"><i class="bi bi-bar-chart-fill me-2"></i>Live Capacity Dashboard</h3>
-
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-white bg-primary shadow-sm">
-                <div class="card-body py-2">
-                    <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
-                        Hospital Max Capacity
-                        <img src="/js/images/capacity.png" width="50" height="50" />
-                    </h6>
-                    <h3 class="display-6 mb-0 fw-bold">@Model.TotalHospitalCapacity</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-danger shadow-sm">
-                <div class="card-body py-2">
-                    <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
-                        Total Occupied Beds
-                        <img src="/js/images/disability.png" width="50" height="50" />
-                    </h6>
-                    <h3 class="display-6 mb-0 fw-bold">@Model.TotalOccupied</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-success shadow-sm">
-                <div class="card-body py-2">
-                    <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
-                        Total Available Beds
-                        <img src="/js/images/hospital-bed.png" width="50" height="50" />
-                    </h6>
-                    <h3 class="display-6 mb-0 fw-bold">@Model.TotalAvailable</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-5">
-        @foreach (var ward in Model.WardStats)
-        {
-            string barColor = "bg-success";
-            if (ward.OccupancyRate >= 90) barColor = "bg-danger";
-            else if (ward.OccupancyRate >= 75) barColor = "bg-warning";
-
-            <div class="col-md-6 col-lg-3 mb-3">
-                <div class="card shadow-sm h-100 border-0">
-                    <div class="card-header bg-light fw-bold d-flex justify-content-between align-items-center py-2">
-                        <span>@ward.WardName</span>
-                        <span class="badge bg-secondary text-white">Ward @ward.WardID</span>
-                    </div>
-                    <div class="card-body py-2">
-                        <div class="d-flex justify-content-between mb-1 small">
-                            <span class="text-muted">Occupied:</span>
-                            <span class="fw-bold text-danger">@ward.OccupiedBeds</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2 small">
-                            <span class="text-muted">Available:</span>
-                            <span class="fw-bold text-success">@ward.AvailableBeds</span>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar @barColor" role="progressbar" style="width: @ward.OccupancyRate%"
-                                 aria-valuenow="@ward.OccupancyRate" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        <div class="text-end mt-1">
-                            <small class="text-muted" style="font-size: 0.75rem;">@Math.Round(ward.OccupancyRate, 1)% Full</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        .stat-tile .card-body {
+            padding: 1.1rem 1.25rem;
         }
-    </div>
 
-    <hr class="mb-5 text-muted" />
+    .stat-label {
+        color: #64748b;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
 
-    <div class="dashboard-grid">
-        <a class="dashboard-tile" asp-page="/Admin/Reception/TransferPatient">
-            <span class="dashboard-tile-title">Transfer Patient</span>
-            <p class="dashboard-tile-desc">Transfer Patient</p>
-        </a>
+    .stat-value {
+        color: #173f3b;
+        font-size: 1.9rem;
+        font-weight: 750;
+        line-height: 1.1;
+        margin-top: 0.25rem;
+    }
+
+        .stat-value.stat-danger {
+            color: #dc3545;
+        }
+
+        .stat-value.stat-success {
+            color: #198754;
+        }
+
+    .ward-card {
+        border: 1px solid #dfe9e7;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        .ward-card .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f1;
+            color: #006a72;
+            font-weight: 700;
+            padding: 0.85rem 1.1rem;
+        }
+
+        .ward-card .card-body {
+            padding: 1rem 1.1rem;
+        }
+
+    .section-heading {
+        margin-bottom: 1rem;
+    }
+
+        .section-heading h2 {
+            color: #173f3b;
+            font-size: 1.15rem;
+            margin-bottom: 0.25rem;
+        }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Wards &amp; beds</h1>
+        <p class="page-subtitle text-muted">Live capacity across all wards.</p>
     </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="section-heading">
+    <h2>Live capacity dashboard</h2>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-tile app-card card">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="stat-label">Hospital Max Capacity</div>
+                    <div class="stat-value">@Model.TotalHospitalCapacity</div>
+                </div>
+                <img src="/js/images/capacity.png" width="44" height="44" alt="" />
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-tile app-card card">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="stat-label">Total Occupied Beds</div>
+                    <div class="stat-value stat-danger">@Model.TotalOccupied</div>
+                </div>
+                <img src="/js/images/disability.png" width="44" height="44" alt="" />
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-tile app-card card">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="stat-label">Total Available Beds</div>
+                    <div class="stat-value stat-success">@Model.TotalAvailable</div>
+                </div>
+                <img src="/js/images/hospital-bed.png" width="44" height="44" alt="" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-5">
+    @foreach (var ward in Model.WardStats)
+    {
+        string barColor = "bg-success";
+        if (ward.OccupancyRate >= 90) barColor = "bg-danger";
+        else if (ward.OccupancyRate >= 75) barColor = "bg-warning";
+
+        <div class="col-md-6 col-lg-3">
+            <div class="ward-card app-card card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>@ward.WardName</span>
+                    <span class="badge bg-secondary">Ward @ward.WardID</span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="text-muted">Occupied:</span>
+                        <span class="fw-bold text-danger">@ward.OccupiedBeds</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Available:</span>
+                        <span class="fw-bold text-success">@ward.AvailableBeds</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar @barColor" role="progressbar" style="width: @ward.OccupancyRate%"
+                             aria-valuenow="@ward.OccupancyRate" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-end mt-1">
+                        <small class="text-muted" style="font-size: 0.75rem;">@Math.Round(ward.OccupancyRate, 1)% Full</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="dashboard-grid">
+    <a class="dashboard-tile" asp-page="/Admin/Reception/TransferPatient">
+        <span class="dashboard-tile-title">Transfer Patient</span>
+        <p class="dashboard-tile-desc">Move an admitted patient to a new bed.</p>
+    </a>
 </div>
 
 @section Scripts {
