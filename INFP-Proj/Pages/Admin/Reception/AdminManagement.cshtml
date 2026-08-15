@@ -18,9 +18,6 @@
                         <input type="text" name="firstName" class="form-control" placeholder="First Name" required />
                     </div>
                     <div class="col-md-3 mb-2">
-                        <input type="text" name="middleName" class="form-control" placeholder="Middle Name (Optional)" />
-                    </div>
-                    <div class="col-md-3 mb-2">
                         <input type="text" name="lastName" class="form-control" placeholder="Last Name" required />
                     </div>
                     <div class="col-md-3 mb-2">
@@ -63,7 +60,6 @@
         <thead>
             <tr>
                 <th>First Name</th>
-                <th>Middle Name</th>
                 <th>Last Name</th>
                 <th>Email</th>
                 <th>Role</th>
@@ -75,13 +71,12 @@
             {
                 <tr>
                     <td>@admin.FirstName</td>
-                    <td>@admin.MiddleName</td>
                     <td>@admin.LastName</td>
                     <td>@admin.Email</td>
                     <td>@admin.Role</td>
                     <td>
                         <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editAdminModal"
-                                onclick="populateEditModal('@admin.Id', '@admin.FirstName', '@admin.MiddleName', '@admin.LastName', '@admin.Email', '@admin.Role')">
+                                onclick="populateEditModal('@admin.Id', '@admin.FirstName', '@admin.LastName', '@admin.Email', '@admin.Role')">
                             Edit
                         </button>
 
@@ -110,10 +105,6 @@
                     <div class="mb-3">
                         <label>First Name</label>
                         <input type="text" name="firstName" id="editFirstName" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label>Middle Name</label>
-                        <input type="text" name="middleName" id="editMiddleName" class="form-control" />
                     </div>
                     <div class="mb-3">
                         <label>Last Name</label>
@@ -155,12 +146,11 @@
 
             if (cells.length > 0) {
                 let firstName = cells[0].textContent.toLowerCase();
-                let middleName = cells[1].textContent.toLowerCase();
                 let lastName = cells[2].textContent.toLowerCase();
                 let email = cells[3].textContent.toLowerCase();
                 let role = cells[4].textContent.toLowerCase().trim();
 
-                let searchableText = `${firstName} ${middleName} ${lastName} ${email}`;
+                let searchableText = `${firstName} ${lastName} ${email}`;
 
                 let matchesSearch = searchableText.includes(searchQuery);
                 let matchesRole = (roleQuery === "" || role === roleQuery);
@@ -177,10 +167,9 @@
     searchInput.addEventListener('input', filterAdmins);
     roleFilter.addEventListener('change', filterAdmins);
 
-    function populateEditModal(id, firstName, middleName, lastName, email, role) {
+    function populateEditModal(id, firstName, lastName, email, role) {
         document.getElementById('editId').value = id;
         document.getElementById('editFirstName').value = firstName;
-        document.getElementById('editMiddleName').value = middleName;
         document.getElementById('editLastName').value = lastName;
         document.getElementById('editEmail').value = email;
         document.getElementById('editRole').value = role;

@@ -26,7 +26,6 @@ namespace INFP_Proj.Pages.Admin.Reception
         {
             public string Id { get; set; }
             public string FirstName { get; set; }
-            public string MiddleName { get; set; }
             public string LastName { get; set; }
             public string Email { get; set; }
             public string Role { get; set; }
@@ -53,7 +52,6 @@ namespace INFP_Proj.Pages.Admin.Reception
                     {
                         Id = user.Id,
                         FirstName = user.FirstName,
-                        MiddleName = user.MiddleName,
                         LastName = user.LastName,
                         Email = user.Email,
                         Role = assignedAdminRole
@@ -62,14 +60,13 @@ namespace INFP_Proj.Pages.Admin.Reception
             }
         }
 
-        public async Task<IActionResult> OnPostCreateAsync(string firstName, string middleName, string lastName, string email, string password, string roleName)
+        public async Task<IActionResult> OnPostCreateAsync(string firstName, string lastName, string email, string password, string roleName)
         {
             var newUser = new AppUser
             {
                 UserName = email,
                 Email = email,
                 FirstName = firstName,
-                MiddleName = middleName,
                 LastName = lastName,
                 EmailConfirmed = true
             };
@@ -83,7 +80,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostUpdateAsync(string id, string firstName, string middleName, string lastName, string email, string roleName)
+        public async Task<IActionResult> OnPostUpdateAsync(string id, string firstName, string lastName, string email, string roleName)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
@@ -92,7 +89,6 @@ namespace INFP_Proj.Pages.Admin.Reception
             }
 
             user.FirstName = firstName;
-            user.MiddleName = middleName;
             user.LastName = lastName;
             user.Email = email;
             user.UserName = email; 

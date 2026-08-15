@@ -55,7 +55,6 @@ namespace INFP_Proj.Pages.Admin.Reception
                 UserName = Input.Email,
                 Email = Input.Email,
                 FirstName = Input.FirstName,
-                MiddleName = Input.MiddleName,
                 LastName = Input.LastName,
                 EmailConfirmed = true
             };

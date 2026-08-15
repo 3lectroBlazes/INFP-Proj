@@ -8,9 +8,6 @@ namespace INFP_Proj.ViewModel
         [Display(Name = "First Name")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Display(Name = "Middle Name (Optional)")]
-        public string? MiddleName { get; set; }
-
         [Required(ErrorMessage = "Last Name is required.")]
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = string.Empty;
