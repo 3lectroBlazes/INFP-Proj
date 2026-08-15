@@ -236,12 +236,13 @@ namespace INFP_Proj.Pages.Admin
                 return null;
             }
 
+            // ADDED: Include Diagnoses so we can grab the name
             var record = await _context.Records
+                .Include(r => r.Diagnoses)
                 .Where(r => r.PatientID == patientId)
                 .OrderByDescending(r => r.AdmissionDateTime)
                 .FirstOrDefaultAsync();
 
-            // Medications explicitly linked to this admission via RecordID.
             var medications = record == null
                 ? new List<MedicationList>()
                 : await _context.MedicationLists
@@ -260,6 +261,10 @@ namespace INFP_Proj.Pages.Admin
                 DischargeDateTime = record?.DischargeDateTime,
                 DischargeReason = record?.DischargeReason,
                 RequestHelp = patient.RequestHelp,
+
+                AdmissionNotes = record?.Description,
+                DiagnosisName = record?.Diagnoses?.DiagnosisName,
+
                 MedicationLists = medications.Select(m => new MedicationListEditItem
                 {
                     MedicationListID = m.MedicationListID,

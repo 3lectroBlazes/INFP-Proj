@@ -4,37 +4,20 @@
     ViewData["Title"] = "Appointments Calendar";
 }
 
-<style>
-    .calendar-card {
-        border: 1px solid #dfe9e7;
-        border-radius: 15px;
-        overflow: hidden;
-    }
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-calendar-week"></i> Appointments Calendar</h2>
 
-        .calendar-card .card-body {
-            padding: 1.25rem;
-        }
-</style>
-
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Appointments calendar</h1>
-        <p class="page-subtitle text-muted">View and manage patient appointments.</p>
-    </div>
-    <div class="page-actions">
-        <a class="btn btn-outline-secondary btn-sm" asp-page="/Admin/Index">Return to dashboard</a>
-        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+        <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
             <i class="bi bi-plus-lg me-1"></i> Add Appointment
         </button>
     </div>
+    <hr />
+
+    <div id="calendar" class="bg-white p-3 shadow-sm rounded"></div>
 </div>
 
-<div class="calendar-card app-card card">
-    <div class="card-body">
-        <div id="calendar"></div>
-    </div>
-</div>
-
+<!-- Add Modal -->
 <div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-top border-success border-4">
@@ -48,6 +31,12 @@
                         <label class="form-label fw-bold">Patient ID</label>
                         <select id="addPatientId" class="form-select" asp-items="Model.PatientsList" required>
                             <option value="">-- Search by Name or ID --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Assigned Doctor</label>
+                        <select id="addDoctorId" class="form-select" asp-items="Model.DoctorsList" required>
+                            <option value="">-- Assign a Doctor --</option>
                         </select>
                     </div>
                     <div class="row">
@@ -85,6 +74,7 @@
     </div>
 </div>
 
+<!-- Action Modal -->
 <div class="modal fade" id="actionModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
         <div class="modal-content text-center">
@@ -95,10 +85,8 @@
             <div class="modal-body py-4">
                 <p class="text-muted small mb-4">Choose an action for this appointment.</p>
 
-                <!-- ADDED: Show patient request information -->
                 <div id="patientRequestInfo" class="alert alert-warning small" style="display:none;"></div>
 
-                <!-- ADDED: Accept/Reject patient request -->
                 <div id="patientRequestActions" style="display:none;">
                     <button type="button" class="btn btn-success w-100 mb-2" id="btnAcceptAppointment">
                         Accept
@@ -109,7 +97,7 @@
                 </div>
 
                 <button type="button" class="btn btn-primary w-100 mb-2" id="btnGoToUpdate">
-                    <i class="bi bi-pencil-square me-2"></i> Update Form
+                    <i class="bi bi-pencil-square me-2"></i> Reschedule Appointment
                 </button>
                 <button type="button" class="btn btn-danger w-100" id="btnGoToDelete">
                     <i class="bi bi-trash me-2"></i> Delete Appointment
@@ -119,11 +107,12 @@
     </div>
 </div>
 
+<!-- Update Modal -->
 <div class="modal fade" id="updateModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-top border-primary border-4">
             <div class="modal-header">
-                <h5 class="modal-title">Update Appointment</h5>
+                <h5 class="modal-title">Reschedule Appointment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -134,6 +123,12 @@
                         <label class="form-label fw-bold">Patient ID</label>
                         <select id="updatePatientId" class="form-select" asp-items="Model.PatientsList" required>
                             <option value="">-- Search by Name or ID --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Assigned Doctor</label>
+                        <select id="updateDoctorId" class="form-select" asp-items="Model.DoctorsList" required>
+                            <option value="">-- Assign a Doctor --</option>
                         </select>
                     </div>
                     <div class="row">
@@ -175,7 +170,6 @@
 
 @section Scripts {
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
@@ -190,15 +184,11 @@
 
             var currentEventData = null;
 
-            var addPatientSelect = new TomSelect("#addPatientId", {
-                create: false,
-                sortField: { field: "text", direction: "asc" }
-            });
+            var addPatientSelect = new TomSelect("#addPatientId", { create: false, sortField: { field: "text", direction: "asc" }});
+            var updatePatientSelect = new TomSelect("#updatePatientId", { create: false, sortField: { field: "text", direction: "asc" }});
 
-            var updatePatientSelect = new TomSelect("#updatePatientId", {
-                create: false,
-                sortField: { field: "text", direction: "asc" }
-            });
+            var addDoctorSelect = new TomSelect("#addDoctorId", { create: false, sortField: { field: "text", direction: "asc" }});
+            var updateDoctorSelect = new TomSelect("#updateDoctorId", { create: false, sortField: { field: "text", direction: "asc" }});
 
             function getFormattedDateTime(dateObj) {
                 let year = dateObj.getFullYear();
@@ -206,10 +196,7 @@
                 let day = String(dateObj.getDate()).padStart(2, '0');
                 let hours = String(dateObj.getHours()).padStart(2, '0');
                 let minutes = String(dateObj.getMinutes()).padStart(2, '0');
-                return {
-                    date: `${year}-${month}-${day}`,
-                    time: `${hours}:${minutes}`
-                };
+                return { date: `${year}-${month}-${day}`, time: `${hours}:${minutes}` };
             }
 
             let todayFormatted = getFormattedDateTime(new Date()).date;
@@ -282,12 +269,37 @@
                 if (e.relatedTarget) {
                     document.getElementById('addForm').reset();
                     if (typeof addPatientSelect !== 'undefined') addPatientSelect.clear();
+                    if (typeof addDoctorSelect !== 'undefined') addDoctorSelect.clear();
 
                     let timeSelect = document.getElementById('addTime');
-                    for (let i = 0; i < timeSelect.options.length; i++) {
-                        timeSelect.options[i].hidden = false;
-                        timeSelect.options[i].disabled = false;
-                        timeSelect.options[i].style.display = '';
+                    let dateInput = document.getElementById('addDate');
+
+                    let targetDate = new Date();
+                    let foundValidSlot = false;
+                    let safetyCounter = 0; 
+
+                    while (!foundValidSlot && safetyCounter < 30) {
+                        let formatted = getFormattedDateTime(targetDate);
+
+                        filterAvailableTimes(formatted.date, 'addTime');
+
+                        let nextAvailableOption = Array.from(timeSelect.options).find(opt => opt.value !== "" && !opt.disabled);
+
+                        if (nextAvailableOption) {
+                            dateInput.value = formatted.date;
+                            timeSelect.value = nextAvailableOption.value;
+                            foundValidSlot = true;
+                        } else {
+                            targetDate.setDate(targetDate.getDate() + 1);
+                            targetDate.setHours(9, 0, 0, 0);
+                        }
+
+                        safetyCounter++;
+                    }
+
+                    if (!foundValidSlot) {
+                        dateInput.value = getFormattedDateTime(new Date()).date;
+                        timeSelect.value = "";
                     }
                 }
             });
@@ -314,18 +326,18 @@
                 slotMinTime: '09:00:00',
                 slotMaxTime: '18:00:00',
                 slotDuration: '01:00:00',
-                businessHours: {
-                    startTime: '09:00',
-                    endTime: '18:00'
-                },
+                businessHours: { startTime: '09:00', endTime: '18:00' },
                 events: '?handler=FetchAppointments',
                 selectable: true,
 
-                // ADDED: Highlight patient appointment and reschedule requests
                 eventDidMount: function(info) {
                     let p = info.event.extendedProps;
-
-                    if (p.hasPendingChange) {
+                    if (p.urgency === 'Emergency') {
+                        info.el.style.backgroundColor = '#dc3545';
+                        info.el.style.borderColor = '#dc3545';
+                        info.el.style.color = '#fff';
+                    }
+                    else if (p.hasPendingChange) {
                         info.el.style.backgroundColor = '#fd7e14';
                     }
                     else if (!p.docAcknowledged && p.patientAcknowledged && p.status === "Pending") {
@@ -337,7 +349,13 @@
                 dateClick: function(info) {
                     let now = new Date();
 
-                    if (info.date.setHours(0,0,0,0) < now.setHours(0,0,0,0)) {
+                    let clickedDateOnly = new Date(info.date);
+                    clickedDateOnly.setHours(0, 0, 0, 0);
+
+                    let todayOnly = new Date();
+                    todayOnly.setHours(0, 0, 0, 0);
+
+                    if (clickedDateOnly < todayOnly) {
                         alert("Appointments cannot be scheduled in the past.");
                         return;
                     }
@@ -349,7 +367,8 @@
                     }
 
                     document.getElementById('addForm').reset();
-                    addPatientSelect.clear();
+                    if (typeof addPatientSelect !== 'undefined') addPatientSelect.clear();
+                    if (typeof addDoctorSelect !== 'undefined') addDoctorSelect.clear();
 
                     let formatted = getFormattedDateTime(info.date);
                     document.getElementById('addDate').value = formatted.date;
@@ -358,6 +377,7 @@
 
                     let timeSelect = document.getElementById('addTime');
                     let targetOption = Array.from(timeSelect.options).find(opt => opt.value === formatted.time);
+
                     if (targetOption && !targetOption.disabled) {
                         timeSelect.value = formatted.time;
                     } else {
@@ -369,8 +389,6 @@
 
                 eventClick: function(info) {
                     currentEventData = info.event;
-
-                    // ADDED: Show approval buttons for patient request/reschedule
                     let p = currentEventData.extendedProps;
                     let patientRequest = !p.docAcknowledged && p.patientAcknowledged && p.status === "Pending";
                     let needsAction = patientRequest || p.hasPendingChange;
@@ -378,7 +396,6 @@
                     document.getElementById('patientRequestActions').style.display = needsAction ? 'block' : 'none';
 
                     let infoBox = document.getElementById('patientRequestInfo');
-
                     if (p.hasPendingChange) {
                         infoBox.innerText = "Requested new date: " + new Date(p.requestedDateTime).toLocaleString();
                         infoBox.style.display = 'block';
@@ -401,9 +418,10 @@
                 let dateVal = document.getElementById('addDate').value;
                 let timeVal = document.getElementById('addTime').value;
                 let patientVal = document.getElementById('addPatientId').value;
+                let doctorVal = document.getElementById('addDoctorId').value;
                 let reasonVal = document.getElementById('addReason').value;
 
-                if (!dateVal || !timeVal || !patientVal || !reasonVal) {
+                if (!dateVal || !timeVal || !patientVal || !doctorVal || !reasonVal) {
                     alert("Please fill out all required fields.");
                     return;
                 }
@@ -417,6 +435,7 @@
                 let data = {
                     AppointmentRequestID: 0,
                     PatientID: parseInt(patientVal),
+                    DoctorID: doctorVal,
                     Reason: reasonVal,
                     DateTime: dateVal + 'T' + timeVal + ':00',
                     Urgency: document.getElementById('addUrgency').value
@@ -430,7 +449,8 @@
                     if(data.success) {
                         addModal.hide();
                         document.getElementById('addForm').reset();
-                        if (typeof addPatientSelect !== 'undefined') addPatientSelect.clear();
+                        addPatientSelect.clear();
+                        addDoctorSelect.clear();
                         calendar.refetchEvents();
                     } else {
                         alert(data.message || 'Error adding appointment.');
@@ -447,7 +467,9 @@
                 document.getElementById('updateApptId').value = currentEventData.id;
                 document.getElementById('updateReason').value = currentEventData.title;
                 document.getElementById('updateUrgency').value = currentEventData.extendedProps.urgency;
+
                 updatePatientSelect.setValue(currentEventData.extendedProps.patientId);
+                updateDoctorSelect.setValue(currentEventData.extendedProps.doctorId);
 
                 let eventDate = currentEventData.start;
                 let formatted = getFormattedDateTime(eventDate);
@@ -463,9 +485,10 @@
                 let dateVal = document.getElementById('updateDate').value;
                 let timeVal = document.getElementById('updateTime').value;
                 let patientVal = document.getElementById('updatePatientId').value;
+                let doctorVal = document.getElementById('updateDoctorId').value;
                 let reasonVal = document.getElementById('updateReason').value;
 
-                if (!dateVal || !timeVal || !patientVal || !reasonVal) {
+                if (!dateVal || !timeVal || !patientVal || !doctorVal || !reasonVal) {
                     alert("Please fill out all required fields.");
                     return;
                 }
@@ -481,6 +504,7 @@
                 let data = {
                     AppointmentRequestID: parseInt(document.getElementById('updateApptId').value),
                     PatientID: parseInt(patientVal),
+                    DoctorID: doctorVal,
                     Reason: reasonVal,
                     DateTime: dateVal + 'T' + timeVal + ':00',
                     Urgency: document.getElementById('updateUrgency').value
@@ -503,10 +527,8 @@
                 });
             });
 
-            // ADDED: Reception accepts patient appointment/reschedule
             document.getElementById('btnAcceptAppointment').addEventListener('click', function() {
                 let id = parseInt(currentEventData.id);
-
                 fetch('?handler=Accept', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
@@ -521,12 +543,9 @@
                 });
             });
 
-            // ADDED: Reception rejects patient appointment/reschedule
             document.getElementById('btnRejectAppointment').addEventListener('click', function() {
                 if(!confirm("Reject this request?")) return;
-
                 let id = parseInt(currentEventData.id);
-
                 fetch('?handler=Reject', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
@@ -543,9 +562,7 @@
 
             document.getElementById('btnGoToDelete').addEventListener('click', function() {
                 if(!confirm("Are you sure you want to permanently delete this appointment?")) return;
-
                 let id = parseInt(currentEventData.id);
-
                 fetch('?handler=Delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },

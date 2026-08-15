@@ -17,7 +17,7 @@ namespace INFP_Proj.Pages.Admin.Reception
         }
 
         public List<SelectListItem> PatientsList { get; set; } = new List<SelectListItem>();
-
+        public List<SelectListItem> DoctorsList { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> TimeSlots { get; set; } = new List<SelectListItem>();
 
         public async Task OnGetAsync()
@@ -32,6 +32,27 @@ namespace INFP_Proj.Pages.Admin.Reception
                           Text = $"{user.FirstName} {user.LastName} (ID: {patient.PatientID})"
                       })
                 .ToListAsync();
+
+            var doctorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Doctor");
+
+            if (doctorRole != null)
+            {
+                DoctorsList = await _context.UserRoles
+                    .Where(ur => ur.RoleId == doctorRole.Id)
+                    .Join(_context.Users,
+                          ur => ur.UserId,
+                          user => user.Id,
+                          (ur, user) => new SelectListItem
+                          {
+                              Value = user.Id,
+                              Text = $"Dr. {user.FirstName} {user.LastName}"
+                          })
+                    .ToListAsync();
+            }
+            else
+            {
+                DoctorsList = new List<SelectListItem>();
+            }
 
             int startHour = 9;
             int endHour = 17;
@@ -58,14 +79,12 @@ namespace INFP_Proj.Pages.Admin.Reception
                     extendedProps = new
                     {
                         patientId = a.PatientID,
+                        doctorId = a.DoctorID,
                         urgency = a.Urgency,
                         status = a.Status,
-
-                        // ADDED: Used to identify patient/reception acknowledgement state
                         docAcknowledged = a.DocAcknowledged,
                         patientAcknowledged = a.PatientAcknowledged,
 
-                        // ADDED: Used to identify pending patient reschedule requests
                         hasPendingChange = _context.AppointmentChangeRequests
                             .Any(r => r.AppointmentRequestID == a.AppointmentRequestID && r.Status == "Pending"),
 
@@ -90,24 +109,22 @@ namespace INFP_Proj.Pages.Admin.Reception
             }
 
             bool isDoubleBooked = await _context.Appointments
-                .AnyAsync(a => a.DateTime == dto.DateTime);
+                .AnyAsync(a => a.DateTime == dto.DateTime && a.DoctorID == dto.DoctorID);
 
             if (isDoubleBooked)
             {
-                return new JsonResult(new { success = false, message = "This time slot is already booked. Please select another time." });
+                return new JsonResult(new { success = false, message = "This doctor is already booked at this time." });
             }
 
             var newAppt = new Appointment
             {
                 PatientID = dto.PatientID,
+                DoctorID = dto.DoctorID,
                 Reason = dto.Reason,
                 Urgency = dto.Urgency ?? "Normal",
                 Status = "Pending",
-
-                // ADDED: Reception-created appointment = D1P0
                 DocAcknowledged = true,
                 PatientAcknowledged = false,
-
                 DateTime = dto.DateTime,
                 RequestedAt = DateTime.Now
             };
@@ -128,22 +145,21 @@ namespace INFP_Proj.Pages.Admin.Reception
             }
 
             bool isDoubleBooked = await _context.Appointments
-                .AnyAsync(a => a.DateTime == dto.DateTime && a.AppointmentRequestID != dto.AppointmentRequestID);
+                .AnyAsync(a => a.DateTime == dto.DateTime && a.DoctorID == dto.DoctorID && a.AppointmentRequestID != dto.AppointmentRequestID);
 
             if (isDoubleBooked)
             {
-                return new JsonResult(new { success = false, message = "This time slot is already booked by another patient." });
+                return new JsonResult(new { success = false, message = "This doctor is already booked at this time by another patient." });
             }
 
             var appt = await _context.Appointments.FindAsync(dto.AppointmentRequestID);
             if (appt == null) return NotFound();
 
             appt.PatientID = dto.PatientID;
+            appt.DoctorID = dto.DoctorID;
             appt.Reason = dto.Reason;
             appt.Urgency = dto.Urgency ?? "Normal";
             appt.DateTime = dto.DateTime;
-
-            // ADDED: Reception reschedule = D1P0
             appt.DocAcknowledged = true;
             appt.PatientAcknowledged = false;
             appt.Status = "Pending";
@@ -152,7 +168,6 @@ namespace INFP_Proj.Pages.Admin.Reception
             return new JsonResult(new { success = true });
         }
 
-        // ADDED: Reception accepts patient appointment or patient reschedule request
         public async Task<IActionResult> OnPostAcceptAsync([FromBody] int id)
         {
             var appt = await _context.Appointments.FindAsync(id);
@@ -164,14 +179,13 @@ namespace INFP_Proj.Pages.Admin.Reception
             if (change != null)
             {
                 bool isDoubleBooked = await _context.Appointments
-                    .AnyAsync(a => a.DateTime == change.RequestedDateTime && a.AppointmentRequestID != id);
+                    .AnyAsync(a => a.DateTime == change.RequestedDateTime && a.DoctorID == appt.DoctorID && a.AppointmentRequestID != id);
 
                 if (isDoubleBooked)
                 {
-                    return new JsonResult(new { success = false, message = "The requested time is already booked." });
+                    return new JsonResult(new { success = false, message = "The requested time is already booked for this doctor." });
                 }
 
-                // ADDED: Apply patient's requested new date
                 appt.DateTime = change.RequestedDateTime;
                 change.Status = "Approved";
                 change.ReviewedAt = DateTime.Now;
@@ -186,7 +200,6 @@ namespace INFP_Proj.Pages.Admin.Reception
             return new JsonResult(new { success = true });
         }
 
-        // ADDED: Reception rejects patient appointment or patient reschedule request
         public async Task<IActionResult> OnPostRejectAsync([FromBody] int id)
         {
             var appt = await _context.Appointments.FindAsync(id);
@@ -197,10 +210,8 @@ namespace INFP_Proj.Pages.Admin.Reception
 
             if (change != null)
             {
-                // ADDED: Reject requested date but keep original appointment
                 change.Status = "Rejected";
                 change.ReviewedAt = DateTime.Now;
-
                 appt.DocAcknowledged = true;
                 appt.PatientAcknowledged = false;
                 appt.Status = "Pending";
@@ -230,6 +241,7 @@ namespace INFP_Proj.Pages.Admin.Reception
         {
             public int AppointmentRequestID { get; set; }
             public int PatientID { get; set; }
+            public string DoctorID { get; set; } = string.Empty;
             public string Reason { get; set; } = string.Empty;
             public string Urgency { get; set; } = string.Empty;
             public DateTime DateTime { get; set; }

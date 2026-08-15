@@ -93,6 +93,14 @@
             <hr />
             <h5 class="mb-3 text-secondary">Assignment Details</h5>
 
+            <div class="mb-3">
+                <label asp-for="Input.HospitalID" class="form-label fw-bold">Hospital</label>
+                <select id="hospitalSelect" asp-for="Input.HospitalID" class="form-select" asp-items="Model.AvailableHospitals" required>
+                    <option value="">-- Search and Select a Hospital --</option>
+                </select>
+                <span asp-validation-for="Input.HospitalID" class="text-danger"></span>
+            </div>
+
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label asp-for="SelectedWardID" class="form-label fw-bold text-info">Select Ward (Required for Bed Selection)</label>
@@ -160,6 +168,10 @@
         document.addEventListener('DOMContentLoaded', function () {
             const wardSelect = document.getElementById('wardSelect');
             const bedSelect = document.getElementById('bedSelect');
+            var hospitalSelect = new TomSelect("#hospitalSelect", {
+                create: false,
+                sortField: { field: "text", direction: "asc" }
+            });
 
             wardSelect.addEventListener('change', function () {
                 const wardId = this.value;

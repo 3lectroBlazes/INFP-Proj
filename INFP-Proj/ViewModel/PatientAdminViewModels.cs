@@ -44,5 +44,6 @@ namespace INFP_Proj.ViewModel
         [Display(Name = "Dosage")]
         public string? NewDosage { get; set; }
         public bool RequestHelp { get; set; }
+        public string? DiagnosisName { get; set; }
     }
 }

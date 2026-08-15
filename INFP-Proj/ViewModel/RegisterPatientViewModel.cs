@@ -24,6 +24,8 @@ namespace INFP_Proj.ViewModel
         [Display(Name = "Assigned Bracelet")]
         public int BraceletID { get; set; }
 
+        public int HospitalID { get; set; }
+
         [Required(ErrorMessage = "Please select an available bed.")]
         [Display(Name = "Assigned Bed")]
         public int BedID { get; set; }

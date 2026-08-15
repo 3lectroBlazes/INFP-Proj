@@ -35,6 +35,7 @@ namespace INFP_Proj.Pages.Admin.Reception
         public List<SelectListItem> AvailableBeds { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> AvailableDiagnoses { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> EligibleExistingUsers { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> AvailableHospitals { get; set; } = new List<SelectListItem>();
 
         public async Task OnGetAsync()
         {
@@ -42,6 +43,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             PopulateAllBracelets();
             await PopulateDiagnosesAsync();
             await PopulateEligibleExistingUsersAsync();
+            await PopulateHospitalsAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -203,7 +205,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 PatientID = patient.PatientID,
                 BedID = Input.BedID,
                 WardID = assignedWardID,
-                HospitalID = 1,
+                HospitalID = Input.HospitalID,
                 DiagnosisID = Input.DiagnosisID,
                 Description = Input.AdmissionNotes,
                 AdmissionDateTime = DateTime.UtcNow
@@ -240,6 +242,7 @@ namespace INFP_Proj.Pages.Admin.Reception
             PopulateAllBracelets();
             await PopulateDiagnosesAsync();
             await PopulateEligibleExistingUsersAsync();
+            await PopulateHospitalsAsync();
             if (SelectedWardID.HasValue)
             {
                 PopulateBedsForWard(SelectedWardID.Value);
@@ -248,12 +251,15 @@ namespace INFP_Proj.Pages.Admin.Reception
 
         private void PopulateWards()
         {
-            var wardIds = _context.Beds.Select(b => b.WardID).Distinct().ToList();
-            AvailableWards = wardIds.Select(id => new SelectListItem
-            {
-                Value = id.ToString(),
-                Text = $"Ward {id}"
-            }).ToList();
+            var wardIdsWithBeds = _context.Beds.Select(b => b.WardID).Distinct().ToList();
+
+            AvailableWards = _context.Wards
+                .Where(w => wardIdsWithBeds.Contains(w.WardID))
+                .Select(w => new SelectListItem
+                {
+                    Value = w.WardID.ToString(),
+                    Text = w.WardName 
+                }).ToList();
         }
 
         private void PopulateAllBracelets()
@@ -359,5 +365,15 @@ namespace INFP_Proj.Pages.Admin.Reception
 
             return new JsonResult(new { beds = beds });
         }
+        private async Task PopulateHospitalsAsync()
+        {
+            AvailableHospitals = await _context.Hospitals
+                .Select(h => new SelectListItem
+                {
+                    Value = h.HospitalID.ToString(),
+                    Text = $"{h.HospitalName} - {h.HospitalAddress}"
+                }).ToListAsync();
+        }
+
     }
 }
