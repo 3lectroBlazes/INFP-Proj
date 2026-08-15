@@ -128,7 +128,7 @@ namespace INFP_Proj.Data
                 .HasOne(r => r.Patients)
                 .WithMany()
                 .HasForeignKey(r => r.PatientID)
-                .OnDelete(DeleteBehavior.Restrict);  
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Records>()
                 .HasOne(r => r.Beds)
@@ -154,11 +154,13 @@ namespace INFP_Proj.Data
                 .HasForeignKey(r => r.DiagnosisID)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Records>()
-                .HasOne(r => r.MedicationList)
+            // CHANGED: MedicationList now belongs to a Records (many-to-one),
+            // instead of Records pointing at a single MedicationList.
+            modelBuilder.Entity<MedicationList>()
+                .HasOne(m => m.Records)
                 .WithMany()
-                .HasForeignKey(r => r.MedicationListID)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(m => m.RecordID)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Relationships>()
                 .HasKey(r => new { r.PatientID, r.UserID });
@@ -186,9 +188,18 @@ namespace INFP_Proj.Data
 
             modelBuilder.Entity<BraceletRelation>()
                 .HasOne(br => br.Bracelet)
-                .WithMany(b => b.BraceletRelations)  
+                .WithMany(b => b.BraceletRelations)
                 .HasForeignKey(br => br.BraceletID)
                 .OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Appointment>()
+            .Property(a => a.DoctorID)
+            .HasMaxLength(450);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.DoctorID)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

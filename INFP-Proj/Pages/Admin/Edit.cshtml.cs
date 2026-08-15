@@ -87,21 +87,42 @@ namespace INFP_Proj.Pages.Admin
 
         public async Task<IActionResult> OnPostAddMedicationAsync(int id)
         {
-            var exists = await _context.Patients.AnyAsync(p => p.PatientID == id);
-            if (!exists)
+            var patientExists = await _context.Patients.AnyAsync(p => p.PatientID == id);
+            if (!patientExists)
             {
                 return NotFound();
             }
 
-            Medications medication = await _context.Medications.FindAsync(Patient.NewMedicationID.Value);
-            if (medication == null || string.IsNullOrWhiteSpace(Patient.NewDosage))
+            if (Patient.NewMedicationID == null || string.IsNullOrWhiteSpace(Patient.NewDosage))
             {
                 TempData["Error"] = "Select a medication and enter a dosage to add.";
                 return RedirectToPage(new { id });
             }
 
+            Medications medication = await _context.Medications.FindAsync(Patient.NewMedicationID.Value);
+            if (medication == null)
+            {
+                TempData["Error"] = "Selected medication was not found.";
+                return RedirectToPage(new { id });
+            }
+
+            var activeRecord = await _context.Records
+                .Where(r => r.PatientID == id && r.DischargeDateTime == null)
+                .OrderByDescending(r => r.AdmissionDateTime)
+                .FirstOrDefaultAsync();
+
+            if (activeRecord == null)
+            {
+                TempData["Error"] = "No active admission found for this patient.";
+                return RedirectToPage(new { id });
+            }
+
+            // Duplicate check is now precise: only medications tied to this exact admission.
             var alreadyExists = await _context.MedicationLists
-                .AnyAsync(m => m.PatientID == id && m.MedicationID == Patient.NewMedicationID.Value);
+                .AnyAsync(m => m.PatientID == id
+                    && m.MedicationID == Patient.NewMedicationID.Value
+                    && m.RecordID == activeRecord.RecordID);
+
             if (alreadyExists)
             {
                 TempData["Error"] = "This medication is already assigned to this patient.";
@@ -112,7 +133,8 @@ namespace INFP_Proj.Pages.Admin
             {
                 PatientID = id,
                 MedicationID = Patient.NewMedicationID.Value,
-                Dosage = Patient.NewDosage.Trim()
+                Dosage = Patient.NewDosage.Trim(),
+                RecordID = activeRecord.RecordID
             };
             _context.MedicationLists.Add(newMedicationList);
             await _context.SaveChangesAsync();
@@ -219,13 +241,13 @@ namespace INFP_Proj.Pages.Admin
                 .OrderByDescending(r => r.AdmissionDateTime)
                 .FirstOrDefaultAsync();
 
-            // Only show medications for the current admission (medications attached to,
-            // or added after, the latest record's medication list).
-            var medications = await _context.MedicationLists
-                .Where(m => m.PatientID == patientId
-                    && (record == null || m.MedicationListID >= record.MedicationListID))
-                .OrderBy(m => m.MedicationListID)
-                .ToListAsync();
+            // Medications explicitly linked to this admission via RecordID.
+            var medications = record == null
+                ? new List<MedicationList>()
+                : await _context.MedicationLists
+                    .Where(m => m.PatientID == patientId && m.RecordID == record.RecordID)
+                    .OrderBy(m => m.MedicationListID)
+                    .ToListAsync();
 
             return new PatientEditViewModel
             {
@@ -237,8 +259,7 @@ namespace INFP_Proj.Pages.Admin
                 AdmissionDateTime = record?.AdmissionDateTime,
                 DischargeDateTime = record?.DischargeDateTime,
                 DischargeReason = record?.DischargeReason,
-                AdmissionNotes = record?.Description,
-                RequestHelp = patient.RequestHelp,   // <-- add this
+                RequestHelp = patient.RequestHelp,
                 MedicationLists = medications.Select(m => new MedicationListEditItem
                 {
                     MedicationListID = m.MedicationListID,

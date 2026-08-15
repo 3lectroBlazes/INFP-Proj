@@ -71,7 +71,8 @@ namespace INFP_Proj.Pages.Admin
 
                 var patientMeds = medicationLists
                     .Where(m => m.PatientID == p.PatientID
-                        && (latestRecord == null || m.MedicationListID >= latestRecord.MedicationListID))
+                        && latestRecord != null
+                        && m.RecordID == latestRecord.RecordID)
                     .ToList();
 
                 var medSummary = patientMeds.Count == 0

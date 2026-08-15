@@ -10,6 +10,7 @@ namespace INFP_Proj.Data
         public int MedicationListID { get; set; }
         public int PatientID { get; set; }
         public int MedicationID { get; set; }
+        public int? RecordID { get; set; } 
         public required string Dosage { get; set; }
         public bool Approved { get; set; } = true;
 
@@ -17,5 +18,7 @@ namespace INFP_Proj.Data
         public Patients? Patients { get; set; }
         [ForeignKey("MedicationID")]
         public Medications? Medications { get; set; }
+        [ForeignKey("RecordID")]
+        public Records? Records { get; set; }
     }
 }

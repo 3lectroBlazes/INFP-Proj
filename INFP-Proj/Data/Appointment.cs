@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using INFP_Proj.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,6 +12,7 @@ namespace INFP_Proj.Data
         public int AppointmentRequestID { get; set; }
         public int PatientID { get; set; }
         [StringLength(500)]
+        public string DoctorID { get; set; } = null!;
         public required string Reason { get; set; } = string.Empty;
         public string Urgency { get; set; } = "Normal";
         public string Status { get; set; } = "Pending";
@@ -22,5 +25,7 @@ namespace INFP_Proj.Data
 
         [ForeignKey("PatientID")]
         public Patients? Patient { get; set; }
+        [ForeignKey("DoctorID")]
+        public AppUser? User { get; set; }
     }
 }

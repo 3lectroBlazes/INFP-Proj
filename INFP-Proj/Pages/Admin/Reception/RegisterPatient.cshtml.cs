@@ -55,6 +55,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                     ModelState.AddModelError(nameof(Input.ExistingUserId), "Please select a registered user.");
                 }
             }
+
             else
             {
                 if (string.IsNullOrWhiteSpace(Input.FirstName))
@@ -89,6 +90,11 @@ namespace INFP_Proj.Pages.Admin.Reception
                 {
                     ModelState.AddModelError(nameof(Input.ExistingUserId), "This user is already currently admitted.");
                 }
+                else if (await _context.Patients.AnyAsync(p => p.UserID == existingUser.Id && p.Status == "Deceased"))
+                {
+                    ModelState.AddModelError(nameof(Input.ExistingUserId), "This patient is deceased and cannot be admitted.");
+                }
+
             }
 
             if (!ModelState.IsValid)
@@ -310,7 +316,13 @@ namespace INFP_Proj.Pages.Admin.Reception
                 .Select(p => p.UserID)
                 .ToListAsync()).ToHashSet();
 
+            HashSet<string> deceasedUserIds = (await _context.Patients
+                .Where(p => p.Status == "Deceased")
+                .Select(p => p.UserID)
+                .ToListAsync()).ToHashSet();
+
             HashSet<string> excludedUserIds = new HashSet<string>(admittedUserIds);
+            excludedUserIds.UnionWith(deceasedUserIds);
             HashSet<string> adminRoleNames = await GetAdminRoleNamesAsync();
 
             foreach (string roleName in adminRoleNames)

@@ -165,7 +165,7 @@ namespace INFP_Proj.Pages.Admin
 
             record.DischargeDateTime = dateOfDeathParsed;
             record.DischargeReason = "Deceased";
-            patient.Status = "Discharged";
+            patient.Status = "Deceased";
 
             await _context.SaveChangesAsync();
 

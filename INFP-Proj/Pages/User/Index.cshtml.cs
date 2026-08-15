@@ -85,17 +85,15 @@ namespace INFP_Proj.Pages.User
                 .Include(r => r.Wards)
                 .Include(r => r.Beds)
                 .Include(r => r.Diagnoses)
-                .Include(r => r.MedicationList)
-                    .ThenInclude(ml => ml.Medications)
                 .Where(r => r.PatientID == patient.PatientID)
                 .OrderByDescending(r => r.AdmissionDateTime)
                 .FirstOrDefaultAsync();
 
             var currentMedications = await _context.MedicationLists
                 .Include(ml => ml.Medications)
-                .Where(ml =>
-                    ml.PatientID == patient.PatientID &&
-                    (record == null || ml.MedicationListID >= record.MedicationListID))
+                .Where(ml => ml.PatientID == patient.PatientID
+                    && record != null
+                    && ml.RecordID == record.RecordID)
                 .OrderBy(ml =>
                     ml.Medications != null
                         ? ml.Medications.ConsumptionTime
@@ -384,6 +382,7 @@ namespace INFP_Proj.Pages.User
                 .OrderBy(p => p.PatientID)
                 .ToListAsync();
 
+
             var patientIds = patients.Select(p => p.PatientID).ToList();
 
             if (patientIds.Count == 0)
@@ -413,8 +412,8 @@ namespace INFP_Proj.Pages.User
                 var patientMeds = medicationLists
                     .Where(m =>
                         m.PatientID == p.PatientID &&
-                        (latestRecord == null ||
-                         m.MedicationListID >= latestRecord.MedicationListID))
+                        latestRecord != null &&
+                        m.RecordID == latestRecord.RecordID)
                     .ToList();
 
                 string medSummary = patientMeds.Count == 0
