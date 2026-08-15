@@ -237,6 +237,7 @@ namespace INFP_Proj.Pages.Admin
                 AdmissionDateTime = record?.AdmissionDateTime,
                 DischargeDateTime = record?.DischargeDateTime,
                 DischargeReason = record?.DischargeReason,
+                AdmissionNotes = record?.Description,
                 RequestHelp = patient.RequestHelp,   // <-- add this
                 MedicationLists = medications.Select(m => new MedicationListEditItem
                 {

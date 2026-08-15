@@ -146,6 +146,20 @@
 </div>
 
 <div class="dashboard-card app-card card mb-4">
+    <div class="card-header">Admission notes</div>
+    <div class="card-body">
+        @if (string.IsNullOrWhiteSpace(Model.Patient.AdmissionNotes))
+        {
+            <p class="text-muted mb-0">No admission notes recorded.</p>
+        }
+        else
+        {
+            <p class="mb-0">@Model.Patient.AdmissionNotes</p>
+        }
+    </div>
+</div>
+
+<div class="dashboard-card app-card card mb-4">
     <div class="card-header">Medications</div>
     <div class="card-body">
         @if (Model.Patient.MedicationLists.Count == 0)

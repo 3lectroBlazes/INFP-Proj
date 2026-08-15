@@ -36,6 +36,7 @@ namespace INFP_Proj.ViewModel
         public DateTime? AdmissionDateTime { get; set; }
         public DateTime? DischargeDateTime { get; set; }
         public string? DischargeReason { get; set; }
+        public string? AdmissionNotes { get; set; }
         public bool IsDischarged => DischargeDateTime.HasValue;
         public List<MedicationListEditItem> MedicationLists { get; set; } = new();
         [Display(Name = "Medication")]
