@@ -28,18 +28,12 @@ namespace INFP_Proj.Data
         public DbSet<Relationships> Relationships { get; set; }
         public DbSet<BraceletRelation> BraceletRelations { get; set; }
         public DbSet<Log> Logs { get; set; }
-
-        public DbSet<LogAcknowledgement>
-            LogAcknowledgements
-        { get; set; }
+        public DbSet<LogAcknowledgement> LogAcknowledgements { get; set; }
         public DbSet<DoctorRequest> DoctorRequests { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
-
-        public DbSet<AppointmentChangeRequest>
-            AppointmentChangeRequests
-        { get; set; }
-
+        public DbSet<AppointmentChangeRequest> AppointmentChangeRequests { get; set; }
         public DbSet<Thresholds> Thresholds { get; set; }
+        public DbSet<DeathCerts> DeathCerts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,10 +51,6 @@ namespace INFP_Proj.Data
                     .HasMaxLength(450)
                     .IsRequired();
 
-                /*
-                 * The same relative can acknowledge the same
-                 * emergency only once.
-                 */
                 entity.HasIndex(acknowledgement => new
                 {
                     acknowledgement.LogID,
