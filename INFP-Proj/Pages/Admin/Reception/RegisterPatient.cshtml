@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model INFP_Proj.Pages.Admin.Reception.RegisterPatientModel
 @{
     ViewData["Title"] = "Register New Patient";
@@ -24,7 +24,20 @@
                     <form method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                        <div class="row mb-3">
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label fw-bold d-block">Patient type</label>
+                                <div class="btn-group" role="group" aria-label="Registration mode">
+                                    <input type="radio" class="btn-check" name="Input.Mode" id="modeNew" value="New" autocomplete="off" checked="@(Model.Input.Mode != "Existing")">
+                                    <label class="btn btn-outline-primary" for="modeNew">Register New Patient</label>
+
+                                    <input type="radio" class="btn-check" name="Input.Mode" id="modeExisting" value="Existing" autocomplete="off" checked="@(Model.Input.Mode == "Existing")">
+                                    <label class="btn btn-outline-primary" for="modeExisting">Already Registered User</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="newPatientFields" class="row mb-3">
                             <div class="col-md-4">
                                 <label asp-for="Input.FirstName" class="form-label fw-bold"></label>
                                 <input asp-for="Input.FirstName" class="form-control" />
@@ -35,13 +48,21 @@
                                 <input asp-for="Input.LastName" class="form-control" />
                                 <span asp-validation-for="Input.LastName" class="text-danger"></span>
                             </div>
-                        </div>
-
-                        <div class="row mb-4">
-                            <div class="col-md-12">
+                            <div class="col-md-4">
                                 <label asp-for="Input.Email" class="form-label fw-bold"></label>
                                 <input asp-for="Input.Email" class="form-control" placeholder="patient@example.com" />
                                 <span asp-validation-for="Input.Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div id="existingPatientFields" class="row mb-4">
+                            <div class="col-md-12">
+                                <label asp-for="Input.ExistingUserId" class="form-label fw-bold"></label>
+                                <select asp-for="Input.ExistingUserId" asp-items="Model.EligibleExistingUsers" class="form-select">
+                                    <option value="">-- Select a registered user --</option>
+                                </select>
+                                <span asp-validation-for="Input.ExistingUserId" class="text-danger"></span>
+                                <p class="form-text text-muted mb-0">Non-admin users who are not currently admitted (discharged patients can be readmitted).</p>
                             </div>
                         </div>
 
@@ -81,11 +102,22 @@
                             </div>
                         </div>
 
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label asp-for="Input.DiagnosisID" class="form-label fw-bold"></label>
+                                <select asp-for="Input.DiagnosisID" asp-items="Model.AvailableDiagnoses" class="form-select">
+                                    <option value="">-- Select a diagnosis --</option>
+                                </select>
+                                <span asp-validation-for="Input.DiagnosisID" class="text-danger"></span>
+                                <p class="form-text text-muted mb-0">General diagnosis category for this admission.</p>
+                            </div>
+                        </div>
+
                         <div class="row mb-4">
                             <div class="col-12">
-                                <label asp-for="Input.Description" class="form-label fw-bold"></label>
-                                <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Enter reason for admission, symptoms, or initial notes..."></textarea>
-                                <span asp-validation-for="Input.Description" class="text-danger"></span>
+                                <label asp-for="Input.AdmissionNotes" class="form-label fw-bold"></label>
+                                <textarea asp-for="Input.AdmissionNotes" class="form-control" rows="3" placeholder="Describe observations (e.g. spasming, shaking)..."></textarea>
+                                <span asp-validation-for="Input.AdmissionNotes" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -137,6 +169,25 @@
                         alert("Failed to load beds for the selected ward.");
                     });
             });
+
+            const modeRadios = document.querySelectorAll('input[name="Input.Mode"]');
+            const newFields = document.getElementById('newPatientFields');
+            const existingFields = document.getElementById('existingPatientFields');
+
+            function applyMode(mode) {
+                const isExisting = mode === 'Existing';
+                newFields.hidden = isExisting;
+                existingFields.hidden = !isExisting;
+            }
+
+            modeRadios.forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    applyMode(radio.value);
+                });
+            });
+
+            const checkedMode = document.querySelector('input[name="Input.Mode"]:checked');
+            applyMode(checkedMode ? checkedMode.value : 'New');
         });
     </script>
 }
