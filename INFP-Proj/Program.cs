@@ -83,17 +83,5 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
-using (IServiceScope scope = app.Services.CreateScope())
-{
-    IServiceProvider services = scope.ServiceProvider;
-    try
-    {
-        await AppDbSeeder.SeedAsync(services);
-    }
-    catch (Exception ex)
-    {
-        ILogger<Program> startupLogger = services.GetRequiredService<ILogger<Program>>();
-        startupLogger.LogError(ex, "Database seeding failed at startup. The app will continue starting, but check the database connection string.");
-    }
-}
+
 app.Run();

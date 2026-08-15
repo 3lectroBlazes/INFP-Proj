@@ -11,1171 +11,465 @@ namespace INFP_Proj.Pages.User
     [Authorize]
     public class CareUpdatesModel : PageModel
     {
-        private const string SelectedPatientSessionKey =
-            "SelectedPatientId";
-
+        private const string SelectedPatientSessionKey = "SelectedPatientId";
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
 
-        public CareUpdatesModel(
-            AppDbContext context,
-            UserManager<AppUser> userManager)
+        public CareUpdatesModel(AppDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
         public bool HasPatientRecord { get; set; }
-
         public int PatientId { get; set; }
+        public string PatientName { get; set; } = string.Empty;
 
-        public string PatientName { get; set; } =
-            string.Empty;
-
-        public List<AppointmentDisplayItem>
-            ConfirmedAppointments
-        { get; set; } = new();
-
-        public List<AppointmentDisplayItem>
-            PendingAppointments
-        { get; set; } = new();
-
-        public List<AppointmentDisplayItem>
-            AppointmentHistory
-        { get; set; } = new();
-
-        public List<ChangeRequestDisplayItem>
-            ChangeRequestHistory
-        { get; set; } = new();
-
-        public List<DoctorRequest>
-            DoctorRequests
-        { get; set; } = new();
+        public List<AppointmentDisplayItem> ConfirmedAppointments { get; set; } = new();
+        public List<AppointmentDisplayItem> PendingAppointments { get; set; } = new();
+        public List<AppointmentDisplayItem> AppointmentHistory { get; set; } = new();
+        public List<ChangeRequestDisplayItem> ChangeRequestHistory { get; set; } = new();
+        public List<DoctorRequest> DoctorRequests { get; set; } = new();
 
         [BindProperty]
-        public NewAppointmentInput
-            NewAppointmentRequest
-        { get; set; } = new();
+        public NewAppointmentInput NewAppointmentRequest { get; set; } = new();
 
         [BindProperty]
         public string? QuestionMessage { get; set; }
 
-
+        // Kept for compatibility with the current page until the new .cshtml is added.
         public string MinimumDateTimeValue =>
-            GetSingaporeNow()
-                .AddMinutes(5)
-                .ToString("yyyy-MM-ddTHH:mm");
+            GetSingaporeNow().AddMinutes(5).ToString("yyyy-MM-ddTHH:mm");
 
-
-        // =========================================================
-        // PAGE LOAD
-        // =========================================================
+        public string MinimumDateValue =>
+            GetSingaporeNow().ToString("yyyy-MM-dd");
 
         public async Task OnGetAsync()
         {
             await LoadPageDataAsync();
         }
 
-
         // =========================================================
-        // PATIENT ACKNOWLEDGES APPOINTMENT
-        // =========================================================
-        //
-        // Expected Reception-created/rescheduled state:
-        //
-        // DocAcknowledged     = true
-        // PatientAcknowledged = false
-        //
-        // D1P0
-        //
-        // Once patient agrees:
-        //
-        // D1P1 -> Scheduled
+        // PATIENT ACKNOWLEDGES RECEPTION APPOINTMENT
+        // D1P0 -> D1P1 -> Scheduled
         // =========================================================
 
-        public async Task<IActionResult>
-            OnPostAcknowledgeAppointmentAsync(
-                int appointmentId)
+        public async Task<IActionResult> OnPostAcknowledgeAppointmentAsync(int appointmentId)
         {
-            Patients? patient =
-                await GetCurrentLinkedPatientAsync();
+            var patient = await GetCurrentLinkedPatientAsync();
 
             if (patient == null)
-            {
-                SetError(
-                    "No patient has been selected.");
-
-                return RedirectToPage();
-            }
+                return Error("No patient has been selected.");
 
             if (appointmentId <= 0)
-            {
-                SetError(
-                    "The appointment was not selected correctly.");
+                return Error("The appointment was not selected correctly.");
 
-                return RedirectToPage();
-            }
-
-            Appointment? appointment =
-                await _context.Appointments
-                    .FirstOrDefaultAsync(item =>
-                        item.AppointmentRequestID ==
-                            appointmentId &&
-                        item.PatientID ==
-                            patient.PatientID);
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a =>
+                    a.AppointmentRequestID == appointmentId &&
+                    a.PatientID == patient.PatientID);
 
             if (appointment == null)
-            {
-                SetError(
-                    "The selected appointment could not be found.");
+                return Error("The selected appointment could not be found.");
 
-                return RedirectToPage();
-            }
+            if (IsClosedStatus(appointment.Status))
+                return Error("A cancelled, rejected or completed appointment cannot be acknowledged.");
 
-            if (IsClosedStatus(
-                    appointment.Status))
-            {
-                SetError(
-                    "A cancelled, rejected or completed " +
-                    "appointment cannot be acknowledged.");
-
-                return RedirectToPage();
-            }
-
-            /*
-             * Reception must have acknowledged
-             * the appointment first.
-             *
-             * Old Approved / Scheduled / Rescheduled rows
-             * are recognised for compatibility.
-             */
-            if (!IsReceptionAcknowledged(
-                    appointment))
-            {
-                SetError(
-                    "This appointment is still awaiting Reception approval.");
-
-                return RedirectToPage();
-            }
+            if (!IsReceptionAcknowledged(appointment))
+                return Error("This appointment is still awaiting Reception approval.");
 
             if (appointment.PatientAcknowledged)
-            {
-                SetMessage(
-                    "This appointment has already been acknowledged.");
+                return Message("This appointment has already been acknowledged.");
 
-                return RedirectToPage();
-            }
-
-            /*
-             * Some older rows may have Approved,
-             * Scheduled or Rescheduled status but
-             * DocAcknowledged was never written.
-             *
-             * Backfill it here so the new D/P workflow
-             * becomes consistent.
-             */
+            // Older rows may have Reception status but DocAcknowledged was not written.
             if (!appointment.DocAcknowledged)
-            {
-                appointment.DocAcknowledged =
-                    true;
-            }
+                appointment.DocAcknowledged = true;
 
-            appointment.PatientAcknowledged =
-                true;
+            appointment.PatientAcknowledged = true;
 
-            /*
-             * Requirement:
-             *
-             * D1P1 = Scheduled
-             */
-            if (
-                appointment.DocAcknowledged &&
-                appointment.PatientAcknowledged
-            )
-            {
-                appointment.Status =
-                    "Scheduled";
-            }
+            if (appointment.DocAcknowledged && appointment.PatientAcknowledged)
+                appointment.Status = "Scheduled";
 
             await _context.SaveChangesAsync();
 
-            SetMessage(
-                "Appointment acknowledged successfully. " +
-                "The appointment is now scheduled.");
-
-            return RedirectToPage();
+            return Message("Appointment acknowledged successfully. The appointment is now scheduled.");
         }
 
-
         // =========================================================
-        // PATIENT REQUESTS A DIFFERENT DATE
-        // =========================================================
-        //
-        // Patient reschedule requirement:
-        //
-        // D0P1
-        //
-        // IMPORTANT:
-        //
-        // We DO NOT overwrite Appointment.DateTime yet.
-        //
-        // The requested date stays inside the existing
-        // AppointmentChangeRequest table so Reception's
-        // approve/reject workflow is preserved.
-        //
-        // This protects your teammate's existing code.
+        // PATIENT REQUESTS NEW DATE
+        // D0P1 - original appointment date stays unchanged
         // =========================================================
 
-        public async Task<IActionResult>
-            OnPostRequestDateChangeAsync(
-                int appointmentId,
-                DateTime? requestedDateTime,
-                string? changeReason)
+        public async Task<IActionResult> OnPostRequestDateChangeAsync(
+            int appointmentId,
+            DateTime? requestedDateTime,
+            string? changeReason)
         {
-            Patients? patient =
-                await GetCurrentLinkedPatientAsync();
+            var patient = await GetCurrentLinkedPatientAsync();
 
             if (patient == null)
-            {
-                SetError(
-                    "No patient has been selected.");
-
-                return RedirectToPage();
-            }
+                return Error("No patient has been selected.");
 
             if (appointmentId <= 0)
-            {
-                SetError(
-                    "The appointment was not selected correctly.");
-
-                return RedirectToPage();
-            }
+                return Error("The appointment was not selected correctly.");
 
             if (!requestedDateTime.HasValue)
-            {
-                SetError(
-                    "Select your preferred new date and time.");
-
-                return RedirectToPage();
-            }
+                return Error("Select your preferred new date and time.");
 
             DateTime requestedTime =
-                DateTime.SpecifyKind(
-                    requestedDateTime.Value,
-                    DateTimeKind.Unspecified);
+                DateTime.SpecifyKind(requestedDateTime.Value, DateTimeKind.Unspecified);
 
             if (requestedTime <= GetSingaporeNow())
-            {
-                SetError(
-                    "The requested appointment date must be in the future.");
+                return Error("The requested appointment date must be in the future.");
 
-                return RedirectToPage();
-            }
+            // ADDED: User appointments must match Reception's 9AM-5PM hourly slots.
+            if (!IsValidAppointmentSlot(requestedTime))
+                return Error("Select a time between 9:00 AM and 5:00 PM on the hour.");
 
-            Appointment? appointment =
-                await _context.Appointments
-                    .FirstOrDefaultAsync(item =>
-                        item.AppointmentRequestID ==
-                            appointmentId &&
-                        item.PatientID ==
-                            patient.PatientID);
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a =>
+                    a.AppointmentRequestID == appointmentId &&
+                    a.PatientID == patient.PatientID);
 
             if (appointment == null)
-            {
-                SetError(
-                    "The selected appointment could not be found.");
+                return Error("The selected appointment could not be found.");
 
-                return RedirectToPage();
-            }
+            if (IsClosedStatus(appointment.Status))
+                return Error("A cancelled, rejected or completed appointment cannot be changed.");
 
-            if (IsClosedStatus(
-                    appointment.Status))
-            {
-                SetError(
-                    "A cancelled, rejected or completed " +
-                    "appointment cannot be changed.");
+            if (!IsReceptionAcknowledged(appointment))
+                return Error("This appointment is still awaiting Reception approval.");
 
-                return RedirectToPage();
-            }
+            if (appointment.DateTime == requestedTime)
+                return Error("The requested date and time is the same as the current appointment.");
 
-            /*
-             * Only an appointment already accepted/
-             * created by Reception can be rescheduled
-             * from this section.
-             */
-            if (!IsReceptionAcknowledged(
-                    appointment))
-            {
-                SetError(
-                    "This appointment is still awaiting Reception approval.");
+            string reason = changeReason?.Trim() ?? string.Empty;
 
-                return RedirectToPage();
-            }
-
-            if (appointment.DateTime ==
-                requestedTime)
-            {
-                SetError(
-                    "The requested date and time is the same " +
-                    "as the current appointment.");
-
-                return RedirectToPage();
-            }
-
-            string reason =
-                changeReason?.Trim()
-                ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(
-                    reason))
-            {
-                SetError(
-                    "Enter a reason for requesting another date.");
-
-                return RedirectToPage();
-            }
+            if (string.IsNullOrWhiteSpace(reason))
+                return Error("Enter a reason for requesting another date.");
 
             if (reason.Length > 500)
+                return Error("The reason cannot exceed 500 characters.");
+
+            bool pendingExists = await _context.AppointmentChangeRequests
+                .AsNoTracking()
+                .AnyAsync(r =>
+                    r.AppointmentRequestID == appointmentId &&
+                    r.Status == "Pending");
+
+            if (pendingExists)
+                return Error("A date-change request is already pending for this appointment.");
+
+            var changeRequest = new AppointmentChangeRequest
             {
-                SetError(
-                    "The reason cannot exceed 500 characters.");
+                AppointmentRequestID = appointment.AppointmentRequestID,
+                PatientID = patient.PatientID,
+                RequestedDateTime = requestedTime,
+                Reason = reason,
+                Status = "Pending",
+                RequestedAt = DateTime.UtcNow
+            };
 
-                return RedirectToPage();
-            }
+            // Patient requested/rescheduled = D0P1.
+            appointment.DocAcknowledged = false;
+            appointment.PatientAcknowledged = true;
+            appointment.Status = "Pending";
 
-
-            // -----------------------------------------------------
-            // Prevent multiple pending date-change requests
-            // -----------------------------------------------------
-
-            bool pendingRequestExists =
-                await _context
-                    .AppointmentChangeRequests
-                    .AsNoTracking()
-                    .AnyAsync(request =>
-                        request.AppointmentRequestID ==
-                            appointmentId &&
-                        request.Status ==
-                            "Pending");
-
-            if (pendingRequestExists)
-            {
-                SetError(
-                    "A date-change request is already pending " +
-                    "for this appointment.");
-
-                return RedirectToPage();
-            }
-
-
-            // -----------------------------------------------------
-            // Preserve existing change-request system
-            // -----------------------------------------------------
-
-            var changeRequest =
-                new AppointmentChangeRequest
-                {
-                    AppointmentRequestID =
-                        appointment
-                            .AppointmentRequestID,
-
-                    PatientID =
-                        patient.PatientID,
-
-                    RequestedDateTime =
-                        requestedTime,
-
-                    Reason =
-                        reason,
-
-                    Status =
-                        "Pending",
-
-                    RequestedAt =
-                        DateTime.UtcNow,
-
-                    ReviewedAt =
-                        null,
-
-                    ReviewMessage =
-                        null,
-
-                    ReviewedByUserID =
-                        null
-                };
-
-
-            /*
-             * Requirement from recommendation:
-             *
-             * Patient makes/reschedules:
-             *
-             * DocAcknowledged     = 0
-             * PatientAcknowledged = 1
-             *
-             * D0P1
-             *
-             * Appointment.DateTime is deliberately
-             * NOT changed yet.
-             */
-            appointment.DocAcknowledged =
-                false;
-
-            appointment.PatientAcknowledged =
-                true;
-
-            appointment.Status =
-                "Pending";
-
-
-            _context
-                .AppointmentChangeRequests
-                .Add(changeRequest);
-
+            _context.AppointmentChangeRequests.Add(changeRequest);
 
             try
             {
-                await _context
-                    .SaveChangesAsync();
+                await _context.SaveChangesAsync();
             }
             catch (DbUpdateException)
             {
-                SetError(
-                    "A pending date-change request already exists " +
-                    "for this appointment.");
-
-                return RedirectToPage();
+                return Error("A pending date-change request already exists for this appointment.");
             }
 
-
-            SetMessage(
-                "Your preferred new date has been submitted. " +
-                "It is now awaiting Reception acknowledgement.");
-
-            return RedirectToPage();
+            return Message(
+                "Your preferred new date has been submitted. It is now awaiting Reception acknowledgement.");
         }
 
-
         // =========================================================
-        // PATIENT CREATES NEW APPOINTMENT
-        // =========================================================
-        //
-        // Requirement:
-        //
-        // Patient-created appointment = D0P1
-        //
-        // DocAcknowledged     = false
-        // PatientAcknowledged = true
-        //
-        // Reception must agree before it becomes Scheduled.
+        // PATIENT CREATES APPOINTMENT
+        // D0P1
         // =========================================================
 
-        public async Task<IActionResult>
-            OnPostRequestNewAppointmentAsync()
+        public async Task<IActionResult> OnPostRequestNewAppointmentAsync()
         {
-            Patients? patient =
-                await GetCurrentLinkedPatientAsync();
+            var patient = await GetCurrentLinkedPatientAsync();
 
             if (patient == null)
-            {
-                SetError(
-                    "No patient has been selected.");
+                return Error("No patient has been selected.");
 
-                return RedirectToPage();
-            }
+            if (!NewAppointmentRequest.PreferredDateTime.HasValue)
+                return Error("Select a preferred appointment date and time.");
 
-            if (!NewAppointmentRequest
-                    .PreferredDateTime
-                    .HasValue)
-            {
-                SetError(
-                    "Select a preferred appointment date and time.");
+            DateTime preferredDateTime = DateTime.SpecifyKind(
+                NewAppointmentRequest.PreferredDateTime.Value,
+                DateTimeKind.Unspecified);
 
-                return RedirectToPage();
-            }
+            if (preferredDateTime <= GetSingaporeNow())
+                return Error("The preferred appointment date must be in the future.");
 
-            DateTime preferredDateTime =
-                DateTime.SpecifyKind(
-                    NewAppointmentRequest
-                        .PreferredDateTime
-                        .Value,
-                    DateTimeKind.Unspecified);
+            // ADDED: Match Reception's 9AM-5PM whole-hour slots.
+            if (!IsValidAppointmentSlot(preferredDateTime))
+                return Error("Select a time between 9:00 AM and 5:00 PM on the hour.");
 
-            if (preferredDateTime <=
-                GetSingaporeNow())
-            {
-                SetError(
-                    "The preferred appointment date must be in the future.");
+            string reason = NewAppointmentRequest.Reason?.Trim() ?? string.Empty;
 
-                return RedirectToPage();
-            }
-
-
-            string reason =
-                NewAppointmentRequest
-                    .Reason?
-                    .Trim()
-                ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(
-                    reason))
-            {
-                SetError(
-                    "Enter a reason for the appointment.");
-
-                return RedirectToPage();
-            }
+            if (string.IsNullOrWhiteSpace(reason))
+                return Error("Enter a reason for the appointment.");
 
             if (reason.Length > 500)
+                return Error("The appointment reason cannot exceed 500 characters.");
+
+            string urgency = NewAppointmentRequest.Urgency?.Trim().ToLowerInvariant() switch
             {
-                SetError(
-                    "The appointment reason cannot exceed 500 characters.");
+                "urgent" => "Urgent",
+                "emergency" => "Emergency",
+                _ => "Normal"
+            };
 
-                return RedirectToPage();
-            }
+            bool duplicateExists = await _context.Appointments
+                .AsNoTracking()
+                .AnyAsync(a =>
+                    a.PatientID == patient.PatientID &&
+                    a.DateTime == preferredDateTime &&
+                    a.Status != "Rejected" &&
+                    a.Status != "Cancelled");
 
+            if (duplicateExists)
+                return Error("An appointment or request already exists at that exact date and time.");
 
-            // -----------------------------------------------------
-            // Urgency:
-            //
-            // Normal
-            // Urgent
-            // Emergency
-            // -----------------------------------------------------
-
-            string urgency =
-                NewAppointmentRequest
-                    .Urgency?
-                    .Trim()
-                    .ToLowerInvariant()
-                switch
-                {
-                    "urgent" =>
-                        "Urgent",
-
-                    "emergency" =>
-                        "Emergency",
-
-                    _ =>
-                        "Normal"
-                };
-
-
-            // -----------------------------------------------------
-            // Avoid duplicate exact appointment requests
-            // -----------------------------------------------------
-
-            bool duplicateRequestExists =
-                await _context.Appointments
-                    .AsNoTracking()
-                    .AnyAsync(appointment =>
-                        appointment.PatientID ==
-                            patient.PatientID &&
-
-                        appointment.DateTime ==
-                            preferredDateTime &&
-
-                        appointment.Status !=
-                            "Rejected" &&
-
-                        appointment.Status !=
-                            "Cancelled");
-
-            if (duplicateRequestExists)
+            var appointment = new Appointment
             {
-                SetError(
-                    "An appointment or request already exists " +
-                    "at that exact date and time.");
+                PatientID = patient.PatientID,
+                Reason = reason,
+                Urgency = urgency,
+                Status = "Pending",
+                DoctorResponse = null,
+                DocAcknowledged = false,
+                PatientAcknowledged = true,
+                DateTime = preferredDateTime,
+                RequestedAt = DateTime.UtcNow
+            };
 
-                return RedirectToPage();
-            }
-
-
-            // -----------------------------------------------------
-            // D0P1
-            // -----------------------------------------------------
-
-            var appointment =
-                new Appointment
-                {
-                    PatientID =
-                        patient.PatientID,
-
-                    Reason =
-                        reason,
-
-                    Urgency =
-                        urgency,
-
-                    Status =
-                        "Pending",
-
-                    DoctorResponse =
-                        null,
-
-                    // D0
-                    DocAcknowledged =
-                        false,
-
-                    // P1
-                    PatientAcknowledged =
-                        true,
-
-                    DateTime =
-                        preferredDateTime,
-
-                    RequestedAt =
-                        DateTime.UtcNow
-                };
-
-
-            _context.Appointments.Add(
-                appointment);
-
+            _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
 
+            // ADDED: Emergency appointment also creates an emergency log
+            if (urgency == "Emergency")
+            {
+                _context.Logs.Add(new Log
+                {
+                    UserID = patient.UserID,
+                    PatientID = patient.PatientID,
+                    Event = $"Emergency appointment requested: {reason}",
+                    Emergency = true,
+                    Resolved = false,
+                    selfAcknowledged = false,
+                    relativeAcknowledged = false,
+                    Timestamp = DateTime.Now
+                });
 
-            SetMessage(
-                "Your appointment request was submitted. " +
-                "It is now awaiting Reception acknowledgement.");
+                await _context.SaveChangesAsync();
+            }
 
-            return RedirectToPage();
+            return Message(
+                "Your appointment request was submitted. It is now awaiting Reception acknowledgement.");
         }
-
 
         // =========================================================
         // ASK DOCTOR
         // =========================================================
 
-        public async Task<IActionResult>
-            OnPostAskDoctorAsync()
+        public async Task<IActionResult> OnPostAskDoctorAsync()
         {
-            Patients? patient =
-                await GetCurrentLinkedPatientAsync();
+            var patient = await GetCurrentLinkedPatientAsync();
 
             if (patient == null)
-            {
-                SetError(
-                    "No patient has been selected.");
+                return Error("No patient has been selected.");
 
-                return RedirectToPage();
-            }
+            string question = QuestionMessage?.Trim() ?? string.Empty;
 
-
-            string question =
-                QuestionMessage?.Trim()
-                ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(
-                    question))
-            {
-                SetError(
-                    "Enter a question for the doctor.");
-
-                return RedirectToPage();
-            }
+            if (string.IsNullOrWhiteSpace(question))
+                return Error("Enter a question for the doctor.");
 
             if (question.Length > 1000)
+                return Error("The question cannot exceed 1,000 characters.");
+
+            _context.DoctorRequests.Add(new DoctorRequest
             {
-                SetError(
-                    "The question cannot exceed 1,000 characters.");
-
-                return RedirectToPage();
-            }
-
-
-            var doctorRequest =
-                new DoctorRequest
-                {
-                    PatientID =
-                        patient.PatientID,
-
-                    RequestMessage =
-                        question,
-
-                    RequestDate =
-                        DateTime.UtcNow,
-
-                    ReplyMessage =
-                        null,
-
-                    Completed =
-                        false,
-
-                    /*
-                     * This is a User-side request,
-                     * not an Admin-created request.
-                     */
-                    ByAdmin =
-                        false
-                };
-
-
-            _context.DoctorRequests.Add(
-                doctorRequest);
+                PatientID = patient.PatientID,
+                RequestMessage = question,
+                RequestDate = DateTime.UtcNow,
+                ReplyMessage = null,
+                Completed = false,
+                ByAdmin = false
+            });
 
             await _context.SaveChangesAsync();
 
-
-            SetMessage(
-                "Your question was submitted to the doctor.");
-
-            return RedirectToPage();
+            return Message("Your question was submitted to the doctor.");
         }
 
-
         // =========================================================
-        // LOAD PAGE DATA
+        // LOAD PAGE
         // =========================================================
 
         private async Task LoadPageDataAsync()
         {
-            Patients? patient =
-                await GetCurrentLinkedPatientAsync();
+            var patient = await GetCurrentLinkedPatientAsync();
 
             if (patient == null)
             {
-                HasPatientRecord =
-                    false;
-
+                HasPatientRecord = false;
                 return;
             }
 
-
-            HasPatientRecord =
-                true;
-
-            PatientId =
-                patient.PatientID;
-
-            PatientName =
-                patient.User == null
-                    ? $"Patient #{patient.PatientID}"
-                    : $"{patient.User.FirstName} {patient.User.LastName}"
-                        .Trim();
-
-
-            // -----------------------------------------------------
-            // Appointments
-            // -----------------------------------------------------
-
-            List<Appointment> appointments =
-                await _context.Appointments
-                    .AsNoTracking()
-                    .Where(appointment =>
-                        appointment.PatientID ==
-                            patient.PatientID)
-                    .OrderBy(appointment =>
-                        appointment.DateTime)
-                    .ToListAsync();
-
-
-            // -----------------------------------------------------
-            // Existing shared AppointmentChangeRequest records
-            // -----------------------------------------------------
-
-            List<AppointmentChangeRequest>
-                changeRequests =
-                    await _context
-                        .AppointmentChangeRequests
-                        .AsNoTracking()
-                        .Where(request =>
-                            request.PatientID ==
-                                patient.PatientID)
-                        .OrderByDescending(request =>
-                            request.RequestedAt)
-                        .ToListAsync();
-
-
-            // -----------------------------------------------------
-            // Latest change request for each appointment
-            // -----------------------------------------------------
-
-            Dictionary<int, AppointmentChangeRequest>
-                latestRequestByAppointment =
-                    changeRequests
-                        .GroupBy(request =>
-                            request
-                                .AppointmentRequestID)
-                        .ToDictionary(
-                            group =>
-                                group.Key,
-
-                            group =>
-                                group
-                                    .OrderByDescending(
-                                        request =>
-                                            request
-                                                .RequestedAt)
-                                    .First());
-
-
-            // -----------------------------------------------------
-            // Pending change request for each appointment
-            // -----------------------------------------------------
-
-            Dictionary<int, AppointmentChangeRequest>
-                pendingRequestByAppointment =
-                    changeRequests
-                        .Where(request =>
-                            request.Status.Equals(
-                                "Pending",
-                                StringComparison
-                                    .OrdinalIgnoreCase))
-                        .GroupBy(request =>
-                            request
-                                .AppointmentRequestID)
-                        .ToDictionary(
-                            group =>
-                                group.Key,
-
-                            group =>
-                                group
-                                    .OrderByDescending(
-                                        request =>
-                                            request
-                                                .RequestedAt)
-                                    .First());
-
-
-            // -----------------------------------------------------
-            // Convert database rows into page display items
-            // -----------------------------------------------------
-
-            List<AppointmentDisplayItem>
-                displayItems =
-                    appointments
-                        .Select(appointment =>
-                        {
-                            pendingRequestByAppointment
-                                .TryGetValue(
-                                    appointment
-                                        .AppointmentRequestID,
-
-                                    out
-                                    AppointmentChangeRequest?
-                                        pendingRequest);
-
-
-                            latestRequestByAppointment
-                                .TryGetValue(
-                                    appointment
-                                        .AppointmentRequestID,
-
-                                    out
-                                    AppointmentChangeRequest?
-                                        latestRequest);
-
-
-                            bool isConfirmed =
-                                IsReceptionAcknowledged(
-                                    appointment);
-
-
-                            bool isClosed =
-                                IsClosedStatus(
-                                    appointment.Status);
-
-
-                            return new AppointmentDisplayItem
-                            {
-                                AppointmentRequestID =
-                                    appointment
-                                        .AppointmentRequestID,
-
-                                DateTime =
-                                    appointment.DateTime,
-
-                                Reason =
-                                    appointment.Reason,
-
-                                Urgency =
-                                    appointment.Urgency,
-
-                                Status =
-                                    appointment.Status,
-
-                                DoctorResponse =
-                                    appointment
-                                        .DoctorResponse,
-
-                                DocAcknowledged =
-                                    appointment
-                                        .DocAcknowledged,
-
-                                PatientAcknowledged =
-                                    appointment
-                                        .PatientAcknowledged,
-
-                                RequestedAt =
-                                    appointment
-                                        .RequestedAt,
-
-                                IsConfirmed =
-                                    isConfirmed,
-
-                                IsClosed =
-                                    isClosed,
-
-                                PendingChangeRequest =
-                                    pendingRequest,
-
-                                LatestChangeRequest =
-                                    latestRequest
-                            };
-                        })
-                        .ToList();
-
-
-            DateTime singaporeNow =
-                GetSingaporeNow();
-
-
-            // -----------------------------------------------------
-            // Reception has acknowledged
-            //
-            // D1P0 or D1P1
-            // -----------------------------------------------------
-
-            ConfirmedAppointments =
-                displayItems
-                    .Where(item =>
-                        item.DateTime >=
-                            singaporeNow &&
-
-                        item.IsConfirmed &&
-
-                        !item.IsClosed)
-                    .OrderBy(item =>
-                        item.DateTime)
-                    .ToList();
-
-
-            // -----------------------------------------------------
-            // Waiting for Reception
-            //
-            // Patient-created/rescheduled = D0P1
-            // -----------------------------------------------------
-
-            PendingAppointments =
-                displayItems
-                    .Where(item =>
-                        !item.IsConfirmed &&
-
-                        !item.IsClosed &&
-
-                        (
-                            item.DateTime >=
-                                singaporeNow
-                            ||
-                            item.PendingChangeRequest !=
-                                null
-                        ))
-                    .OrderBy(item =>
-                        item.PendingChangeRequest?
-                            .RequestedDateTime
-                        ??
-                        item.DateTime)
-                    .ToList();
-
-
-            // -----------------------------------------------------
-            // Appointment history
-            // -----------------------------------------------------
-
-            AppointmentHistory =
-                displayItems
-                    .Where(item =>
-                        (
-                            item.DateTime <
-                                singaporeNow &&
-
-                            item.PendingChangeRequest ==
-                                null
-                        )
-                        ||
-                        item.IsClosed)
-                    .OrderByDescending(item =>
-                        item.DateTime)
-                    .ToList();
-
-
-            // -----------------------------------------------------
-            // Change request history
-            // -----------------------------------------------------
-
-            Dictionary<int, Appointment>
-                appointmentLookup =
-                    appointments
-                        .ToDictionary(
-                            appointment =>
-                                appointment
-                                    .AppointmentRequestID);
-
-
-            ChangeRequestHistory =
-                changeRequests
-                    .Select(request =>
-                    {
-                        appointmentLookup
-                            .TryGetValue(
-                                request
-                                    .AppointmentRequestID,
-
-                                out
-                                Appointment?
-                                    appointment);
-
-
-                        return new ChangeRequestDisplayItem
-                        {
-                            AppointmentChangeRequestID =
-                                request
-                                    .AppointmentChangeRequestID,
-
-                            AppointmentRequestID =
-                                request
-                                    .AppointmentRequestID,
-
-                            CurrentAppointmentDate =
-                                appointment?.DateTime,
-
-                            RequestedDateTime =
-                                request
-                                    .RequestedDateTime,
-
-                            Reason =
-                                request.Reason,
-
-                            Status =
-                                request.Status,
-
-                            RequestedAt =
-                                request.RequestedAt,
-
-                            ReviewedAt =
-                                request.ReviewedAt,
-
-                            ReviewMessage =
-                                request.ReviewMessage
-                        };
-                    })
-                    .ToList();
-
-
-            // -----------------------------------------------------
-            // Doctor communication
-            //
-            // Only User-side requests.
-            // -----------------------------------------------------
-
-            DoctorRequests =
-                await _context.DoctorRequests
-                    .AsNoTracking()
-                    .Where(request =>
-                        request.PatientID ==
-                            patient.PatientID &&
-
-                        !request.ByAdmin)
-                    .OrderByDescending(request =>
-                        request.RequestDate)
-                    .ToListAsync();
+            HasPatientRecord = true;
+            PatientId = patient.PatientID;
+            PatientName = patient.User == null
+                ? $"Patient #{patient.PatientID}"
+                : $"{patient.User.FirstName} {patient.User.LastName}".Trim();
+
+            var appointments = await _context.Appointments
+                .AsNoTracking()
+                .Where(a => a.PatientID == patient.PatientID)
+                .OrderBy(a => a.DateTime)
+                .ToListAsync();
+
+            var changeRequests = await _context.AppointmentChangeRequests
+                .AsNoTracking()
+                .Where(r => r.PatientID == patient.PatientID)
+                .OrderByDescending(r => r.RequestedAt)
+                .ToListAsync();
+
+            var latestChanges = changeRequests
+                .GroupBy(r => r.AppointmentRequestID)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.RequestedAt).First());
+
+            var pendingChanges = changeRequests
+                .Where(r => r.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                .GroupBy(r => r.AppointmentRequestID)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.RequestedAt).First());
+
+            var displayItems = appointments.Select(a =>
+            {
+                pendingChanges.TryGetValue(a.AppointmentRequestID, out var pending);
+                latestChanges.TryGetValue(a.AppointmentRequestID, out var latest);
+
+                return new AppointmentDisplayItem
+                {
+                    AppointmentRequestID = a.AppointmentRequestID,
+                    DateTime = a.DateTime,
+                    Reason = a.Reason,
+                    Urgency = a.Urgency,
+                    Status = a.Status,
+                    DoctorResponse = a.DoctorResponse,
+                    DocAcknowledged = a.DocAcknowledged,
+                    PatientAcknowledged = a.PatientAcknowledged,
+                    RequestedAt = a.RequestedAt,
+                    IsConfirmed = IsReceptionAcknowledged(a),
+                    IsClosed = IsClosedStatus(a.Status),
+                    PendingChangeRequest = pending,
+                    LatestChangeRequest = latest
+                };
+            }).ToList();
+
+            DateTime now = GetSingaporeNow();
+
+            ConfirmedAppointments = displayItems
+                .Where(a => a.DateTime >= now && a.IsConfirmed && !a.IsClosed)
+                .OrderBy(a => a.DateTime)
+                .ToList();
+
+            PendingAppointments = displayItems
+                .Where(a =>
+                    !a.IsConfirmed &&
+                    !a.IsClosed &&
+                    (a.DateTime >= now || a.PendingChangeRequest != null))
+                .OrderBy(a => a.PendingChangeRequest?.RequestedDateTime ?? a.DateTime)
+                .ToList();
+
+            AppointmentHistory = displayItems
+                .Where(a =>
+                    (a.DateTime < now && a.PendingChangeRequest == null) ||
+                    a.IsClosed)
+                .OrderByDescending(a => a.DateTime)
+                .ToList();
+
+            var appointmentLookup =
+                appointments.ToDictionary(a => a.AppointmentRequestID);
+
+            ChangeRequestHistory = changeRequests.Select(r =>
+            {
+                appointmentLookup.TryGetValue(r.AppointmentRequestID, out var appointment);
+
+                return new ChangeRequestDisplayItem
+                {
+                    AppointmentChangeRequestID = r.AppointmentChangeRequestID,
+                    AppointmentRequestID = r.AppointmentRequestID,
+                    CurrentAppointmentDate = appointment?.DateTime,
+                    RequestedDateTime = r.RequestedDateTime,
+                    Reason = r.Reason,
+                    Status = r.Status,
+                    RequestedAt = r.RequestedAt,
+                    ReviewedAt = r.ReviewedAt,
+                    ReviewMessage = r.ReviewMessage
+                };
+            }).ToList();
+
+            DoctorRequests = await _context.DoctorRequests
+                .AsNoTracking()
+                .Where(r => r.PatientID == patient.PatientID && !r.ByAdmin)
+                .OrderByDescending(r => r.RequestDate)
+                .ToListAsync();
         }
 
-
         // =========================================================
-        // GET SELECTED PATIENT
-        // =========================================================
-        //
-        // This now follows the patient selected on Dashboard.
-        //
-        // We DO NOT automatically take:
-        //
-        // Relationships.FirstOrDefault()
-        //
-        // anymore.
+        // SELECTED PATIENT
         // =========================================================
 
-        private async Task<Patients?>
-            GetCurrentLinkedPatientAsync()
+        private async Task<Patients?> GetCurrentLinkedPatientAsync()
         {
-            string? currentUserId =
-                _userManager.GetUserId(User);
+            string? currentUserId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(
-                    currentUserId))
-            {
+            if (string.IsNullOrWhiteSpace(currentUserId))
                 return null;
-            }
-
 
             int? selectedPatientId =
-                HttpContext.Session
-                    .GetInt32(
-                        SelectedPatientSessionKey);
-
-
-            // -----------------------------------------------------
-            // Existing patient selection
-            // -----------------------------------------------------
+                HttpContext.Session.GetInt32(SelectedPatientSessionKey);
 
             if (selectedPatientId.HasValue)
             {
-                bool ownsPatient =
-                    await _context.Patients
-                        .AsNoTracking()
-                        .AnyAsync(patient =>
-                            patient.PatientID ==
-                                selectedPatientId.Value &&
+                bool ownsPatient = await _context.Patients
+                    .AsNoTracking()
+                    .AnyAsync(p =>
+                        p.PatientID == selectedPatientId.Value &&
+                        p.UserID == currentUserId);
 
-                            patient.UserID ==
-                                currentUserId);
-
-
-                bool isRelated =
-                    await _context
-                        .Relationships
-                        .AsNoTracking()
-                        .AnyAsync(relationship =>
-                            relationship.PatientID ==
-                                selectedPatientId.Value &&
-
-                            relationship.UserID ==
-                                currentUserId);
-
+                bool isRelated = await _context.Relationships
+                    .AsNoTracking()
+                    .AnyAsync(r =>
+                        r.PatientID == selectedPatientId.Value &&
+                        r.UserID == currentUserId);
 
                 if (ownsPatient || isRelated)
                 {
-                    return await _context
-                        .Patients
-                        .Include(patient =>
-                            patient.User)
-                        .FirstOrDefaultAsync(patient =>
-                            patient.PatientID ==
-                                selectedPatientId.Value);
+                    return await _context.Patients
+                        .Include(p => p.User)
+                        .FirstOrDefaultAsync(p =>
+                            p.PatientID == selectedPatientId.Value);
                 }
 
-
-                /*
-                 * Selection is no longer valid.
-                 */
-                HttpContext.Session.Remove(
-                    SelectedPatientSessionKey);
+                HttpContext.Session.Remove(SelectedPatientSessionKey);
             }
 
-
-            // -----------------------------------------------------
-            // Default patient's own account to itself
-            // -----------------------------------------------------
-
-            Patients? ownPatient =
-                await _context.Patients
-                    .Include(patient =>
-                        patient.User)
-                    .FirstOrDefaultAsync(patient =>
-                        patient.UserID ==
-                            currentUserId);
-
+            var ownPatient = await _context.Patients
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.UserID == currentUserId);
 
             if (ownPatient != null)
             {
@@ -1186,396 +480,169 @@ namespace INFP_Proj.Pages.User
                 return ownPatient;
             }
 
-
-            /*
-             * Relative must choose a patient on
-             * the Dashboard first.
-             */
             return null;
         }
 
-
         // =========================================================
-        // DISPLAY HELPERS
-        // =========================================================
-
-        public string FormatAppointmentDate(
-            DateTime dateTime)
-        {
-            return dateTime.ToString(
-                "dd MMM yyyy, hh:mm tt");
-        }
-
-
-        public string FormatUtcDate(
-            DateTime dateTime)
-        {
-            return ToSingaporeTime(
-                    dateTime)
-                .ToString(
-                    "dd MMM yyyy, hh:mm tt");
-        }
-
-
-        public string FormatOptionalUtcDate(
-            DateTime? dateTime)
-        {
-            return dateTime.HasValue
-                ? FormatUtcDate(
-                    dateTime.Value)
-                : "-";
-        }
-
-
-        private void SetMessage(
-            string message)
-        {
-            TempData["CareUpdateMessage"] =
-                message;
-        }
-
-
-        private void SetError(
-            string message)
-        {
-            TempData["CareUpdateError"] =
-                message;
-        }
-
-
-        // =========================================================
-        // RECEPTION ACKNOWLEDGEMENT CHECK
-        // =========================================================
-        //
-        // New workflow uses DocAcknowledged.
-        //
-        // Older status strings are retained for compatibility
-        // with existing teammate data.
+        // HELPERS
         // =========================================================
 
-        private static bool
-            IsReceptionAcknowledged(
-                Appointment appointment)
+        public string FormatAppointmentDate(DateTime dateTime) =>
+            dateTime.ToString("dd MMM yyyy, hh:mm tt");
+
+        public string FormatUtcDate(DateTime dateTime) =>
+            ToSingaporeTime(dateTime).ToString("dd MMM yyyy, hh:mm tt");
+
+        public string FormatOptionalUtcDate(DateTime? dateTime) =>
+            dateTime.HasValue ? FormatUtcDate(dateTime.Value) : "-";
+
+        private IActionResult Message(string message)
+        {
+            SetMessage(message);
+            return RedirectToPage();
+        }
+
+        private IActionResult Error(string message)
+        {
+            SetError(message);
+            return RedirectToPage();
+        }
+
+        private void SetMessage(string message) =>
+            TempData["CareUpdateMessage"] = message;
+
+        private void SetError(string message) =>
+            TempData["CareUpdateError"] = message;
+
+        // ADDED: Same appointment times as Reception.
+        private static bool IsValidAppointmentSlot(DateTime dateTime) =>
+            dateTime.Hour >= 9 &&
+            dateTime.Hour <= 17 &&
+            dateTime.Minute == 0 &&
+            dateTime.Second == 0;
+
+        private static bool IsReceptionAcknowledged(Appointment appointment)
         {
             if (appointment.DocAcknowledged)
-            {
                 return true;
-            }
 
-            if (string.IsNullOrWhiteSpace(
-                    appointment.Status))
-            {
+            if (string.IsNullOrWhiteSpace(appointment.Status))
                 return false;
-            }
 
-            return
-                appointment.Status.Equals(
-                    "Approved",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                appointment.Status.Equals(
-                    "Scheduled",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                appointment.Status.Equals(
-                    "Rescheduled",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                appointment.Status.Equals(
-                    "Confirmed",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                appointment.Status.Equals(
-                    "Awaiting Patient",
-                    StringComparison.OrdinalIgnoreCase);
-        }
-
-
-        // =========================================================
-        // CLOSED APPOINTMENT CHECK
-        // =========================================================
-
-        private static bool IsClosedStatus(
-            string? status)
-        {
-            if (string.IsNullOrWhiteSpace(
-                    status))
+            string[] receptionStatuses =
             {
+                "Approved",
+                "Scheduled",
+                "Rescheduled",
+                "Confirmed",
+                "Awaiting Patient"
+            };
+
+            return receptionStatuses.Contains(
+                appointment.Status,
+                StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static bool IsClosedStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
                 return false;
-            }
 
-            return
-                status.Equals(
-                    "Rejected",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                status.Equals(
-                    "Cancelled",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                status.Equals(
-                    "Completed",
-                    StringComparison.OrdinalIgnoreCase);
+            string[] closedStatuses =
+            {
+                "Rejected",
+                "Cancelled",
+                "Completed"
+            };
+
+            return closedStatuses.Contains(
+                status,
+                StringComparer.OrdinalIgnoreCase);
         }
 
+        private static DateTime GetSingaporeNow() =>
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                GetSingaporeTimeZone());
 
-        // =========================================================
-        // TIME
-        // =========================================================
-
-        private static DateTime
-            GetSingaporeNow()
+        private static DateTime ToSingaporeTime(DateTime dateTime)
         {
-            return TimeZoneInfo
-                .ConvertTimeFromUtc(
-                    DateTime.UtcNow,
-                    GetSingaporeTimeZone());
+            DateTime utc = dateTime.Kind switch
+            {
+                DateTimeKind.Utc => dateTime,
+                DateTimeKind.Local => dateTime.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+            };
+
+            return TimeZoneInfo.ConvertTimeFromUtc(
+                utc,
+                GetSingaporeTimeZone());
         }
 
-
-        private static DateTime
-            ToSingaporeTime(
-                DateTime dateTime)
-        {
-            DateTime utcDateTime =
-                dateTime.Kind switch
-                {
-                    DateTimeKind.Utc =>
-                        dateTime,
-
-                    DateTimeKind.Local =>
-                        dateTime
-                            .ToUniversalTime(),
-
-                    _ =>
-                        DateTime.SpecifyKind(
-                            dateTime,
-                            DateTimeKind.Utc)
-                };
-
-
-            return TimeZoneInfo
-                .ConvertTimeFromUtc(
-                    utcDateTime,
-                    GetSingaporeTimeZone());
-        }
-
-
-        private static TimeZoneInfo
-            GetSingaporeTimeZone()
+        private static TimeZoneInfo GetSingaporeTimeZone()
         {
             try
             {
-                return TimeZoneInfo
-                    .FindSystemTimeZoneById(
-                        "Singapore Standard Time");
+                return TimeZoneInfo.FindSystemTimeZoneById(
+                    "Singapore Standard Time");
             }
             catch (TimeZoneNotFoundException)
             {
-                return TimeZoneInfo
-                    .FindSystemTimeZoneById(
-                        "Asia/Singapore");
+                return TimeZoneInfo.FindSystemTimeZoneById(
+                    "Asia/Singapore");
             }
         }
 
-
         // =========================================================
-        // NEW APPOINTMENT INPUT
+        // VIEW MODELS
         // =========================================================
 
         public sealed class NewAppointmentInput
         {
-            public DateTime? PreferredDateTime
-            {
-                get;
-                set;
-            }
-
-            public string? Reason
-            {
-                get;
-                set;
-            }
-
-            public string Urgency
-            {
-                get;
-                set;
-            } = "Normal";
+            public DateTime? PreferredDateTime { get; set; }
+            public string? Reason { get; set; }
+            public string Urgency { get; set; } = "Normal";
         }
-
-
-        // =========================================================
-        // APPOINTMENT DISPLAY ITEM
-        // =========================================================
 
         public sealed class AppointmentDisplayItem
         {
-            public int AppointmentRequestID
-            {
-                get;
-                set;
-            }
+            public int AppointmentRequestID { get; set; }
+            public DateTime DateTime { get; set; }
+            public string Reason { get; set; } = string.Empty;
+            public string Urgency { get; set; } = string.Empty;
+            public string Status { get; set; } = string.Empty;
+            public string? DoctorResponse { get; set; }
+            public bool DocAcknowledged { get; set; }
+            public bool PatientAcknowledged { get; set; }
+            public DateTime RequestedAt { get; set; }
+            public bool IsConfirmed { get; set; }
+            public bool IsClosed { get; set; }
 
-            public DateTime DateTime
-            {
-                get;
-                set;
-            }
+            public AppointmentChangeRequest? PendingChangeRequest { get; set; }
+            public AppointmentChangeRequest? LatestChangeRequest { get; set; }
 
-            public string Reason
-            {
-                get;
-                set;
-            } = string.Empty;
-
-            public string Urgency
-            {
-                get;
-                set;
-            } = string.Empty;
-
-            public string Status
-            {
-                get;
-                set;
-            } = string.Empty;
-
-            public string? DoctorResponse
-            {
-                get;
-                set;
-            }
-
-            public bool DocAcknowledged
-            {
-                get;
-                set;
-            }
-
-            public bool PatientAcknowledged
-            {
-                get;
-                set;
-            }
-
-            public DateTime RequestedAt
-            {
-                get;
-                set;
-            }
-
-            public bool IsConfirmed
-            {
-                get;
-                set;
-            }
-
-            public bool IsClosed
-            {
-                get;
-                set;
-            }
-
-            public AppointmentChangeRequest?
-                PendingChangeRequest
-            {
-                get;
-                set;
-            }
-
-            public AppointmentChangeRequest?
-                LatestChangeRequest
-            {
-                get;
-                set;
-            }
-
-
-            /*
-             * Reception = 1
-             * Patient = 0
-             *
-             * Patient can acknowledge.
-             */
             public bool CanAcknowledge =>
                 IsConfirmed &&
                 !IsClosed &&
                 !PatientAcknowledged;
 
-
-            /*
-             * Only request another date when
-             * Reception has already acknowledged
-             * the current appointment and there isn't
-             * another pending request.
-             */
             public bool CanRequestDateChange =>
                 IsConfirmed &&
                 !IsClosed &&
                 PendingChangeRequest == null;
         }
 
-
-        // =========================================================
-        // CHANGE REQUEST DISPLAY ITEM
-        // =========================================================
-
         public sealed class ChangeRequestDisplayItem
         {
-            public int AppointmentChangeRequestID
-            {
-                get;
-                set;
-            }
-
-            public int AppointmentRequestID
-            {
-                get;
-                set;
-            }
-
-            public DateTime? CurrentAppointmentDate
-            {
-                get;
-                set;
-            }
-
-            public DateTime RequestedDateTime
-            {
-                get;
-                set;
-            }
-
-            public string? Reason
-            {
-                get;
-                set;
-            }
-
-            public string Status
-            {
-                get;
-                set;
-            } = string.Empty;
-
-            public DateTime RequestedAt
-            {
-                get;
-                set;
-            }
-
-            public DateTime? ReviewedAt
-            {
-                get;
-                set;
-            }
-
-            public string? ReviewMessage
-            {
-                get;
-                set;
-            }
+            public int AppointmentChangeRequestID { get; set; }
+            public int AppointmentRequestID { get; set; }
+            public DateTime? CurrentAppointmentDate { get; set; }
+            public DateTime RequestedDateTime { get; set; }
+            public string? Reason { get; set; }
+            public string Status { get; set; } = string.Empty;
+            public DateTime RequestedAt { get; set; }
+            public DateTime? ReviewedAt { get; set; }
+            public string? ReviewMessage { get; set; }
         }
     }
 }
