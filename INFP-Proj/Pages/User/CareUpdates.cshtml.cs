@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace INFP_Proj.Pages.User
@@ -25,6 +26,7 @@ namespace INFP_Proj.Pages.User
         public int PatientId { get; set; }
         public string PatientName { get; set; } = string.Empty;
 
+        public List<SelectListItem> DoctorsList { get; set; } = new();
         public List<AppointmentDisplayItem> ConfirmedAppointments { get; set; } = new();
         public List<AppointmentDisplayItem> PendingAppointments { get; set; } = new();
         public List<AppointmentDisplayItem> AppointmentHistory { get; set; } = new();
@@ -37,15 +39,12 @@ namespace INFP_Proj.Pages.User
         [BindProperty]
         public string? QuestionMessage { get; set; }
 
-        // Kept for compatibility with the current page until the new .cshtml is added.
-        public string MinimumDateTimeValue =>
-            GetSingaporeNow().AddMinutes(5).ToString("yyyy-MM-ddTHH:mm");
-
         public string MinimumDateValue =>
             GetSingaporeNow().ToString("yyyy-MM-dd");
 
         public async Task OnGetAsync()
         {
+            await LoadDoctorsAsync();
             await LoadPageDataAsync();
         }
 
@@ -81,7 +80,6 @@ namespace INFP_Proj.Pages.User
             if (appointment.PatientAcknowledged)
                 return Message("This appointment has already been acknowledged.");
 
-            // Older rows may have Reception status but DocAcknowledged was not written.
             if (!appointment.DocAcknowledged)
                 appointment.DocAcknowledged = true;
 
@@ -97,7 +95,7 @@ namespace INFP_Proj.Pages.User
 
         // =========================================================
         // PATIENT REQUESTS NEW DATE
-        // D0P1 - original appointment date stays unchanged
+        // D0P1 - original date stays until Reception approves
         // =========================================================
 
         public async Task<IActionResult> OnPostRequestDateChangeAsync(
@@ -122,7 +120,6 @@ namespace INFP_Proj.Pages.User
             if (requestedTime <= GetSingaporeNow())
                 return Error("The requested appointment date must be in the future.");
 
-            // ADDED: User appointments must match Reception's 9AM-5PM hourly slots.
             if (!IsValidAppointmentSlot(requestedTime))
                 return Error("Select a time between 9:00 AM and 5:00 PM on the hour.");
 
@@ -142,6 +139,22 @@ namespace INFP_Proj.Pages.User
 
             if (appointment.DateTime == requestedTime)
                 return Error("The requested date and time is the same as the current appointment.");
+
+            // Check selected doctor is still free at requested new time.
+            if (!string.IsNullOrWhiteSpace(appointment.DoctorID))
+            {
+                bool doctorBooked = await _context.Appointments
+                    .AsNoTracking()
+                    .AnyAsync(a =>
+                        a.DoctorID == appointment.DoctorID &&
+                        a.DateTime == requestedTime &&
+                        a.AppointmentRequestID != appointmentId &&
+                        a.Status != "Rejected" &&
+                        a.Status != "Cancelled");
+
+                if (doctorBooked)
+                    return Error("The assigned doctor is already booked at the requested time.");
+            }
 
             string reason = changeReason?.Trim() ?? string.Empty;
 
@@ -170,7 +183,6 @@ namespace INFP_Proj.Pages.User
                 RequestedAt = DateTime.UtcNow
             };
 
-            // Patient requested/rescheduled = D0P1.
             appointment.DocAcknowledged = false;
             appointment.PatientAcknowledged = true;
             appointment.Status = "Pending";
@@ -212,9 +224,15 @@ namespace INFP_Proj.Pages.User
             if (preferredDateTime <= GetSingaporeNow())
                 return Error("The preferred appointment date must be in the future.");
 
-            // ADDED: Match Reception's 9AM-5PM whole-hour slots.
             if (!IsValidAppointmentSlot(preferredDateTime))
                 return Error("Select a time between 9:00 AM and 5:00 PM on the hour.");
+
+            // ADDED: Doctor must be selected and must have Doctor role.
+            if (string.IsNullOrWhiteSpace(NewAppointmentRequest.DoctorID) ||
+                !await IsValidDoctorAsync(NewAppointmentRequest.DoctorID))
+            {
+                return Error("Select a valid doctor for the appointment.");
+            }
 
             string reason = NewAppointmentRequest.Reason?.Trim() ?? string.Empty;
 
@@ -231,6 +249,18 @@ namespace INFP_Proj.Pages.User
                 _ => "Normal"
             };
 
+            // ADDED: Same doctor cannot have two appointments at same time.
+            bool doctorBooked = await _context.Appointments
+                .AsNoTracking()
+                .AnyAsync(a =>
+                    a.DoctorID == NewAppointmentRequest.DoctorID &&
+                    a.DateTime == preferredDateTime &&
+                    a.Status != "Rejected" &&
+                    a.Status != "Cancelled");
+
+            if (doctorBooked)
+                return Error("This doctor is already booked at the selected time.");
+
             bool duplicateExists = await _context.Appointments
                 .AsNoTracking()
                 .AnyAsync(a =>
@@ -240,11 +270,12 @@ namespace INFP_Proj.Pages.User
                     a.Status != "Cancelled");
 
             if (duplicateExists)
-                return Error("An appointment or request already exists at that exact date and time.");
+                return Error("You already have an appointment or request at that date and time.");
 
             var appointment = new Appointment
             {
                 PatientID = patient.PatientID,
+                DoctorID = NewAppointmentRequest.DoctorID,
                 Reason = reason,
                 Urgency = urgency,
                 Status = "Pending",
@@ -258,7 +289,7 @@ namespace INFP_Proj.Pages.User
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
 
-            // ADDED: Emergency appointment also creates an emergency log
+            // Emergency appointment also creates Emergency Log.
             if (urgency == "Emergency")
             {
                 _context.Logs.Add(new Log
@@ -315,6 +346,50 @@ namespace INFP_Proj.Pages.User
         }
 
         // =========================================================
+        // LOAD DOCTORS
+        // =========================================================
+
+        private async Task LoadDoctorsAsync()
+        {
+            var doctorRole = await _context.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Name == "Doctor");
+
+            if (doctorRole == null)
+                return;
+
+            var doctors = await _context.UserRoles
+                .Where(ur => ur.RoleId == doctorRole.Id)
+                .Join(_context.Users,
+                    ur => ur.UserId,
+                    user => user.Id,
+                    (ur, user) => user)
+                .OrderBy(user => user.FirstName)
+                .ThenBy(user => user.LastName)
+                .ToListAsync();
+
+            DoctorsList = doctors.Select(user => new SelectListItem
+            {
+                Value = user.Id,
+                Text = $"Dr. {user.FirstName} {user.LastName}"
+            }).ToList();
+        }
+
+        private async Task<bool> IsValidDoctorAsync(string doctorId)
+        {
+            var doctorRole = await _context.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Name == "Doctor");
+
+            return doctorRole != null &&
+                await _context.UserRoles
+                    .AsNoTracking()
+                    .AnyAsync(ur =>
+                        ur.RoleId == doctorRole.Id &&
+                        ur.UserId == doctorId);
+        }
+
+        // =========================================================
         // LOAD PAGE
         // =========================================================
 
@@ -340,6 +415,20 @@ namespace INFP_Proj.Pages.User
                 .OrderBy(a => a.DateTime)
                 .ToListAsync();
 
+            // ADDED: Get doctor names for appointment display.
+            var doctorIds = appointments
+                .Where(a => !string.IsNullOrWhiteSpace(a.DoctorID))
+                .Select(a => a.DoctorID!)
+                .Distinct()
+                .ToList();
+
+            var doctorNames = await _context.Users
+                .AsNoTracking()
+                .Where(u => doctorIds.Contains(u.Id))
+                .ToDictionaryAsync(
+                    u => u.Id,
+                    u => $"Dr. {u.FirstName} {u.LastName}");
+
             var changeRequests = await _context.AppointmentChangeRequests
                 .AsNoTracking()
                 .Where(r => r.PatientID == patient.PatientID)
@@ -360,10 +449,19 @@ namespace INFP_Proj.Pages.User
                 pendingChanges.TryGetValue(a.AppointmentRequestID, out var pending);
                 latestChanges.TryGetValue(a.AppointmentRequestID, out var latest);
 
+                string doctorName = "Not assigned";
+
+                if (!string.IsNullOrWhiteSpace(a.DoctorID) &&
+                    doctorNames.TryGetValue(a.DoctorID, out var name))
+                {
+                    doctorName = name;
+                }
+
                 return new AppointmentDisplayItem
                 {
                     AppointmentRequestID = a.AppointmentRequestID,
                     DateTime = a.DateTime,
+                    DoctorName = doctorName,
                     Reason = a.Reason,
                     Urgency = a.Urgency,
                     Status = a.Status,
@@ -493,28 +591,18 @@ namespace INFP_Proj.Pages.User
         public string FormatUtcDate(DateTime dateTime) =>
             ToSingaporeTime(dateTime).ToString("dd MMM yyyy, hh:mm tt");
 
-        public string FormatOptionalUtcDate(DateTime? dateTime) =>
-            dateTime.HasValue ? FormatUtcDate(dateTime.Value) : "-";
-
         private IActionResult Message(string message)
         {
-            SetMessage(message);
+            TempData["CareUpdateMessage"] = message;
             return RedirectToPage();
         }
 
         private IActionResult Error(string message)
         {
-            SetError(message);
+            TempData["CareUpdateError"] = message;
             return RedirectToPage();
         }
 
-        private void SetMessage(string message) =>
-            TempData["CareUpdateMessage"] = message;
-
-        private void SetError(string message) =>
-            TempData["CareUpdateError"] = message;
-
-        // ADDED: Same appointment times as Reception.
         private static bool IsValidAppointmentSlot(DateTime dateTime) =>
             dateTime.Hour >= 9 &&
             dateTime.Hour <= 17 &&
@@ -529,7 +617,7 @@ namespace INFP_Proj.Pages.User
             if (string.IsNullOrWhiteSpace(appointment.Status))
                 return false;
 
-            string[] receptionStatuses =
+            string[] statuses =
             {
                 "Approved",
                 "Scheduled",
@@ -538,7 +626,7 @@ namespace INFP_Proj.Pages.User
                 "Awaiting Patient"
             };
 
-            return receptionStatuses.Contains(
+            return statuses.Contains(
                 appointment.Status,
                 StringComparer.OrdinalIgnoreCase);
         }
@@ -548,14 +636,14 @@ namespace INFP_Proj.Pages.User
             if (string.IsNullOrWhiteSpace(status))
                 return false;
 
-            string[] closedStatuses =
+            string[] statuses =
             {
                 "Rejected",
                 "Cancelled",
                 "Completed"
             };
 
-            return closedStatuses.Contains(
+            return statuses.Contains(
                 status,
                 StringComparer.OrdinalIgnoreCase);
         }
@@ -600,6 +688,10 @@ namespace INFP_Proj.Pages.User
         public sealed class NewAppointmentInput
         {
             public DateTime? PreferredDateTime { get; set; }
+
+            // ADDED: Uses existing Appointment.DoctorID.
+            public string DoctorID { get; set; } = string.Empty;
+
             public string? Reason { get; set; }
             public string Urgency { get; set; } = "Normal";
         }
@@ -608,6 +700,7 @@ namespace INFP_Proj.Pages.User
         {
             public int AppointmentRequestID { get; set; }
             public DateTime DateTime { get; set; }
+            public string DoctorName { get; set; } = "Not assigned";
             public string Reason { get; set; } = string.Empty;
             public string Urgency { get; set; } = string.Empty;
             public string Status { get; set; } = string.Empty;
@@ -622,14 +715,10 @@ namespace INFP_Proj.Pages.User
             public AppointmentChangeRequest? LatestChangeRequest { get; set; }
 
             public bool CanAcknowledge =>
-                IsConfirmed &&
-                !IsClosed &&
-                !PatientAcknowledged;
+                IsConfirmed && !IsClosed && !PatientAcknowledged;
 
             public bool CanRequestDateChange =>
-                IsConfirmed &&
-                !IsClosed &&
-                PendingChangeRequest == null;
+                IsConfirmed && !IsClosed && PendingChangeRequest == null;
         }
 
         public sealed class ChangeRequestDisplayItem
