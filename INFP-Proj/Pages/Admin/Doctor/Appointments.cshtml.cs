@@ -53,31 +53,22 @@ namespace INFP_Proj.Pages.Admin.Doctor
 
             return Page();
         }
-
-        public async Task<IActionResult> OnPostAcknowledgeAsync(int id)
+        public async Task<IActionResult> OnPostAcknowledgeAsync(int id, string notes)
         {
-            var appt = await _context.Appointments.FindAsync(id);
-            if (appt == null) return NotFound();
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToPage("/Login");
 
-            // Acknowledge the appointment (D1)
-            appt.DocAcknowledged = true;
+            var appointment = await _context.Appointments
+                .FirstOrDefaultAsync(a => a.AppointmentRequestID == id);
 
-            // If the patient has also acknowledged it (P1), finalize the status
-            if (appt.PatientAcknowledged)
-            {
-                appt.Status = "Scheduled";
-            }
+            if (appointment == null) return NotFound();
 
-            await _context.SaveChangesAsync();
-            return RedirectToPage();
-        }
+            // Make sure this doctor owns the appointment
+            if (appointment.DoctorID != user.Id) return Forbid();
 
-        public async Task<IActionResult> OnPostRejectAsync(int id)
-        {
-            var appt = await _context.Appointments.FindAsync(id);
-            if (appt == null) return NotFound();
+            appointment.Status = "Completed";
+            appointment.DoctorResponse = notes; 
 
-            appt.Status = "Rejected";
             await _context.SaveChangesAsync();
 
             return RedirectToPage();
