@@ -534,3 +534,34 @@ video {
   max-width: 100%;
   height: auto;
 }
+
+/* ADDED: Nurse assistance control */
+.nurse-call-panel {
+    min-width: 245px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 14px;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.nurse-call-title {
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.nurse-call-text {
+    font-size: .78rem;
+    opacity: .9;
+    margin-bottom: .75rem;
+}
+
+.nurse-call-active {
+    background: rgba(220,53,69,.18);
+    border-color: rgba(255,255,255,.35);
+}
+
+.nurse-call-panel .btn {
+    border-radius: 10px;
+    width: 100%;
+}

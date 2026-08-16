@@ -25,31 +25,42 @@ namespace INFP_Proj.Pages.User
 
         public UserDashboardViewModel DashboardData { get; set; } = new();
         public IList<PatientListItem> Patients { get; set; } = new List<PatientListItem>();
+
         public string CurrentUserName { get; set; } = "User";
         public int? SelectedPatientId { get; set; }
         public Guid? OwnRelationCode { get; set; }
+        public string? OwnRelationCodeShort =>
+            OwnRelationCode?.ToString("N").Substring(0, 8).ToUpperInvariant();
+
         public bool IsViewingOwnPatient { get; set; }
         public bool CanRequestHelp { get; set; }
         public bool HelpRequested { get; set; }
 
+        // ADDED: Upcoming appointment
+        public NextAppointmentItem? NextAppointment { get; set; }
+
+        // =========================================================
+        // LOAD DASHBOARD
+        // =========================================================
+
         public async Task OnGetAsync()
         {
-            string? currentUserId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(currentUserId)) return;
+            string? userId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(userId)) return;
 
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser != null)
-                CurrentUserName = $"{currentUser.FirstName} {currentUser.LastName}".Trim();
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+                CurrentUserName = $"{user.FirstName} {user.LastName}".Trim();
 
             var ownPatient = await _context.Patients
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.UserID == currentUserId);
+                .FirstOrDefaultAsync(p => p.UserID == userId);
 
             OwnRelationCode = ownPatient?.RelationCode;
 
-            await LoadAccessiblePatientsAsync(currentUserId);
+            await LoadAccessiblePatientsAsync(userId);
 
-            var patient = await GetLinkedPatientAsync(currentUserId);
+            var patient = await GetLinkedPatientAsync(userId);
 
             if (patient == null)
             {
@@ -58,12 +69,11 @@ namespace INFP_Proj.Pages.User
             }
 
             SelectedPatientId = patient.PatientID;
-            IsViewingOwnPatient = patient.UserID == currentUserId;
+            IsViewingOwnPatient = patient.UserID == userId;
             HelpRequested = patient.RequestHelp;
+            CanRequestHelp = IsViewingOwnPatient && IsHelpEligibleStatus(patient.Status);
 
-            CanRequestHelp =
-                IsViewingOwnPatient &&
-                IsHelpEligibleStatus(patient.Status);
+            await LoadNextAppointmentAsync(patient.PatientID);
 
             var bed = await _context.Beds
                 .Include(b => b.Wards)
@@ -89,37 +99,38 @@ namespace INFP_Proj.Pages.User
                 .OrderByDescending(r => r.AdmissionDateTime)
                 .FirstOrDefaultAsync();
 
-            var currentMedications = await _context.MedicationLists
-                .Include(ml => ml.Medications)
-                .Where(ml => ml.PatientID == patient.PatientID
-                    && record != null
-                    && ml.RecordID == record.RecordID)
-                .OrderBy(ml =>
-                    ml.Medications != null
-                        ? ml.Medications.ConsumptionTime
-                        : TimeOnly.MinValue)
-                .Select(ml => new UserMedicationItem
+            var medications = await _context.MedicationLists
+                .Include(m => m.Medications)
+                .Where(m =>
+                    m.PatientID == patient.PatientID &&
+                    record != null &&
+                    m.RecordID == record.RecordID)
+                .OrderBy(m => m.Medications != null
+                    ? m.Medications.ConsumptionTime
+                    : TimeOnly.MinValue)
+                .Select(m => new UserMedicationItem
                 {
-                    MedicationName = ml.Medications != null
-                        ? ml.Medications.MedicationName
+                    MedicationName = m.Medications != null
+                        ? m.Medications.MedicationName
                         : "Unknown medication",
-                    Dosage = ml.Dosage,
-                    ConsumptionTime = ml.Medications != null
-                        ? ml.Medications.ConsumptionTime
+
+                    Dosage = m.Dosage,
+
+                    ConsumptionTime = m.Medications != null
+                        ? m.Medications.ConsumptionTime
                         : null
                 })
                 .ToListAsync();
 
-            var latestDoctorRequest = await _context.DoctorRequests
-                .Where(dr => dr.PatientID == patient.PatientID && !dr.ByAdmin)
-                .OrderByDescending(dr => dr.RequestDate)
+            var doctorRequest = await _context.DoctorRequests
+                .Where(d => d.PatientID == patient.PatientID && !d.ByAdmin)
+                .OrderByDescending(d => d.RequestDate)
                 .FirstOrDefaultAsync();
 
-            bool hasUnresolvedEmergency = await _context.Logs
-                .AnyAsync(l =>
-                    l.PatientID == patient.PatientID &&
-                    l.Emergency &&
-                    !l.Resolved);
+            bool hasEmergency = await _context.Logs.AnyAsync(l =>
+                l.PatientID == patient.PatientID &&
+                l.Emergency &&
+                !l.Resolved);
 
             DashboardData = new UserDashboardViewModel
             {
@@ -128,6 +139,7 @@ namespace INFP_Proj.Pages.User
                 PatientName = patient.User != null
                     ? $"{patient.User.FirstName} {patient.User.LastName}"
                     : $"Patient #{patient.PatientID}",
+
                 PatientStatus = patient.Status,
                 PatientNotes = string.IsNullOrWhiteSpace(patient.Notes)
                     ? "No notes recorded."
@@ -153,27 +165,77 @@ namespace INFP_Proj.Pages.User
                 BraceletLocation = bracelet?.Location ?? "Unknown",
 
                 Diagnosis = record?.Diagnoses?.DiagnosisName ?? "No diagnosis recorded",
-                CurrentMedications = currentMedications,
+                CurrentMedications = medications,
                 RecordDescription = record?.Description ?? "No record description",
                 AdmissionDateTime = record?.AdmissionDateTime,
                 DischargeDateTime = record?.DischargeDateTime,
 
-                HasUnresolvedEmergency = hasUnresolvedEmergency,
-                AlertMessage = BuildAlertMessage(latestVitals, bracelet, hasUnresolvedEmergency),
+                HasUnresolvedEmergency = hasEmergency,
+                AlertMessage = BuildAlertMessage(latestVitals, bracelet, hasEmergency),
 
-                HasDoctorRequest = latestDoctorRequest != null,
-                LatestDoctorRequestId = latestDoctorRequest?.DoctorRequestID,
-                LatestDoctorRequestMessage =
-                    latestDoctorRequest?.RequestMessage ?? "No doctor update available.",
-                LatestDoctorReply =
-                    string.IsNullOrWhiteSpace(latestDoctorRequest?.ReplyMessage)
-                        ? "No reply yet."
-                        : latestDoctorRequest.ReplyMessage,
-                LatestDoctorRequestCompleted =
-                    latestDoctorRequest?.Completed ?? false,
-                LatestDoctorRequestDate =
-                    latestDoctorRequest?.RequestDate
+                HasDoctorRequest = doctorRequest != null,
+                LatestDoctorRequestId = doctorRequest?.DoctorRequestID,
+                LatestDoctorRequestMessage = doctorRequest?.RequestMessage ?? "No doctor update available.",
+                LatestDoctorReply = string.IsNullOrWhiteSpace(doctorRequest?.ReplyMessage)
+                    ? "No reply yet."
+                    : doctorRequest.ReplyMessage,
+                LatestDoctorRequestCompleted = doctorRequest?.Completed ?? false,
+                LatestDoctorRequestDate = doctorRequest?.RequestDate
             };
+        }
+
+        // =========================================================
+        // NEXT APPOINTMENT
+        // =========================================================
+
+        private async Task LoadNextAppointmentAsync(int patientId)
+        {
+            DateTime now = GetSingaporeNow();
+
+            var appointment = await _context.Appointments
+                .AsNoTracking()
+                .Where(a =>
+                    a.PatientID == patientId &&
+                    a.DateTime >= now &&
+                    a.Status != "Rejected" &&
+                    a.Status != "Cancelled" &&
+                    a.Status != "Completed")
+                .OrderBy(a => a.DateTime)
+                .FirstOrDefaultAsync();
+
+            if (appointment == null) return;
+
+            string doctorName = "Not assigned";
+
+            if (!string.IsNullOrWhiteSpace(appointment.DoctorID))
+            {
+                var doctor = await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == appointment.DoctorID);
+
+                if (doctor != null)
+                    doctorName = $"Dr. {doctor.FirstName} {doctor.LastName}";
+            }
+
+            NextAppointment = new NextAppointmentItem
+            {
+                AppointmentRequestID = appointment.AppointmentRequestID,
+                DateTime = appointment.DateTime,
+                DoctorName = doctorName,
+                Reason = appointment.Reason,
+                Urgency = appointment.Urgency,
+                Status = appointment.Status,
+                TimeUntil = BuildTimeUntil(appointment.DateTime, now)
+            };
+        }
+
+        private static string BuildTimeUntil(DateTime date, DateTime now)
+        {
+            int days = (date.Date - now.Date).Days;
+
+            if (days == 0) return "Today";
+            if (days == 1) return "Tomorrow";
+            return $"In {days} days";
         }
 
         // =========================================================
@@ -182,12 +244,14 @@ namespace INFP_Proj.Pages.User
 
         public async Task<IActionResult> OnPostConnectRelationAsync(string? relationCode)
         {
-            string? currentUserId = _userManager.GetUserId(User);
-            if (string.IsNullOrWhiteSpace(currentUserId))
+            string? userId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(userId))
                 return RedirectToPage("/Login");
 
-            // CHANGED: Users only need the first 8 characters of the GUID.
-            string code = (relationCode ?? "").Trim().Replace("-", "").ToUpper();
+            string code = (relationCode ?? "")
+                .Trim()
+                .Replace("-", "")
+                .ToUpperInvariant();
 
             if (code.Length != 8 || !code.All(Uri.IsHexDigit))
             {
@@ -195,7 +259,6 @@ namespace INFP_Proj.Pages.User
                 return RedirectToPage();
             }
 
-            // CHANGED: Keep the full GUID in database, but match using its first 8 characters.
             var patients = await _context.Patients
                 .Select(p => new { p.PatientID, p.UserID, p.RelationCode })
                 .ToListAsync();
@@ -211,7 +274,6 @@ namespace INFP_Proj.Pages.User
                 return RedirectToPage();
             }
 
-            // Safety check in case two GUIDs somehow share the same first 8 characters.
             if (matches.Count > 1)
             {
                 TempData["ErrorMessage"] = "This Relation Code is not unique. Please contact hospital staff.";
@@ -220,7 +282,7 @@ namespace INFP_Proj.Pages.User
 
             var patient = matches[0];
 
-            if (patient.UserID == currentUserId)
+            if (patient.UserID == userId)
             {
                 TempData["Message"] = "This patient record already belongs to your account.";
                 return RedirectToPage();
@@ -228,7 +290,7 @@ namespace INFP_Proj.Pages.User
 
             bool exists = await _context.Relationships.AnyAsync(r =>
                 r.PatientID == patient.PatientID &&
-                r.UserID == currentUserId);
+                r.UserID == userId);
 
             if (exists)
             {
@@ -239,7 +301,7 @@ namespace INFP_Proj.Pages.User
             _context.Relationships.Add(new Relationships
             {
                 PatientID = patient.PatientID,
-                UserID = currentUserId
+                UserID = userId
             });
 
             await _context.SaveChangesAsync();
@@ -250,36 +312,34 @@ namespace INFP_Proj.Pages.User
 
         public async Task<IActionResult> OnPostSelectPatientAsync(int patientId)
         {
-            string? currentUserId = _userManager.GetUserId(User);
+            string? userId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(currentUserId))
+            if (string.IsNullOrWhiteSpace(userId))
                 return RedirectToPage("/Login");
 
-            if (!await CanAccessPatientAsync(currentUserId, patientId))
+            if (!await CanAccessPatientAsync(userId, patientId))
                 return Forbid();
 
             HttpContext.Session.SetInt32(SelectedPatientSessionKey, patientId);
-
             return RedirectToPage();
         }
 
         // =========================================================
-        // ?? NURSE CALL / CANCEL NURSE CALL
+        // NURSE CALL
         // =========================================================
 
         public async Task<IActionResult> OnPostRequestHelpAsync()
         {
-            string? currentUserId = _userManager.GetUserId(User);
+            string? userId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(currentUserId))
+            if (string.IsNullOrWhiteSpace(userId))
                 return RedirectToPage("/Login");
 
-            var patient = await GetLinkedPatientAsync(currentUserId);
+            var patient = await GetLinkedPatientAsync(userId);
 
-            if (patient == null || patient.UserID != currentUserId)
+            if (patient == null || patient.UserID != userId)
             {
-                TempData["ErrorMessage"] =
-                    "Only the patient can request nurse help.";
+                TempData["ErrorMessage"] = "Only the patient can request nurse help.";
                 return RedirectToPage();
             }
 
@@ -292,8 +352,7 @@ namespace INFP_Proj.Pages.User
 
             if (patient.RequestHelp)
             {
-                TempData["Message"] =
-                    "A nurse help request is already active.";
+                TempData["Message"] = "A nurse help request is already active.";
                 return RedirectToPage();
             }
 
@@ -304,20 +363,18 @@ namespace INFP_Proj.Pages.User
             return RedirectToPage();
         }
 
-        // ADDED: Patient can cancel their own active nurse call.
         public async Task<IActionResult> OnPostCancelHelpAsync()
         {
-            string? currentUserId = _userManager.GetUserId(User);
+            string? userId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(currentUserId))
+            if (string.IsNullOrWhiteSpace(userId))
                 return RedirectToPage("/Login");
 
-            var patient = await GetLinkedPatientAsync(currentUserId);
+            var patient = await GetLinkedPatientAsync(userId);
 
-            if (patient == null || patient.UserID != currentUserId)
+            if (patient == null || patient.UserID != userId)
             {
-                TempData["ErrorMessage"] =
-                    "Only the patient can cancel this nurse call.";
+                TempData["ErrorMessage"] = "Only the patient can cancel this nurse call.";
                 return RedirectToPage();
             }
 
@@ -340,22 +397,20 @@ namespace INFP_Proj.Pages.User
 
         public async Task<IActionResult> OnPostAcknowledgeDoctorUpdateAsync(int doctorRequestId)
         {
-            string? currentUserId = _userManager.GetUserId(User);
-
-            if (string.IsNullOrEmpty(currentUserId))
+            string? userId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(userId))
                 return RedirectToPage("/Login");
 
-            var patient = await GetLinkedPatientAsync(currentUserId);
+            var patient = await GetLinkedPatientAsync(userId);
             if (patient == null) return RedirectToPage();
 
-            var doctorUpdate = await _context.DoctorRequests
-                .FirstOrDefaultAsync(dr =>
-                    dr.DoctorRequestID == doctorRequestId &&
-                    dr.PatientID == patient.PatientID);
+            var update = await _context.DoctorRequests.FirstOrDefaultAsync(d =>
+                d.DoctorRequestID == doctorRequestId &&
+                d.PatientID == patient.PatientID);
 
-            if (doctorUpdate == null) return RedirectToPage();
+            if (update == null) return RedirectToPage();
 
-            doctorUpdate.Completed = true;
+            update.Completed = true;
             await _context.SaveChangesAsync();
 
             return RedirectToPage();
@@ -365,61 +420,53 @@ namespace INFP_Proj.Pages.User
         // ACCESSIBLE PATIENTS
         // =========================================================
 
-        private async Task LoadAccessiblePatientsAsync(string currentUserId)
+        private async Task LoadAccessiblePatientsAsync(string userId)
         {
             var relatedIds = await _context.Relationships
                 .AsNoTracking()
-                .Where(r => r.UserID == currentUserId)
+                .Where(r => r.UserID == userId)
                 .Select(r => r.PatientID)
                 .ToListAsync();
 
             var patients = await _context.Patients
                 .AsNoTracking()
                 .Include(p => p.User)
-                .Where(p =>
-                    p.UserID == currentUserId ||
-                    relatedIds.Contains(p.PatientID))
+                .Where(p => p.UserID == userId || relatedIds.Contains(p.PatientID))
                 .OrderBy(p => p.PatientID)
                 .ToListAsync();
 
+            var ids = patients.Select(p => p.PatientID).ToList();
 
-            var patientIds = patients.Select(p => p.PatientID).ToList();
-
-            if (patientIds.Count == 0)
+            if (ids.Count == 0)
             {
                 Patients = new List<PatientListItem>();
                 return;
             }
 
-            var medicationLists = await _context.MedicationLists
+            var meds = await _context.MedicationLists
                 .AsNoTracking()
                 .Include(m => m.Medications)
-                .Where(m => patientIds.Contains(m.PatientID))
+                .Where(m => ids.Contains(m.PatientID))
                 .ToListAsync();
 
             var records = await _context.Records
                 .AsNoTracking()
-                .Where(r => patientIds.Contains(r.PatientID))
+                .Where(r => ids.Contains(r.PatientID))
                 .ToListAsync();
 
             Patients = patients.Select(p =>
             {
-                var latestRecord = records
+                var record = records
                     .Where(r => r.PatientID == p.PatientID)
                     .OrderByDescending(r => r.AdmissionDateTime)
                     .FirstOrDefault();
 
-                var patientMeds = medicationLists
+                var patientMeds = meds
                     .Where(m =>
                         m.PatientID == p.PatientID &&
-                        latestRecord != null &&
-                        m.RecordID == latestRecord.RecordID)
+                        record != null &&
+                        m.RecordID == record.RecordID)
                     .ToList();
-
-                string medSummary = patientMeds.Count == 0
-                    ? "None"
-                    : string.Join(", ", patientMeds.Select(m =>
-                        $"{m.Medications?.MedicationName ?? "Unknown"} ({m.Dosage})"));
 
                 return new PatientListItem
                 {
@@ -427,34 +474,36 @@ namespace INFP_Proj.Pages.User
                     PatientName = p.User != null
                         ? $"{p.User.FirstName} {p.User.LastName}"
                         : $"Patient #{p.PatientID}",
-                    Status = p.Status,
-                    MedicationsSummary = medSummary,
-                    AdmissionDateTime = latestRecord?.AdmissionDateTime,
-                    DischargeDateTime = latestRecord?.DischargeDateTime,
 
-                    // Nurse call status shown in patient list.
+                    Status = p.Status,
+                    MedicationsSummary = patientMeds.Count == 0
+                        ? "None"
+                        : string.Join(", ", patientMeds.Select(m =>
+                            $"{m.Medications?.MedicationName ?? "Unknown"} ({m.Dosage})")),
+
+                    AdmissionDateTime = record?.AdmissionDateTime,
+                    DischargeDateTime = record?.DischargeDateTime,
                     RequestHelp = p.RequestHelp
                 };
             }).ToList();
         }
 
         // =========================================================
-        // SELECTED PATIENT / SECURITY
+        // PATIENT ACCESS
         // =========================================================
 
-        private async Task<Patients?> GetLinkedPatientAsync(string currentUserId)
+        private async Task<Patients?> GetLinkedPatientAsync(string userId)
         {
-            int? selectedPatientId =
+            int? selectedId =
                 HttpContext.Session.GetInt32(SelectedPatientSessionKey);
 
-            if (selectedPatientId.HasValue)
+            if (selectedId.HasValue)
             {
-                if (await CanAccessPatientAsync(currentUserId, selectedPatientId.Value))
+                if (await CanAccessPatientAsync(userId, selectedId.Value))
                 {
                     return await _context.Patients
                         .Include(p => p.User)
-                        .FirstOrDefaultAsync(p =>
-                            p.PatientID == selectedPatientId.Value);
+                        .FirstOrDefaultAsync(p => p.PatientID == selectedId.Value);
                 }
 
                 HttpContext.Session.Remove(SelectedPatientSessionKey);
@@ -462,91 +511,69 @@ namespace INFP_Proj.Pages.User
 
             var ownPatient = await _context.Patients
                 .Include(p => p.User)
-                .FirstOrDefaultAsync(p => p.UserID == currentUserId);
+                .FirstOrDefaultAsync(p => p.UserID == userId);
 
             if (ownPatient != null)
             {
                 HttpContext.Session.SetInt32(
                     SelectedPatientSessionKey,
                     ownPatient.PatientID);
-
-                return ownPatient;
             }
 
-            return null;
+            return ownPatient;
         }
 
-        private async Task<bool> CanAccessPatientAsync(string currentUserId, int patientId)
+        private async Task<bool> CanAccessPatientAsync(string userId, int patientId)
         {
-            bool ownsPatient = await _context.Patients
-                .AsNoTracking()
-                .AnyAsync(p =>
-                    p.PatientID == patientId &&
-                    p.UserID == currentUserId);
+            if (await _context.Patients.AsNoTracking().AnyAsync(p =>
+                p.PatientID == patientId &&
+                p.UserID == userId))
+                return true;
 
-            if (ownsPatient) return true;
-
-            return await _context.Relationships
-                .AsNoTracking()
-                .AnyAsync(r =>
-                    r.PatientID == patientId &&
-                    r.UserID == currentUserId);
+            return await _context.Relationships.AsNoTracking().AnyAsync(r =>
+                r.PatientID == patientId &&
+                r.UserID == userId);
         }
 
-        private static bool IsHelpEligibleStatus(string? status)
-        {
-            return
-                string.Equals(status, "Admitted", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(status, "Observed", StringComparison.OrdinalIgnoreCase);
-        }
+        private static bool IsHelpEligibleStatus(string? status) =>
+            string.Equals(status, "Admitted", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(status, "Observed", StringComparison.OrdinalIgnoreCase);
 
         // =========================================================
-        // DASHBOARD ALERT
+        // ALERTS + LIVE VITALS
         // =========================================================
 
         private static string BuildAlertMessage(
-            Vitals? latestVitals,
+            Vitals? vitals,
             Bracelet? bracelet,
-            bool hasUnresolvedEmergency)
+            bool emergency)
         {
-            if (hasUnresolvedEmergency)
+            if (emergency)
                 return "There is an unresolved emergency log. Please review your activity log.";
 
             if (bracelet?.Battery != null && bracelet.Battery <= 20)
                 return "Bracelet battery is low. Please inform hospital staff.";
 
-            if (latestVitals?.HeartRate != null &&
-                (latestVitals.HeartRate < 60 || latestVitals.HeartRate > 100))
+            if (vitals?.HeartRate != null &&
+                (vitals.HeartRate < 60 || vitals.HeartRate > 100))
                 return "Latest heart rate is outside the normal range.";
 
             return "No urgent alerts. Latest readings appear normal.";
         }
 
-        // =========================================================
-        // LIVE VITALS
-        // =========================================================
-
         public async Task<IActionResult> OnGetLatestVitalsAsync()
         {
-            string? currentUserId = _userManager.GetUserId(User);
+            string? userId = _userManager.GetUserId(User);
 
-            if (string.IsNullOrWhiteSpace(currentUserId))
-                return new JsonResult(new
-                {
-                    success = false,
-                    message = "User is not logged in."
-                });
+            if (string.IsNullOrWhiteSpace(userId))
+                return new JsonResult(new { success = false });
 
-            var patient = await GetLinkedPatientAsync(currentUserId);
+            var patient = await GetLinkedPatientAsync(userId);
 
             if (patient == null)
-                return new JsonResult(new
-                {
-                    success = false,
-                    message = "No patient has been selected."
-                });
+                return new JsonResult(new { success = false });
 
-            var latestVitals = await _context.Vitals
+            var vitals = await _context.Vitals
                 .AsNoTracking()
                 .Where(v => v.PatientID == patient.PatientID)
                 .OrderByDescending(v => v.RecordedAt)
@@ -554,11 +581,11 @@ namespace INFP_Proj.Pages.User
 
             var bracelet = await _context.BraceletRelations
                 .AsNoTracking()
-                .Where(br => br.PatientID == patient.PatientID)
-                .Select(br => br.Bracelet)
+                .Where(b => b.PatientID == patient.PatientID)
+                .Select(b => b.Bracelet)
                 .FirstOrDefaultAsync();
 
-            bool hasEmergency = await _context.Logs
+            bool emergency = await _context.Logs
                 .AsNoTracking()
                 .AnyAsync(l =>
                     l.PatientID == patient.PatientID &&
@@ -568,61 +595,65 @@ namespace INFP_Proj.Pages.User
             return new JsonResult(new
             {
                 success = true,
+                heartRate = (vitals?.HeartRate ?? bracelet?.HeartRate)?.ToString("0") ?? "N/A",
+                respiration = (vitals?.RespiratoryRate ?? bracelet?.RespiratoryRate)?.ToString("0") ?? "N/A",
+                systolicBloodPressure = (vitals?.SystolicBloodPressure ?? bracelet?.SystolicBloodPressure)?.ToString("0") ?? "N/A",
+                diastolicBloodPressure = (vitals?.DiastolicBloodPressure ?? bracelet?.DiastolicBloodPressure)?.ToString("0") ?? "N/A",
+                movement = bracelet?.Movement?.ToString("0.0") ?? "N/A",
+                battery = bracelet?.Battery?.ToString("0.0") ?? "N/A",
+                updatedAt = vitals == null
+                    ? "No reading"
+                    : ToSingaporeTime(vitals.RecordedAt).ToString("dd MMM yyyy, hh:mm tt"),
 
-                heartRate =
-                    (latestVitals?.HeartRate ?? bracelet?.HeartRate)?.ToString("0") ?? "N/A",
-
-                respiration =
-                    (latestVitals?.RespiratoryRate ?? bracelet?.RespiratoryRate)?.ToString("0") ?? "N/A",
-
-                systolicBloodPressure =
-                    (latestVitals?.SystolicBloodPressure ?? bracelet?.SystolicBloodPressure)?.ToString("0") ?? "N/A",
-
-                diastolicBloodPressure =
-                    (latestVitals?.DiastolicBloodPressure ?? bracelet?.DiastolicBloodPressure)?.ToString("0") ?? "N/A",
-
-                movement =
-                    bracelet?.Movement?.ToString("0.0") ?? "N/A",
-
-                battery =
-                    bracelet?.Battery?.ToString("0.0") ?? "N/A",
-
-                updatedAt =
-                    latestVitals == null
-                        ? "No reading"
-                        : ToSingaporeTime(latestVitals.RecordedAt)
-                            .ToString("dd MMM yyyy, hh:mm tt"),
-
-                hasUnresolvedEmergency = hasEmergency,
-
-                alertMessage =
-                    BuildAlertMessage(latestVitals, bracelet, hasEmergency)
+                hasUnresolvedEmergency = emergency,
+                alertMessage = BuildAlertMessage(vitals, bracelet, emergency)
             });
         }
 
-        private static DateTime ToSingaporeTime(DateTime recordedAt)
+        // =========================================================
+        // TIME
+        // =========================================================
+
+        private static DateTime GetSingaporeNow() =>
+            TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, GetSingaporeTimeZone());
+
+        private static DateTime ToSingaporeTime(DateTime date)
         {
-            DateTime utcTime = recordedAt.Kind switch
+            DateTime utc = date.Kind switch
             {
-                DateTimeKind.Utc => recordedAt,
-                DateTimeKind.Local => recordedAt.ToUniversalTime(),
-                _ => DateTime.SpecifyKind(recordedAt, DateTimeKind.Utc)
+                DateTimeKind.Utc => date,
+                DateTimeKind.Local => date.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(date, DateTimeKind.Utc)
             };
 
+            return TimeZoneInfo.ConvertTimeFromUtc(utc, GetSingaporeTimeZone());
+        }
+
+        private static TimeZoneInfo GetSingaporeTimeZone()
+        {
             try
             {
-                var zone = TimeZoneInfo.FindSystemTimeZoneById(
-                    "Singapore Standard Time");
-
-                return TimeZoneInfo.ConvertTimeFromUtc(utcTime, zone);
+                return TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time");
             }
             catch (TimeZoneNotFoundException)
             {
-                var zone = TimeZoneInfo.FindSystemTimeZoneById(
-                    "Asia/Singapore");
-
-                return TimeZoneInfo.ConvertTimeFromUtc(utcTime, zone);
+                return TimeZoneInfo.FindSystemTimeZoneById("Asia/Singapore");
             }
+        }
+
+        // =========================================================
+        // VIEW MODEL
+        // =========================================================
+
+        public sealed class NextAppointmentItem
+        {
+            public int AppointmentRequestID { get; set; }
+            public DateTime DateTime { get; set; }
+            public string DoctorName { get; set; } = "Not assigned";
+            public string Reason { get; set; } = string.Empty;
+            public string Urgency { get; set; } = "Normal";
+            public string Status { get; set; } = string.Empty;
+            public string TimeUntil { get; set; } = string.Empty;
         }
     }
 }

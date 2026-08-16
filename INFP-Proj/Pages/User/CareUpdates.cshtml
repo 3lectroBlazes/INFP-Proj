@@ -4,11 +4,11 @@
 @{
     ViewData["Title"] = "Appointments & Care Updates";
 
-    string AppointmentStatusBadge(string? status) => status?.ToLower() switch
+    string StatusBadge(string? status) => status?.ToLower() switch
     {
         "approved" or "scheduled" or "confirmed" => "bg-success",
         "rescheduled" => "bg-info text-dark",
-        "awaiting patient" or "pending" => "bg-warning text-dark",
+        "pending" or "awaiting patient" => "bg-warning text-dark",
         "rejected" => "bg-danger",
         "cancelled" => "bg-dark",
         _ => "bg-secondary"
@@ -20,21 +20,13 @@
         "urgent" => "bg-warning text-dark",
         _ => "bg-primary"
     };
-
-    string ChangeRequestBadge(string? status) => status?.ToLower() switch
-    {
-        "approved" => "bg-success",
-        "rejected" => "bg-danger",
-        "pending" => "bg-warning text-dark",
-        _ => "bg-secondary"
-    };
 }
 
 <style>
     .care-hero {
         background: linear-gradient(135deg,#087f73,#0a9b8c);
-        border-radius: 18px;
         color: white;
+        border-radius: 18px;
         padding: 1.75rem;
     }
 
@@ -53,13 +45,13 @@
             padding: 1rem 1.15rem;
         }
 
-    .appointment-date-panel, .request-change-form, .workflow-box {
+    .date-box, .workflow-box, .change-box {
         background: #f4f8f7;
         border-radius: 12px;
         padding: 1rem;
     }
 
-    .appointment-date {
+    .date-value {
         color: #173f3b;
         font-size: 1.1rem;
         font-weight: 700;
@@ -75,8 +67,8 @@
         }
 
     .detail-label {
-        color: #6c757d;
         display: block;
+        color: #6c757d;
         font-size: .78rem;
         margin-bottom: .2rem;
     }
@@ -86,43 +78,24 @@
         font-weight: 600;
     }
 
-    .section-heading {
-        margin-bottom: 1rem;
+    .section-heading h2 {
+        color: #173f3b;
+        font-size: 1.25rem;
     }
-
-        .section-heading h2 {
-            color: #173f3b;
-            font-size: 1.25rem;
-        }
-
-    .pending-change-panel {
-        background: #fff8e7;
-        border: 1px solid #f2d58d;
-        border-radius: 12px;
-        padding: 1rem;
-    }
-
-    .request-change-box {
-        border-top: 1px solid #edf2f1;
-        margin-top: 1rem;
-        padding-top: 1rem;
-    }
-
-        .request-change-box summary {
-            cursor: pointer;
-            list-style: none;
-        }
-
-            .request-change-box summary::-webkit-details-marker {
-                display: none;
-            }
 
     .info-note {
         background: #f4f8ff;
         border-left: 4px solid #0d6efd;
         border-radius: 10px;
+        padding: .85rem 1rem;
         color: #56657a;
         font-size: .85rem;
+    }
+
+    .emergency-note {
+        background: #fff3f3;
+        border-left: 4px solid #dc3545;
+        border-radius: 10px;
         padding: .85rem 1rem;
     }
 
@@ -141,6 +114,28 @@
         padding: 1rem;
     }
 
+    .summary-box {
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        border-radius: 12px;
+        padding: .8rem 1rem;
+        min-width: 100px;
+    }
+
+    .summary-number {
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
+
+    .request-change summary {
+        cursor: pointer;
+        list-style: none;
+    }
+
+        .request-change summary::-webkit-details-marker {
+            display: none;
+        }
+
     .table thead th {
         color: #50615e;
         font-size: .76rem;
@@ -157,18 +152,16 @@
         </p>
     </div>
 
-    <div class="page-actions">
-        <a asp-page="/User/Index" class="btn btn-outline-secondary btn-sm">
-            Back to dashboard
-        </a>
-    </div>
+    <a asp-page="/User/Index" class="btn btn-outline-secondary btn-sm">
+        Back to dashboard
+    </a>
 </div>
 
 @if (TempData["CareUpdateMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show">
         @TempData["CareUpdateMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
@@ -176,62 +169,62 @@
 {
     <div class="alert alert-danger alert-dismissible fade show">
         @TempData["CareUpdateError"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
 @if (!Model.HasPatientRecord)
 {
     <div class="alert alert-info">
-        <strong>No patient selected.</strong>
-        Select a patient from the Dashboard first.
-
+        <strong>No patient selected.</strong> Select a patient from the Dashboard first.
         <div class="mt-3">
-            <a asp-page="/User/Index" class="btn btn-primary btn-sm">
-                Go to dashboard
-            </a>
+            <a asp-page="/User/Index" class="btn btn-primary btn-sm">Go to dashboard</a>
         </div>
     </div>
 }
 else
 {
     <!-- HERO -->
-    <section class="care-hero mb-4">
-        <div class="d-flex justify-content-between align-items-center">
+    <section class="care-hero mb-5">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
             <div>
-                <div class="small text-uppercase fw-semibold mb-2">
-                    Patient appointment portal
-                </div>
-
-                <h1 class="h3 mb-2">
-                    Care updates for @Model.PatientName
-                </h1>
-
-                <p class="mb-0">
-                    Review Reception appointments and submit appointment requests.
-                </p>
+                <div class="small text-uppercase fw-semibold mb-2">Patient appointment portal</div>
+                <h1 class="h3 mb-2">Care updates for @Model.PatientName</h1>
+                <p class="mb-0">Patient ID: @Model.PatientId</p>
             </div>
 
-            <span class="badge bg-light text-success rounded-pill px-3 py-2">
-                Patient ID: @Model.PatientId
-            </span>
+            <!-- ADDED: Appointment summary -->
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="summary-box text-center">
+                    <div class="summary-number">@Model.ConfirmedAppointments.Count</div>
+                    <div class="small">Upcoming</div>
+                </div>
+
+                <div class="summary-box text-center">
+                    <div class="summary-number">@Model.PendingAppointments.Count</div>
+                    <div class="small">Pending</div>
+                </div>
+
+                <div class="summary-box text-center">
+                    <div class="summary-number">@Model.AppointmentHistory.Count</div>
+                    <div class="small">History</div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- RECEPTION APPOINTMENTS -->
+    <!-- UPCOMING / RECEPTION -->
     <section class="mb-5">
-        <div class="section-heading">
-            <h2>Appointments from Reception</h2>
+        <div class="section-heading mb-3">
+            <h2>Upcoming appointments</h2>
             <p class="text-muted mb-0">
-                Reception appointments that may require your confirmation.
+                Confirm appointments created or approved by Reception.
             </p>
         </div>
 
         @if (Model.ConfirmedAppointments.Count == 0)
         {
-            <div class="empty-panel text-muted">
-                No upcoming Reception appointments.
-            </div>
+            <div class="empty-panel text-muted">No upcoming appointments.</div>
         }
         else
         {
@@ -242,23 +235,17 @@ else
                         <article class="care-card card">
                             <div class="card-header d-flex justify-content-between">
                                 <span>Appointment #@appointment.AppointmentRequestID</span>
-                                <span class="badge @AppointmentStatusBadge(appointment.Status)">
-                                    @appointment.Status
-                                </span>
+                                <span class="badge @StatusBadge(appointment.Status)">@appointment.Status</span>
                             </div>
 
                             <div class="card-body">
-                                <div class="appointment-date-panel mb-3">
-                                    <span class="detail-label">Appointment date and time</span>
-
-                                    <div class="appointment-date">
-                                        @Model.FormatAppointmentDate(appointment.DateTime)
-                                    </div>
+                                <div class="date-box mb-3">
+                                    <span class="detail-label">Date and time</span>
+                                    <div class="date-value">@Model.FormatAppointmentDate(appointment.DateTime)</div>
                                 </div>
 
-                                <!-- ADDED: Assigned Doctor -->
                                 <div class="detail-row">
-                                    <span class="detail-label">Assigned Doctor</span>
+                                    <span class="detail-label">Doctor</span>
                                     <div class="detail-value">@appointment.DoctorName</div>
                                 </div>
 
@@ -269,21 +256,17 @@ else
 
                                 <div class="detail-row">
                                     <span class="detail-label">Urgency</span>
-
                                     <span class="badge @UrgencyBadge(appointment.Urgency)">
                                         @appointment.Urgency
                                     </span>
                                 </div>
 
                                 <div class="workflow-box mt-3">
-                                    <div class="fw-semibold mb-2">
-                                        Appointment acknowledgement
-                                    </div>
+                                    <div class="fw-semibold mb-2">Acknowledgement</div>
 
                                     <div class="d-flex gap-3">
                                         <div>
                                             <span class="detail-label">Reception</span>
-
                                             <span class="badge @(appointment.DocAcknowledged ? "bg-success" : "bg-secondary")">
                                                 @(appointment.DocAcknowledged ? "Acknowledged" : "Waiting")
                                             </span>
@@ -291,7 +274,6 @@ else
 
                                         <div>
                                             <span class="detail-label">Patient</span>
-
                                             <span class="badge @(appointment.PatientAcknowledged ? "bg-success" : "bg-warning text-dark")">
                                                 @(appointment.PatientAcknowledged ? "Acknowledged" : "Waiting")
                                             </span>
@@ -301,46 +283,34 @@ else
 
                                 @if (!string.IsNullOrWhiteSpace(appointment.DoctorResponse))
                                 {
-                                    <div class="detail-row">
-                                        <span class="detail-label">Reception or doctor response</span>
+                                    <div class="detail-row mt-2">
+                                        <span class="detail-label">Response</span>
                                         <div class="detail-value">@appointment.DoctorResponse</div>
                                     </div>
                                 }
 
                                 @if (appointment.PendingChangeRequest != null)
                                 {
-                                    var pendingRequest = appointment.PendingChangeRequest;
-
-                                    <div class="pending-change-panel mt-3">
-                                        <div class="d-flex justify-content-between mb-3">
-                                            <strong>Date-change request</strong>
-
-                                            <span class="badge @ChangeRequestBadge(pendingRequest.Status)">
-                                                @pendingRequest.Status
-                                            </span>
-                                        </div>
-
-                                        <span class="detail-label">Current appointment</span>
-                                        <div class="fw-semibold mb-3">
-                                            @Model.FormatAppointmentDate(appointment.DateTime)
-                                        </div>
-
-                                        <span class="detail-label">Preferred new date</span>
-                                        <div class="fw-semibold mb-3">
-                                            @Model.FormatAppointmentDate(pendingRequest.RequestedDateTime)
-                                        </div>
-
-                                        <span class="detail-label">Reason</span>
-                                        <div>@(pendingRequest.Reason ?? "No reason provided")</div>
-                                    </div>
-                                }
+                                    <div class="change-box mt-3">
+                                        <strong>Date-change request pending</strong>
+                                        <div class="small text-muted mt-2">Requested date</div>
+                                        <div class="fw-semibold">
+                                            @Model.FormatAppointmentDate(
+                                            appointment.PendingChangeRequest.RequestedDateTime)
+                        </div>
+                        <div class="small text-muted mt-2">Reason</div>
+                        <div>@(appointment.PendingChangeRequest.Reason ?? "No reason provided")</div>
+                    </div>
+                                        }
 
                                 <div class="d-flex flex-wrap gap-2 mt-4">
+
                                     @if (appointment.CanAcknowledge)
                                     {
                                         <form method="post"
                                               asp-page-handler="AcknowledgeAppointment"
-                                              asp-route-appointmentId="@appointment.AppointmentRequestID">
+                                              asp-route-appointmentId="@appointment.AppointmentRequestID"
+                                              onsubmit="return confirm('Acknowledge this appointment?');">
 
                                             <button class="btn btn-primary">
                                                 Acknowledge appointment
@@ -348,29 +318,40 @@ else
                                         </form>
                                     }
 
+                                    <!-- CANCEL: Always available for future active appointments -->
+                                    <form method="post"
+                                          asp-page-handler="CancelAppointment"
+                                          asp-route-appointmentId="@appointment.AppointmentRequestID"
+                                          onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+
+                                        <button class="btn btn-outline-danger">
+                                            Cancel appointment
+                                        </button>
+                                    </form>
+
                                     @if (appointment.CanRequestDateChange)
                                     {
-                                        <details class="request-change-box w-100">
+                                        <details class="request-change w-100">
                                             <summary class="btn btn-outline-primary">
                                                 Request another date
                                             </summary>
 
-                                            <div class="request-change-form mt-3">
+                                            <div class="change-box mt-3">
                                                 <div class="info-note mb-3">
-                                                    Reception must approve your requested new date.
-                                                    The assigned doctor will remain the same.
+                                                    Reception must approve the new date.
+                                                    Doctor remains <strong>@appointment.DoctorName</strong>.
                                                 </div>
 
                                                 <form method="post"
                                                       asp-page-handler="RequestDateChange"
                                                       asp-route-appointmentId="@appointment.AppointmentRequestID"
-                                                      class="appointment-time-form">
+                                                      class="appointment-time-form"
+                                                      data-doctor-id="@appointment.DoctorID"
+                                                      data-appointment-id="@appointment.AppointmentRequestID">
 
                                                     <div class="row g-3 mb-3">
                                                         <div class="col-md-6">
-                                                            <label class="form-label">
-                                                                Preferred new date
-                                                            </label>
+                                                            <label class="form-label">Preferred date</label>
 
                                                             <input type="date"
                                                                    class="form-control js-date"
@@ -388,11 +369,16 @@ else
                                                                 {
                                                                     var time = DateTime.Today.AddHours(hour);
 
-                                                                    <option value="@time.ToString("HH:mm")">
+                                                                    <option value="@time.ToString("HH:mm")"
+                                                                            data-label="@time.ToString("hh:mm tt")">
                                                                         @time.ToString("hh:mm tt")
                                                                     </option>
                                                                 }
                                                             </select>
+
+                                                            <div class="small text-muted mt-2 js-availability-message">
+                                                                Select a date to check availability.
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -401,9 +387,7 @@ else
                                                            class="js-datetime" />
 
                                                     <div class="mb-3">
-                                                        <label class="form-label">
-                                                            Reason for requesting another date
-                                                        </label>
+                                                        <label class="form-label">Reason for date change</label>
 
                                                         <textarea name="changeReason"
                                                   class="form-control"
@@ -413,12 +397,13 @@ else
                                                     </div>
 
                                                     <button class="btn btn-primary">
-                                                        Submit date-change request
+                                                        Submit request
                                                     </button>
                                                 </form>
                                             </div>
                                         </details>
                                     }
+
                                 </div>
                             </div>
                         </article>
@@ -428,21 +413,16 @@ else
         }
     </section>
 
-    <!-- PENDING REQUESTS -->
+    <!-- PENDING -->
     <section class="mb-5">
-        <div class="section-heading">
-            <h2>Pending appointment requests</h2>
-
-            <p class="text-muted mb-0">
-                Waiting for Reception acknowledgement.
-            </p>
+        <div class="section-heading mb-3">
+            <h2>Pending requests</h2>
+            <p class="text-muted mb-0">Waiting for Reception acknowledgement.</p>
         </div>
 
         @if (Model.PendingAppointments.Count == 0)
         {
-            <div class="empty-panel text-muted">
-                There are no pending appointment requests.
-            </div>
+            <div class="empty-panel text-muted">No pending appointment requests.</div>
         }
         else
         {
@@ -451,95 +431,64 @@ else
                 {
                     <div class="col-md-6 col-xl-4">
                         <article class="care-card card">
-
                             <div class="card-header d-flex justify-content-between">
                                 <span>Request #@appointment.AppointmentRequestID</span>
-
-                                <span class="badge @AppointmentStatusBadge(appointment.Status)">
-                                    @appointment.Status
-                                </span>
+                                <span class="badge @StatusBadge(appointment.Status)">@appointment.Status</span>
                             </div>
 
                             <div class="card-body">
-                                @if (appointment.PendingChangeRequest != null)
-                                {
-                                    <div class="appointment-date-panel mb-3">
-                                        <span class="detail-label">
-                                            Requested new date and time
-                                        </span>
-
-                                        <div class="appointment-date">
-                                            @Model.FormatAppointmentDate(
-                                            appointment.PendingChangeRequest.RequestedDateTime)
-                        </div>
-                    </div>
-
-                    <div class="detail-row">
-                        <span class="detail-label">
-                            Current appointment date
+                                <div class="date-box mb-3">
+                                    <span class="detail-label">
+                                        @(appointment.PendingChangeRequest != null
+                                                                    ? "Requested new date"
+                                                                    : "Preferred date")
                         </span>
 
-                        <div class="detail-value">
-                            @Model.FormatAppointmentDate(appointment.DateTime)
+                                    <div class="date-value">
+                                        @Model.FormatAppointmentDate(
+                                                        appointment.PendingChangeRequest?.RequestedDateTime
+                                                        ?? appointment.DateTime)
                         </div>
                     </div>
 
-                    <div class="detail-row">
-                        <span class="detail-label">
-                            Reschedule reason
-                        </span>
-
-                        <div class="detail-value">
-                            @(appointment.PendingChangeRequest.Reason ?? "No reason provided")
-                        </div>
-                    </div>
-                                        }
-                                else
+                    @if (appointment.PendingChangeRequest != null)
                                 {
-                                    <div class="appointment-date-panel mb-3">
-                                        <span class="detail-label">
-                                            Preferred date and time
-                                        </span>
-
-                                        <div class="appointment-date">
+                                    <div class="detail-row">
+                                        <span class="detail-label">Current date</span>
+                                        <div class="detail-value">
                                             @Model.FormatAppointmentDate(appointment.DateTime)
+                                        </div>
+                                    </div>
+
+                                    <div class="detail-row">
+                                        <span class="detail-label">Reschedule reason</span>
+                                        <div class="detail-value">
+                                            @(appointment.PendingChangeRequest.Reason ?? "No reason provided")
                                         </div>
                                     </div>
                                 }
 
-                                <!-- ADDED: Assigned Doctor -->
                                 <div class="detail-row">
-                                    <span class="detail-label">Assigned Doctor</span>
+                                    <span class="detail-label">Doctor</span>
                                     <div class="detail-value">@appointment.DoctorName</div>
                                 </div>
 
                                 <div class="detail-row">
-                                    <span class="detail-label">
-                                        Appointment reason
-                                    </span>
-
-                                    <div class="detail-value">
-                                        @appointment.Reason
-                                    </div>
+                                    <span class="detail-label">Reason</span>
+                                    <div class="detail-value">@appointment.Reason</div>
                                 </div>
 
                                 <div class="detail-row">
                                     <span class="detail-label">Urgency</span>
-
                                     <span class="badge @UrgencyBadge(appointment.Urgency)">
                                         @appointment.Urgency
                                     </span>
                                 </div>
 
                                 <div class="workflow-box mt-3">
-                                    <div class="fw-semibold mb-2">
-                                        Awaiting agreement
-                                    </div>
-
                                     <div class="d-flex gap-3">
                                         <div>
                                             <span class="detail-label">Reception</span>
-
                                             <span class="badge @(appointment.DocAcknowledged ? "bg-success" : "bg-warning text-dark")">
                                                 @(appointment.DocAcknowledged ? "Acknowledged" : "Waiting")
                                             </span>
@@ -547,7 +496,6 @@ else
 
                                         <div>
                                             <span class="detail-label">Patient</span>
-
                                             <span class="badge @(appointment.PatientAcknowledged ? "bg-success" : "bg-secondary")">
                                                 @(appointment.PatientAcknowledged ? "Acknowledged" : "Waiting")
                                             </span>
@@ -564,43 +512,44 @@ else
 
     <!-- REQUEST CARE -->
     <section class="mb-5">
-        <div class="section-heading">
+        <div class="section-heading mb-3">
             <h2>Request care</h2>
-
-            <p class="text-muted mb-0">
-                Request a future appointment or ask the doctor a question.
-            </p>
+            <p class="text-muted mb-0">Book an appointment or send a question to the doctor.</p>
         </div>
 
         <div class="row g-4">
-
-            <!-- NEW APPOINTMENT -->
+            <!-- APPOINTMENT -->
             <div class="col-lg-6">
                 <div class="care-card card">
-
-                    <div class="card-header">
-                        Request a future appointment
-                    </div>
+                    <div class="card-header">Request appointment</div>
 
                     <div class="card-body">
                         <div class="info-note mb-4">
-                            Your request remains pending until Reception approves it.
+                            Select a doctor and date to view available times.
+                            Reception must approve the request.
                         </div>
 
                         <form method="post"
                               asp-page-handler="RequestNewAppointment"
-                              class="appointment-time-form">
+                              class="appointment-time-form new-appointment-form">
+
+                            <div class="mb-3">
+                                <label asp-for="NewAppointmentRequest.DoctorID" class="form-label">
+                                    Assigned Doctor
+                                </label>
+
+                                <select asp-for="NewAppointmentRequest.DoctorID"
+                                        asp-items="Model.DoctorsList"
+                                        class="form-select js-doctor" required>
+                                    <option value="">-- Choose a Doctor --</option>
+                                </select>
+                            </div>
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">
-                                        Preferred date
-                                    </label>
-
-                                    <input type="date"
-                                           class="form-control js-date"
-                                           min="@Model.MinimumDateValue"
-                                           required />
+                                    <label class="form-label">Preferred date</label>
+                                    <input type="date" class="form-control js-date"
+                                           min="@Model.MinimumDateValue" required />
                                 </div>
 
                                 <div class="col-md-6">
@@ -613,67 +562,55 @@ else
                                         {
                                             var time = DateTime.Today.AddHours(hour);
 
-                                            <option value="@time.ToString("HH:mm")">
+                                            <option value="@time.ToString("HH:mm")"
+                                                    data-label="@time.ToString("hh:mm tt")">
                                                 @time.ToString("hh:mm tt")
                                             </option>
                                         }
                                     </select>
+
+                                    <div class="small text-muted mt-2 js-availability-message">
+                                        Select a doctor and date.
+                                    </div>
                                 </div>
                             </div>
 
                             <input asp-for="NewAppointmentRequest.PreferredDateTime"
-                                   type="hidden"
-                                   class="js-datetime" />
-
-                            <!-- ADDED: Doctor dropdown -->
-                            <div class="mb-3">
-                                <label asp-for="NewAppointmentRequest.DoctorID"
-                                       class="form-label">
-                                    Assigned Doctor
-                                </label>
-
-                                <select asp-for="NewAppointmentRequest.DoctorID"
-                                        asp-items="Model.DoctorsList"
-                                        class="form-select"
-                                        required>
-
-                                    <option value="">
-                                        -- Choose a Doctor --
-                                    </option>
-                                </select>
-                            </div>
+                                   type="hidden" class="js-datetime" />
 
                             <div class="mb-3">
-                                <label asp-for="NewAppointmentRequest.Reason"
-                                       class="form-label">
-                                    Reason for appointment
+                                <label asp-for="NewAppointmentRequest.Reason" class="form-label">
+                                    Reason
                                 </label>
 
                                 <textarea asp-for="NewAppointmentRequest.Reason"
-                                          class="form-control"
-                                          rows="4"
-                                          maxlength="500"
-                                          required></textarea>
+                                          class="form-control" rows="4"
+                                          maxlength="500" required></textarea>
                             </div>
 
                             <div class="mb-3">
-                                <label asp-for="NewAppointmentRequest.Urgency"
-                                       class="form-label">
+                                <label asp-for="NewAppointmentRequest.Urgency" class="form-label">
                                     Urgency
                                 </label>
 
                                 <select asp-for="NewAppointmentRequest.Urgency"
-                                        class="form-select">
-
+                                        class="form-select js-urgency">
                                     <option value="Normal">Normal</option>
                                     <option value="Urgent">Urgent</option>
                                     <option value="Emergency">Emergency</option>
                                 </select>
                             </div>
 
-                            <button class="btn btn-primary">
-                                Submit appointment request
-                            </button>
+                            <!-- ADDED: Emergency warning -->
+                            <div class="emergency-note mb-3 js-emergency-note" style="display:none;">
+                                <strong>Emergency request</strong>
+                                <div class="small mt-1">
+                                    This will also create an Emergency Log.
+                                    For immediate life-threatening emergencies, contact hospital staff directly.
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary">Submit appointment request</button>
                         </form>
                     </div>
                 </div>
@@ -682,19 +619,16 @@ else
             <!-- ASK DOCTOR -->
             <div class="col-lg-6">
                 <div class="care-card card">
-
-                    <div class="card-header">
-                        Ask the doctor
-                    </div>
+                    <div class="card-header">Ask the doctor</div>
 
                     <div class="card-body">
-                        <form method="post" asp-page-handler="AskDoctor">
+                        <div class="info-note mb-4">
+                            Use this for non-emergency questions or concerns.
+                        </div>
 
+                        <form method="post" asp-page-handler="AskDoctor">
                             <div class="mb-3">
-                                <label asp-for="QuestionMessage"
-                                       class="form-label">
-                                    Question or concern
-                                </label>
+                                <label asp-for="QuestionMessage" class="form-label">Question or concern</label>
 
                                 <textarea asp-for="QuestionMessage"
                                           class="form-control"
@@ -703,9 +637,7 @@ else
                                           required></textarea>
                             </div>
 
-                            <button class="btn btn-primary">
-                                Submit question
-                            </button>
+                            <button class="btn btn-primary">Submit question</button>
                         </form>
                     </div>
                 </div>
@@ -715,32 +647,28 @@ else
 
     <!-- DATE CHANGE HISTORY -->
     <section class="mb-5">
-        <div class="section-heading">
-            <h2>Date-change request history</h2>
+        <div class="section-heading mb-3">
+            <h2>Date-change history</h2>
         </div>
 
         <div class="care-card card">
             <div class="card-body">
-
                 @if (Model.ChangeRequestHistory.Count == 0)
                 {
-                    <p class="text-muted mb-0">
-                        No date-change requests have been submitted.
-                    </p>
+                    <p class="text-muted mb-0">No date-change requests.</p>
                 }
                 else
                 {
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-
                             <thead>
                                 <tr>
                                     <th>Appointment</th>
-                                    <th>Current date</th>
-                                    <th>Requested date</th>
+                                    <th>Current</th>
+                                    <th>Requested</th>
                                     <th>Reason</th>
                                     <th>Status</th>
-                                    <th>Reception response</th>
+                                    <th>Response</th>
                                 </tr>
                             </thead>
 
@@ -752,19 +680,15 @@ else
 
                                         <td>
                                             @(request.CurrentAppointmentDate.HasValue
-                                                                            ? Model.FormatAppointmentDate(
-                                                                            request.CurrentAppointmentDate.Value)
+                                                                            ? Model.FormatAppointmentDate(request.CurrentAppointmentDate.Value)
                                                                             : "-")
                                                                               </td>
 
-                                        <td>
-                                            @Model.FormatAppointmentDate(request.RequestedDateTime)
-                                        </td>
-
+                                        <td>@Model.FormatAppointmentDate(request.RequestedDateTime)</td>
                                         <td>@request.Reason</td>
 
                                         <td>
-                                            <span class="badge @ChangeRequestBadge(request.Status)">
+                                            <span class="badge @StatusBadge(request.Status)">
                                                 @request.Status
                                             </span>
                                         </td>
@@ -777,7 +701,6 @@ else
                         </tr>
                                                 }
                             </tbody>
-
                         </table>
                     </div>
                 }
@@ -787,28 +710,42 @@ else
 
     <!-- APPOINTMENT HISTORY -->
     <section class="mb-5">
-        <div class="section-heading">
+        <div class="section-heading mb-3">
             <h2>Appointment history</h2>
+            <p class="text-muted mb-0">Search or filter previous appointment records.</p>
         </div>
 
         <div class="care-card card">
             <div class="card-body">
-
                 @if (Model.AppointmentHistory.Count == 0)
                 {
-                    <p class="text-muted mb-0">
-                        No previous appointment records.
-                    </p>
+                    <p class="text-muted mb-0">No previous appointment records.</p>
                 }
                 else
                 {
+                    <!-- ADDED: History filter -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-8">
+                            <input id="historySearch" class="form-control"
+                                   placeholder="Search doctor, reason or status..." />
+                        </div>
+
+                        <div class="col-md-4">
+                            <select id="historyUrgency" class="form-select">
+                                <option value="">All urgency levels</option>
+                                <option value="normal">Normal</option>
+                                <option value="urgent">Urgent</option>
+                                <option value="emergency">Emergency</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-
                             <thead>
                                 <tr>
                                     <th>Appointment</th>
-                                    <th>Date and time</th>
+                                    <th>Date</th>
                                     <th>Doctor</th>
                                     <th>Reason</th>
                                     <th>Urgency</th>
@@ -816,10 +753,12 @@ else
                                 </tr>
                             </thead>
 
-                            <tbody>
+                            <tbody id="historyTable">
                                 @foreach (var appointment in Model.AppointmentHistory)
                                 {
-                                    <tr>
+                                    <tr class="history-row"
+                                        data-urgency="@appointment.Urgency.ToLower()">
+
                                         <td>#@appointment.AppointmentRequestID</td>
                                         <td>@Model.FormatAppointmentDate(appointment.DateTime)</td>
                                         <td>@appointment.DoctorName</td>
@@ -832,15 +771,20 @@ else
                                         </td>
 
                                         <td>
-                                            <span class="badge @AppointmentStatusBadge(appointment.Status)">
+                                            <span class="badge @StatusBadge(appointment.Status)">
                                                 @appointment.Status
                                             </span>
                                         </td>
                                     </tr>
                                 }
                             </tbody>
-
                         </table>
+                    </div>
+
+                    <div id="noHistoryResults"
+                         class="text-center text-muted py-4"
+                         style="display:none;">
+                        No matching appointments.
                     </div>
                 }
             </div>
@@ -849,28 +793,23 @@ else
 
     <!-- DOCTOR COMMUNICATION -->
     <section class="mb-4">
-        <div class="section-heading">
+        <div class="section-heading mb-3">
             <h2>Doctor communication</h2>
         </div>
 
         <div class="care-card card">
             <div class="card-body">
-
                 @if (Model.DoctorRequests.Count == 0)
                 {
-                    <p class="text-muted mb-0">
-                        No questions have been submitted.
-                    </p>
+                    <p class="text-muted mb-0">No questions have been submitted.</p>
                 }
                 else
                 {
                     <div class="row g-3">
-
                         @foreach (var request in Model.DoctorRequests)
                         {
                             <div class="col-lg-6">
                                 <div class="doctor-message h-100">
-
                                     <div class="d-flex justify-content-between mb-3">
                                         <span class="badge @(request.Completed ? "bg-success" : "bg-warning text-dark")">
                                             @(request.Completed ? "Replied" : "Awaiting reply")
@@ -881,26 +820,18 @@ else
                                         </span>
                                     </div>
 
-                                    <span class="detail-label">
-                                        Patient question
-                                    </span>
-
+                                    <span class="detail-label">Patient question</span>
                                     <p>@request.RequestMessage</p>
 
-                                    <span class="detail-label">
-                                        Doctor response
-                                    </span>
-
+                                    <span class="detail-label">Doctor response</span>
                                     <p class="mb-0">
                                         @(string.IsNullOrWhiteSpace(request.ReplyMessage)
                                                                     ? "No reply yet."
                                                                     : request.ReplyMessage)
                         </p>
-
-                                </div>
-                            </div>
+                    </div>
+                </div>
                                 }
-
                     </div>
                 }
             </div>
@@ -908,28 +839,119 @@ else
     </section>
 }
 
-@section Scripts
-{
+@section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        // Combines Date + Time into the existing DateTime field.
+        // Doctor availability
+        function resetTimes(form) {
+            form.querySelectorAll('.js-time option').forEach(o => {
+                if (!o.value) return;
+                o.disabled = false;
+                o.textContent = o.dataset.label || o.textContent.replace(' (Booked)', '');
+            });
+        }
+
+        async function refreshAvailability(form) {
+            const date = form.querySelector('.js-date')?.value;
+            const doctorSelect = form.querySelector('.js-doctor');
+            const doctorId = doctorSelect ? doctorSelect.value : form.dataset.doctorId;
+            const appointmentId = form.dataset.appointmentId;
+            const message = form.querySelector('.js-availability-message');
+            const time = form.querySelector('.js-time');
+
+            resetTimes(form);
+
+            if (!date || !doctorId) {
+                if (message) message.textContent = 'Select a doctor and date to check availability.';
+                return;
+            }
+
+            if (message) message.textContent = 'Checking availability...';
+
+            let url = `?handler=AvailableTimes&doctorId=${encodeURIComponent(doctorId)}&date=${encodeURIComponent(date)}`;
+            if (appointmentId) url += `&appointmentId=${appointmentId}`;
+
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                const result = await response.json();
+                const booked = new Set(result.bookedTimes || []);
+
+                time.querySelectorAll('option').forEach(o => {
+                    if (o.value && booked.has(o.value)) {
+                        o.disabled = true;
+                        o.textContent = `${o.dataset.label} (Booked)`;
+                    }
+                });
+
+                if (time.selectedOptions[0]?.disabled) time.value = '';
+
+                if (message)
+                    message.textContent = booked.size ? 'Booked times are disabled.' : 'All time slots are available.';
+            }
+            catch {
+                if (message) message.textContent = 'Unable to check availability.';
+            }
+        }
+
         document.querySelectorAll('.appointment-time-form').forEach(form => {
+            form.querySelector('.js-date')?.addEventListener('change', () => refreshAvailability(form));
+            form.querySelector('.js-doctor')?.addEventListener('change', () => refreshAvailability(form));
 
-            form.addEventListener('submit', function (e) {
-
+            form.addEventListener('submit', e => {
                 const date = form.querySelector('.js-date')?.value;
                 const time = form.querySelector('.js-time')?.value;
                 const target = form.querySelector('.js-datetime');
 
                 if (!date || !time || !target) {
                     e.preventDefault();
-                    alert('Please select both a date and time.');
+                    alert('Please select an available date and time.');
                     return;
                 }
 
                 target.value = `${date}T${time}:00`;
+
+                const urgency = form.querySelector('.js-urgency')?.value;
+
+                if (urgency === 'Emergency' &&
+                    !confirm('This is marked as an Emergency appointment. Continue?')) {
+                    e.preventDefault();
+                }
             });
         });
+
+        // Emergency warning
+        const urgency = document.querySelector('.js-urgency');
+        const emergencyNote = document.querySelector('.js-emergency-note');
+
+        urgency?.addEventListener('change', () => {
+            emergencyNote.style.display = urgency.value === 'Emergency' ? 'block' : 'none';
+        });
+
+        // Appointment history filter
+        const search = document.getElementById('historySearch');
+        const urgencyFilter = document.getElementById('historyUrgency');
+        const rows = document.querySelectorAll('.history-row');
+        const noResults = document.getElementById('noHistoryResults');
+
+        function filterHistory() {
+            const text = search?.value.toLowerCase() || '';
+            const urgency = urgencyFilter?.value || '';
+            let shown = 0;
+
+            rows.forEach(row => {
+                const matchesText = row.textContent.toLowerCase().includes(text);
+                const matchesUrgency = !urgency || row.dataset.urgency === urgency;
+                const show = matchesText && matchesUrgency;
+
+                row.style.display = show ? '' : 'none';
+                if (show) shown++;
+            });
+
+            if (noResults) noResults.style.display = shown ? 'none' : 'block';
+        }
+
+        search?.addEventListener('input', filterHistory);
+        urgencyFilter?.addEventListener('change', filterHistory);
     </script>
 }
