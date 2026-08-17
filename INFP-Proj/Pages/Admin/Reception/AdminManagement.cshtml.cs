@@ -88,7 +88,7 @@ namespace INFP_Proj.Pages.Admin.Reception
                 string message = $"Hello {firstName},\n\n" +
                                  $"An admin account has been created for you.\n" +
                                  $"Your temporary password is: {temporaryPassword}\n\n" +
-                                 $"Please set your actual password using this webpage: https://localhost/ResetPassword";
+                                 $"Please set your actual password using this webpage: https://infp-proj-etfqd4gqgvcqfccq.eastasia-01.azurewebsites.net/ResetPassword";
 
                 await _emailService.SendEmailAsync(email, subject, message);
 
