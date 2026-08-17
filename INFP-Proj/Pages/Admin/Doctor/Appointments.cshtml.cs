@@ -25,7 +25,6 @@ namespace INFP_Proj.Pages.Admin.Doctor
 
         public async Task<IActionResult> OnGetAsync()
         {
-            // 1. Get the currently logged-in Doctor
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Login");
 
@@ -33,7 +32,7 @@ namespace INFP_Proj.Pages.Admin.Doctor
             var allMyAppointments = await (from a in _context.Appointments
                                            join p in _context.Patients on a.PatientID equals p.PatientID
                                            join u in _context.Users on p.UserID equals u.Id
-                                           where a.DoctorID == user.Id && a.DateTime >= DateTime.Today
+                                           where a.DoctorID == user.Id && a.DateTime >= DateTime.Today && (a.Status != "Rejected" || a.Status == "Completed")
                                            orderby a.DateTime
                                            select new DoctorAppointmentViewModel
                                            {
@@ -48,8 +47,8 @@ namespace INFP_Proj.Pages.Admin.Doctor
                                            }).ToListAsync();
 
             // 3. Separate into lists for the UI
-            PendingAppointments = allMyAppointments.Where(a => !a.DocAcknowledged && a.Status != "Rejected").ToList();
-            UpcomingAppointments = allMyAppointments.Where(a => a.DocAcknowledged && a.Status != "Rejected").ToList();
+            PendingAppointments = allMyAppointments.Where(a => !a.DocAcknowledged).ToList();
+            UpcomingAppointments = allMyAppointments.Where(a => a.DocAcknowledged).ToList();
 
             return Page();
         }
@@ -67,6 +66,7 @@ namespace INFP_Proj.Pages.Admin.Doctor
             if (appointment.DoctorID != user.Id) return Forbid();
 
             appointment.Status = "Completed";
+            appointment.DocAcknowledged = true;
             appointment.DoctorResponse = notes; 
 
             await _context.SaveChangesAsync();

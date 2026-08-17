@@ -750,6 +750,7 @@ else
                                     <th>Reason</th>
                                     <th>Urgency</th>
                                     <th>Status</th>
+                                    <th class="text-center">Response</th>
                                 </tr>
                             </thead>
 
@@ -775,8 +776,65 @@ else
                                                 @appointment.Status
                                             </span>
                                         </td>
+
+                                        <td class="text-center">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#responseModal-@appointment.AppointmentRequestID">
+                                                <i class="bi bi-chat-left-text"></i>
+                                                View
+                                            </button>
+
+                                            <!-- Doctor Response Modal -->
+                                            <div class="modal fade"
+                                                 id="responseModal-@appointment.AppointmentRequestID"
+                                                 tabindex="-1"
+                                                 aria-labelledby="responseModalLabel-@appointment.AppointmentRequestID"
+                                                 aria-hidden="true">
+
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content rounded-4">
+
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title"
+                                                                id="responseModalLabel-@appointment.AppointmentRequestID">
+                                                                Doctor response &ndash; Appointment #@appointment.AppointmentRequestID
+                                                            </h5>
+
+                                                            <button type="button"
+                                                                    class="btn-close"
+                                                                    data-bs-dismiss="modal"
+                                                                    aria-label="Close">
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="modal-body">
+                                                            <span class="detail-label">Doctor</span>
+                                                            <p class="fw-semibold mb-3">@appointment.DoctorName</p>
+
+                                                            <span class="detail-label">Response</span>
+                                                            <p class="mb-0">
+                                                                @(string.IsNullOrWhiteSpace(appointment.DoctorResponse)
+                                                                                                                    ? "No response was recorded for this appointment."
+                                                                                                                    : appointment.DoctorResponse)
+                                                </p>
+                                            </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="button"
+                                                                    class="btn btn-outline-secondary"
+                                                                    data-bs-dismiss="modal">
+                                                                Close
+                                                            </button>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
                                     </tr>
-                                }
+                                                }
                             </tbody>
                         </table>
                     </div>
