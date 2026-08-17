@@ -47,8 +47,8 @@ namespace INFP_Proj.Pages.Admin.Doctor
                                            }).ToListAsync();
 
             // 3. Separate into lists for the UI
-            PendingAppointments = allMyAppointments.Where(a => !a.DocAcknowledged).ToList();
-            UpcomingAppointments = allMyAppointments.Where(a => a.DocAcknowledged).ToList();
+            PendingAppointments = allMyAppointments.Where(a => a.DateTime.Date == DateTime.Today).ToList();
+            UpcomingAppointments = allMyAppointments.Where(a => a.DateTime.Date > DateTime.Today).ToList();
 
             return Page();
         }
