@@ -32,7 +32,7 @@ namespace INFP_Proj.Pages.Admin.Doctor
             var allMyAppointments = await (from a in _context.Appointments
                                            join p in _context.Patients on a.PatientID equals p.PatientID
                                            join u in _context.Users on p.UserID equals u.Id
-                                           where a.DoctorID == user.Id && a.DateTime >= DateTime.Today && (a.Status != "Rejected" || a.Status == "Completed")
+                                           where a.DoctorID == user.Id && a.DateTime >= DateTime.Today && (a.Status != "Rejected" && a.Status != "Completed")
                                            orderby a.DateTime
                                            select new DoctorAppointmentViewModel
                                            {

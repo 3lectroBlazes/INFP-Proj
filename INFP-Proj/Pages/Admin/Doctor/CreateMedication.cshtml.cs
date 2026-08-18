@@ -33,6 +33,6 @@ public class CreateMedicationModel : PageModel
         _context.Medications.Add(Medications);
         await _context.SaveChangesAsync();
 
-        return RedirectToPage("./Index");
+        return RedirectToPage("/Admin/Index");
     }
 }

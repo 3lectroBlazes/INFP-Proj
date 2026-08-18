@@ -53,7 +53,7 @@ namespace INFP_Proj.Pages
                     await userManager.AddToRoleAsync(user, "User");
 
                     await signInManager.SignInAsync(user, false);
-                    return RedirectToPage("Index");
+                    return RedirectToPage("Login");
                 }
                 foreach (var error in result.Errors)
                 {
